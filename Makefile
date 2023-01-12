@@ -6,12 +6,11 @@ NUM_JOB ?= 8
 all:
 	@echo nothing special
 
-lint: lintcpp lintcmake
-lintcpp:
-	python3 -m mdk_tools.cli.cpp_lint .
-lintcmake:
-	python3 -m mdk_tools.cli.cmake_lint .
-.PHONY: lint lintcpp lintcmake
+lint:
+	pre-commit run -a
+lint_install:
+	pre-commit install
+.PHONY: lint
 
 reset_submodules:
 	git submodule update --init --recursive
@@ -78,4 +77,4 @@ test:
 	python3 geobuf-roundtrip-test.py pygeobuf/test/fixtures
 
 clean_test:
-	rm -rf $(OUTPUT_DIR_JS) $(OUTPUT_DIR_CPP) build/roundtrip_test 
+	rm -rf $(OUTPUT_DIR_JS) $(OUTPUT_DIR_CPP) build/roundtrip_test

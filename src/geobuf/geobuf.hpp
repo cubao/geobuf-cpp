@@ -101,5 +101,5 @@ struct Decoder
     std::vector<std::string> keys;
 };
 
-} // namespace goebuf
+} // namespace geobuf
 } // namespace mapbox

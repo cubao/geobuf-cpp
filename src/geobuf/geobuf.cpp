@@ -834,5 +834,5 @@ mapbox::geojson::value Decoder::readValue(Pbf &pbf)
     }
     return {};
 }
-}
-}
+} // namespace geobuf
+} // namespace mapbox

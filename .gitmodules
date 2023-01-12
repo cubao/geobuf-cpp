@@ -1,33 +1,33 @@
 [submodule "3rdparties/variant"]
-	path = 3rdparties/variant
-	url = https://github.com/mapbox/variant.git
+    path = 3rdparties/variant
+    url = https://github.com/mapbox/variant.git
 [submodule "3rdparties/geometry-cpp"]
-	path = 3rdparties/geojson-cpp
-	url = https://github.com/district10/geojson-cpp.git
+    path = 3rdparties/geojson-cpp
+    url = https://github.com/district10/geojson-cpp.git
 [submodule "3rdparties/geometry.hpp"]
-	path = 3rdparties/geometry.hpp
-	url = https://github.com/district10/geometry.hpp.git
+    path = 3rdparties/geometry.hpp
+    url = https://github.com/district10/geometry.hpp.git
 [submodule "3rdparties/protozero"]
-	path = 3rdparties/protozero
-	url = https://github.com/mapbox/protozero.git
+    path = 3rdparties/protozero
+    url = https://github.com/mapbox/protozero.git
 [submodule "3rdparties/doctest"]
-	path = 3rdparties/doctest
-	url = https://github.com/onqtam/doctest.git
+    path = 3rdparties/doctest
+    url = https://github.com/onqtam/doctest.git
 [submodule "3rdparties/dbg-macro"]
-	path = 3rdparties/dbg-macro
-	url = https://github.com/sharkdp/dbg-macro.git
+    path = 3rdparties/dbg-macro
+    url = https://github.com/sharkdp/dbg-macro.git
 [submodule "cmake"]
-	path = cmake
-	url = https://github.com/cubao/cmake.git
+    path = cmake
+    url = https://github.com/cubao/cmake.git
 [submodule "geobuf"]
-	path = geobuf
-	url = https://github.com/mapbox/geobuf.git
+    path = geobuf
+    url = https://github.com/mapbox/geobuf.git
 [submodule "3rdparties/rapidjson"]
-	path = 3rdparties/rapidjson
-	url = https://github.com/Tencent/rapidjson.git
+    path = 3rdparties/rapidjson
+    url = https://github.com/Tencent/rapidjson.git
 [submodule "pygeobuf"]
-	path = pygeobuf
-	url = https://github.com/pygeobuf/pygeobuf.git
+    path = pygeobuf
+    url = https://github.com/pygeobuf/pygeobuf.git
 [submodule "headers"]
-	path = headers
-	url = https://github.com/cubao/headers.git
+    path = headers
+    url = https://github.com/cubao/headers.git
