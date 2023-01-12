@@ -26,8 +26,6 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 endif()
 
-include(cmake/GitHooks.cmake)
-# include(cmake/GeneralConfig.cmake)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
@@ -35,22 +33,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O3")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3")
 
-include(cmake/Utilities.cmake)
+include(headers/include/utils.cmake)
 
 include_directories(
-    ${PROJECT_SOURCE_DIR}/3rdparties/dbg-macro
-    ${PROJECT_SOURCE_DIR}/3rdparties/doctest/doctest/
-    ${PROJECT_SOURCE_DIR}/3rdparties/geojson-cpp/include/
-    ${PROJECT_SOURCE_DIR}/3rdparties/geometry.hpp/include
-    ${PROJECT_SOURCE_DIR}/3rdparties/protozero/include
-    ${PROJECT_SOURCE_DIR}/3rdparties/rapidjson/include
-    ${PROJECT_SOURCE_DIR}/3rdparties/variant/include
+    ${PROJECT_BINARY_DIR}
+    ${PROJECT_SOURCE_DIR}/headers/include
     ${PROJECT_SOURCE_DIR}/src)
 
 set(MAJOR_VERSION 0)
 set(MINOR_VERSION 0)
 set(PATCH_VERSION 1)
-include(cmake/SetEnv.cmake)
 setup_git_branch()
 setup_git_commit_hash()
 set(VERSION_H "${CMAKE_BINARY_DIR}/${PROJECT_NAME}/version.h")
@@ -61,12 +53,21 @@ option(BUILD_SHARED_LIBS "Build shared library." OFF)
 set(HEADER_ROOT "${PROJECT_SOURCE_DIR}/src/${PROJECT_NAME}")
 file(GLOB_RECURSE HEADERS src/**/*.hpp)
 file(GLOB_RECURSE SOURCES src/**/*.cpp)
-include(cmake/LibraryConfig.cmake)
+add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})
 print_all_linked_libraries(${PROJECT_NAME})
+install(
+  TARGETS ${PROJECT_NAME}
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)
+foreach(file ${HEADERS})
+  get_filename_component(dir ${file} DIRECTORY)
+  string(REGEX REPLACE "${HEADER_ROOT}" "" dir ${dir})
+  install(FILES ${file} DESTINATION "include/${PROJECT_NAME}/${dir}")
+endforeach()
 
-add_executable(pbf_decoder 3rdparties/protozero/tools/pbf-decoder.cpp)
-target_link_libraries(pbf_decoder ${PROJECT_NAME})
+add_executable(pbf_decoder src/geobuf/pbf_decoder.cpp)
+target_compile_definitions(pbf_decoder PUBLIC -DPBF_DECODER_ENABLE_MAIN)
 
 option(BUILD_EXAMPLES "Build examples." ON)
 if(BUILD_EXAMPLES)
@@ -98,8 +99,6 @@ if(BUILD_TESTS)
     endforeach(src)
 endif()
 add_custom_target(test_all COMMAND make -C .. test_all)
-
-include(cmake/InstallConfig.cmake)
 
 # print_include_directories()
 
