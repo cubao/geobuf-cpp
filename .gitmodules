@@ -28,3 +28,6 @@
 [submodule "pygeobuf"]
 	path = pygeobuf
 	url = https://github.com/pygeobuf/pygeobuf.git
+[submodule "headers"]
+	path = headers
+	url = https://github.com/cubao/headers.git
