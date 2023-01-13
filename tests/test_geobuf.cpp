@@ -84,7 +84,6 @@ TEST_CASE("decoding test")
 
 TEST_CASE("custom properties test")
 {
-#if MAPBOX_GEOMETRY_ENABLE_CUSTOM_PROPERTIES
     {
         mapbox::geojson::feature_collection fc;
         fc.custom_properties["answer"] = 42;
@@ -129,9 +128,6 @@ TEST_CASE("custom properties test")
     dbg(mapbox::geobuf::dump(f.custom_properties));
     CHECK(fc.custom_properties.size() == 2);
     CHECK(f.custom_properties.size() == 3);
-#else
-    dbg("MAPBOX_GEOMETRY_ENABLE_CUSTOM_PROPERTIES is OFF")
-#endif
 }
 
 TEST_CASE("roundtrip")
