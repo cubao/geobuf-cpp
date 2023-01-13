@@ -1,7 +1,7 @@
 import json
 
 import pybind11_geobuf
-from pybind11_geobuf import Encoder
+from pybind11_geobuf import Decoder, Encoder
 
 print(pybind11_geobuf.__version__)
 
@@ -22,4 +22,7 @@ geojson = {
 }
 
 encoded = encoder.encode(geojson=json.dumps(geojson))
-print()
+
+decoder = Decoder()
+geojson_text = decoder.decode(encoded, indent=True)
+print(geojson_text)

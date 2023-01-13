@@ -37,6 +37,19 @@ PYBIND11_MODULE(pybind11_geobuf, m)
         //
         ;
 
+    using Decoder = mapbox::geobuf::Decoder;
+    py::class_<Decoder>(m, "Decoder", py::module_local()) //
+        .def(py::init<>())
+        //
+        .def(
+            "decode",
+            [](Decoder &self, const std::string &geobuf, bool indent) {
+                return mapbox::geobuf::dump(self.decode(geobuf), indent);
+            },
+            "geobuf"_a, py::kw_only(), "indent"_a = false)
+        //
+        ;
+
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 #else
