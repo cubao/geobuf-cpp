@@ -1,0 +1,8 @@
+include README.md LICENSE pybind11/LICENSE
+include CMakeLists.txt
+graft headers/include
+graft pybind11/include
+graft pybind11/tools
+graft src
+graft examples
+graft tests

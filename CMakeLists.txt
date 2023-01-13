@@ -72,3 +72,8 @@ add_custom_target(test_all COMMAND make -C .. test_all)
 # print_include_directories()
 
 # print_all_variables()
+
+set(PYBIND11_CPP_STANDARD -std=c++14)
+add_subdirectory(pybind11)
+pybind11_add_module(pybind11_geobuf src/main.cpp)
+target_link_libraries(pybind11_geobuf PRIVATE ${PROJECT_NAME})
