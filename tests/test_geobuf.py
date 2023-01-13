@@ -1,0 +1,2 @@
+import pybind11_geobuf
+print(pybind11_geobuf.__version__)
