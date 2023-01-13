@@ -6,7 +6,7 @@ import os
 import shutil
 import sys
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union  # noqa
 
 from loguru import logger
 
@@ -64,8 +64,14 @@ def normalize_json(input_path: str, output_path: str):
 
 
 def roundtrip_cpp(input_json: str, output_pbf: str, output_json: str):
-    system(f"{PWD}/build/bin/json2geobuf {input_json} > {output_pbf}", dry_run=False)
-    system(f"{PWD}/build/bin/geobuf2json {output_pbf} > {output_json}", dry_run=False)
+    system(
+        f"{PWD}/build/bin/json2geobuf {input_json} > {output_pbf}",
+        dry_run=False,
+    )
+    system(
+        f"{PWD}/build/bin/geobuf2json {output_pbf} > {output_json}",
+        dry_run=False,
+    )
 
 
 def roundtrip_js(input_json: str, output_pbf: str, output_json: str):
@@ -95,39 +101,51 @@ def roundtrip(
         # shutil.copy(input_json, input_path)
         link = os.path.relpath(input_json, os.path.dirname(input_path))
         os.symlink(link, input_path)
-    input_normalized = normalize_json(input_path, f"{output_dir}/input_normalized.json")
+    input_normalized = normalize_json(
+        input_path,
+        f"{output_dir}/input_normalized.json",
+    )
+
+    pbf_decoder = f"{PWD}/build/bin/pbf_decoder"
 
     t0j = time.time()
     roundtrip_js(input_path, f"{output_dir}/js.pbf", f"{output_dir}/js.json")
     t1j = time.time()
     logger.info(f"roundtrip ( js): {t1j - t0j:.3f} sec ({input_path})")
-    system(f"{PWD}/build/bin/pbf_decoder {output_dir}/js.pbf > {output_dir}/js.pbf.txt")
+    system(
+        f"{pbf_decoder} {output_dir}/js.pbf > {output_dir}/js.pbf.txt",
+    )
     output_js = normalize_json(
-        f"{output_dir}/js.json", f"{output_dir}/js_normalized.json"
+        f"{output_dir}/js.json",
+        f"{output_dir}/js_normalized.json",
     )
 
     t0p = time.time()
     roundtrip_py(input_path, f"{output_dir}/py.pbf", f"{output_dir}/py.json")
     t1p = time.time()
     logger.info(f"roundtrip ( py): {t1p - t0p:.3f} sec ({input_path})")
-    system(f"{PWD}/build/bin/pbf_decoder {output_dir}/py.pbf > {output_dir}/py.pbf.txt")
+    system(
+        f"{pbf_decoder} {output_dir}/py.pbf > {output_dir}/py.pbf.txt",
+    )
     output_py = normalize_json(
         f"{output_dir}/py.json", f"{output_dir}/py_normalized.json"
     )
 
     t0c = time.time()
-    roundtrip_cpp(input_path, f"{output_dir}/cpp.pbf", f"{output_dir}/cpp.json")
+    roundtrip_cpp(
+        input_path,
+        f"{output_dir}/cpp.pbf",
+        f"{output_dir}/cpp.json",
+    )
     t1c = time.time()
     logger.info(f"roundtrip (cpp): {t1c - t0c:.3f} sec ({input_path})")
-    system(
-        f"{PWD}/build/bin/pbf_decoder {output_dir}/cpp.pbf > {output_dir}/cpp.pbf.txt"
-    )
+    system(f"{pbf_decoder} {output_dir}/cpp.pbf > {output_dir}/cpp.pbf.txt")
     output_cpp = normalize_json(
         f"{output_dir}/cpp.json", f"{output_dir}/cpp_normalized.json"
     )
 
     system(
-        f"diff {input_normalized} {output_js} > {output_dir}/diff_input_output_js.diff",
+        f"diff {input_normalized} {output_js} > {output_dir}/diff_input_output_js.diff",  # noqa
         assert_return=False,
     )
     system(

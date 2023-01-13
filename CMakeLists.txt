@@ -8,10 +8,7 @@ auto_build_type_and_compile_flags()
 configure_output_directories()
 configure_version_h()
 
-include_directories(
-    ${PROJECT_BINARY_DIR}
-    ${PROJECT_SOURCE_DIR}/headers/include
-    ${PROJECT_SOURCE_DIR}/src)
+include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/headers/include ${PROJECT_SOURCE_DIR}/src)
 
 option(BUILD_SHARED_LIBS "Build shared library." OFF)
 set(HEADER_ROOT "${PROJECT_SOURCE_DIR}/src/${PROJECT_NAME}")
@@ -21,13 +18,18 @@ add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})
 print_all_linked_libraries(${PROJECT_NAME})
 install(
-  TARGETS ${PROJECT_NAME}
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib)
+    TARGETS ${PROJECT_NAME}
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)
 foreach(file ${HEADERS})
-  get_filename_component(dir ${file} DIRECTORY)
-  string(REGEX REPLACE "${HEADER_ROOT}" "" dir ${dir})
-  install(FILES ${file} DESTINATION "include/${PROJECT_NAME}/${dir}")
+    get_filename_component(dir ${file} DIRECTORY)
+    string(
+        REGEX
+        REPLACE "${HEADER_ROOT}"
+                ""
+                dir
+                ${dir})
+    install(FILES ${file} DESTINATION "include/${PROJECT_NAME}/${dir}")
 endforeach()
 
 add_executable(pbf_decoder src/geobuf/pbf_decoder.cpp)
