@@ -16,7 +16,7 @@ reset_submodules:
 	git submodule update --init --recursive
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) *.egg-info dist
 
 CMAKE_ARGS ?= \
 	-DCMAKE_INSTALL_PREFIX=$(INSTALL_DIR) \
