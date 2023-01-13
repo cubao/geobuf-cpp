@@ -88,5 +88,4 @@ set(PYBIND11_CPP_STANDARD -std=c++14)
 add_subdirectory(pybind11)
 pybind11_add_module(pybind11_geobuf src/main.cpp)
 target_link_libraries(pybind11_geobuf PRIVATE ${PROJECT_NAME})
-target_compile_definitions(pybind11_geobuf
-                           PRIVATE VERSION_INFO=${EXAMPLE_VERSION_INFO})
+target_compile_definitions(pybind11_geobuf PRIVATE VERSION_INFO=${EXAMPLE_VERSION_INFO})

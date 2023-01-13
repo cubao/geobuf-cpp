@@ -223,6 +223,24 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
     return data;
 }
 
+std::string Encoder::encode(const std::string &geojson_text)
+{
+    if (geojson_text[0] != '{') {
+        auto json = mapbox::geobuf::load_json(geojson_text);
+        return encode(mapbox::geojson::convert(json));
+    }
+    auto geojson = mapbox::geojson::convert(parse(geojson_text));
+    return encode(geojson);
+}
+
+bool Encoder::encode(const std::string &input_path,
+                     const std::string &output_path)
+{
+    auto json = mapbox::geobuf::load_json(input_path);
+    auto bytes = encode(mapbox::geojson::convert(json));
+    return dump_bytes(output_path, bytes);
+}
+
 void Encoder::analyze(const mapbox::geojson::geojson &geojson)
 {
     auto analyze_feature = [&](const mapbox::geojson::feature &f) {

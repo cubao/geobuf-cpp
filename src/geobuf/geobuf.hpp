@@ -64,6 +64,8 @@ struct Encoder
     {
     }
     std::string encode(const mapbox::geojson::geojson &geojson);
+    std::string encode(const std::string &geojson);
+    bool encode(const std::string &input_path, const std::string &output_path);
 
   private:
     void analyze(const mapbox::geojson::geojson &geojson);
