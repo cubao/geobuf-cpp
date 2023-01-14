@@ -43,10 +43,24 @@ PYBIND11_MODULE(pybind11_geobuf, m)
         //
         .def(
             "decode",
-            [](Decoder &self, const std::string &geobuf, bool indent) {
-                return mapbox::geobuf::dump(self.decode(geobuf), indent);
+            [](Decoder &self, const std::string &geobuf, bool indent,
+               bool sort_keys) {
+                return mapbox::geobuf::dump(self.decode(geobuf), indent,
+                                            sort_keys);
             },
-            "geobuf"_a, py::kw_only(), "indent"_a = false)
+            "geobuf"_a, py::kw_only(), "indent"_a = false,
+            "sort_keys"_a = false)
+        .def(
+            "decode",
+            [](Decoder &self,              //
+               const std::string &geobuf,  //
+               const std::string &geojson, //
+               bool indent,                //
+               bool sort_keys) {
+                return self.decode(geobuf, geojson, indent, sort_keys);
+            },
+            py::kw_only(), "geobuf"_a, "geojson"_a, //
+            "indent"_a = false, "sort_keys"_a = false)
         //
         ;
 

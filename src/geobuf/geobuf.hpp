@@ -17,31 +17,39 @@ using LinesType = mapbox::geojson::multi_line_string::container_type;
 using PolygonsType = mapbox::geojson::multi_polygon::container_type;
 
 using RapidjsonValue = mapbox::geojson::rapidjson_value;
+using RapidjsonAllocator = mapbox::geojson::rapidjson_allocator;
 
 RapidjsonValue load_json(const std::string &path);
 RapidjsonValue load_json(); // read from stdin
 bool dump_json(const std::string &path, const RapidjsonValue &json,
-               bool indent = false);
-bool dump_json(const RapidjsonValue &json,
-               bool indent = false); // write to stdout
+               bool indent = false, bool sort_keys = false);
+bool dump_json(const RapidjsonValue &json, //
+               bool indent = false,
+               bool sort_keys = false); // write to stdout
 
 std::string load_bytes(const std::string &path);
 std::string load_bytes(); // read from stdin
 bool dump_bytes(const std::string &path, const std::string &bytes);
 
-RapidjsonValue geojson2json(const mapbox::geojson::value &geojson);
+RapidjsonValue geojson2json(const mapbox::geojson::value &geojson,
+                            bool sort_keys = false);
+RapidjsonValue geojson2json(const mapbox::geojson::geojson &geojson,
+                            bool sort_keys = false);
 mapbox::geojson::value json2geojson(const RapidjsonValue &json);
 
 RapidjsonValue parse(const std::string &json, bool raise_error = false);
-std::string dump(const RapidjsonValue &json, bool indent = false);
-std::string dump(const mapbox::geojson::value &geojson, bool indent = false);
-std::string dump(const mapbox::geojson::geojson &geojson, bool indent = false);
+std::string dump(const RapidjsonValue &json, //
+                 bool indent = false, bool sort_keys = false);
+std::string dump(const mapbox::geojson::value &geojson, //
+                 bool indent = false, bool sort_keys = false);
+std::string dump(const mapbox::geojson::geojson &geojson, //
+                 bool indent = false, bool sort_keys = false);
 
-inline void normalize_json_inplace(mapbox::geojson::rapidjson_value &json)
+inline void sort_keys_inplace(RapidjsonValue &json)
 {
     if (json.IsArray()) {
         for (auto &e : json.GetArray()) {
-            normalize_json_inplace(e);
+            sort_keys_inplace(e);
         }
     } else if (json.IsObject()) {
         auto obj = json.GetObject();
@@ -50,9 +58,18 @@ inline void normalize_json_inplace(mapbox::geojson::rapidjson_value &json)
             return strcmp(lhs.name.GetString(), rhs.name.GetString()) < 0;
         });
         for (auto &kv : obj) {
-            normalize_json_inplace(kv.value);
+            sort_keys_inplace(kv.value);
         }
     }
+}
+
+inline RapidjsonValue sort_keys(const RapidjsonValue &json)
+{
+    RapidjsonAllocator allocator;
+    RapidjsonValue copy;
+    copy.CopyFrom(json, allocator);
+    sort_keys_inplace(copy);
+    return copy;
 }
 
 struct Encoder
@@ -109,6 +126,8 @@ struct Decoder
     Decoder() {}
     static std::string to_printable(const std::string &pbf_bytes);
     mapbox::geojson::geojson decode(const std::string &pbf_bytes);
+    bool decode(const std::string &input_path, const std::string &output_path,
+                bool indent = false, bool sort_keys = false);
 
   private:
     mapbox::geojson::feature_collection readFeatureCollection(Pbf &pbf);

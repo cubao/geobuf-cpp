@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
     //      normalize_json input.json output.json
     auto json = argc > 1 ? mapbox::geobuf::load_json(argv[1])
                          : mapbox::geobuf::load_json();
-    mapbox::geobuf::normalize_json_inplace(json);
+    mapbox::geobuf::sort_keys_inplace(json);
     return (argc > 2 ? mapbox::geobuf::dump_json(argv[2], json, true)
                      : mapbox::geobuf::dump_json(json, true))
                ? 0
