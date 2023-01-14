@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <mapbox/geojson.hpp>
 #include <mapbox/geojson/rapidjson.hpp>
 #include <protozero/pbf_builder.hpp>
