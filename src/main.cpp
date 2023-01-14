@@ -25,7 +25,8 @@ PYBIND11_MODULE(pybind11_geobuf, m)
 
     m.def(
         "str2json2str",
-        [](const std::string &json_string, bool indent,
+        [](const std::string &json_string, //
+           bool indent,                    //
            bool sort_keys) -> std::optional<std::string> {
             auto json = mapbox::geobuf::parse(json_string);
             if (json.IsNull()) {
@@ -36,12 +37,15 @@ PYBIND11_MODULE(pybind11_geobuf, m)
             }
             return mapbox::geobuf::dump(json, indent);
         },
-        "json_string"_a, py::kw_only(), "indent"_a = false,
+        "json_string"_a,    //
+        py::kw_only(),      //
+        "indent"_a = false, //
         "sort_keys"_a = false);
 
     m.def(
         "str2geojson2str",
-        [](const std::string &json_string, bool indent,
+        [](const std::string &json_string, //
+           bool indent,                    //
            bool sort_keys) -> std::optional<std::string> {
             auto json = mapbox::geobuf::parse(json_string);
             if (json.IsNull()) {
@@ -54,14 +58,18 @@ PYBIND11_MODULE(pybind11_geobuf, m)
             }
             return mapbox::geobuf::dump(json_output, indent);
         },
-        "json_string"_a, py::kw_only(), "indent"_a = false,
+        "json_string"_a,    //
+        py::kw_only(),      //
+        "indent"_a = false, //
         "sort_keys"_a = false);
 
     m.def(
         "pbf_decode",
         [](const std::string &pbf_bytes, const std::string &indent)
             -> std::string { return Decoder::to_printable(pbf_bytes, indent); },
-        "pbf_bytes"_a, py::kw_only(), "indent"_a = "");
+        "pbf_bytes"_a, //
+        py::kw_only(), //
+        "indent"_a = "");
 
     py::class_<Encoder>(m, "Encoder", py::module_local()) //
         .def(py::init<uint32_t>(),                        //
@@ -102,8 +110,11 @@ PYBIND11_MODULE(pybind11_geobuf, m)
                bool sort_keys) {
                 return self.decode(geobuf, geojson, indent, sort_keys);
             },
-            py::kw_only(), "geobuf"_a, "geojson"_a, //
-            "indent"_a = false, "sort_keys"_a = false)
+            py::kw_only(),      //
+            "geobuf"_a,         //
+            "geojson"_a,        //
+            "indent"_a = false, //
+            "sort_keys"_a = false)
         //
         ;
 
