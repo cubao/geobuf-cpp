@@ -17,6 +17,8 @@ reset_submodules:
 
 clean:
 	rm -rf $(BUILD_DIR) *.egg-info dist
+force_clean:
+	docker run --rm -v `pwd`:`pwd` -w `pwd` -it alpine/make make clean
 
 CMAKE_ARGS ?= \
 	-DCMAKE_INSTALL_PREFIX=$(INSTALL_DIR) \
