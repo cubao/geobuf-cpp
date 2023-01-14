@@ -124,7 +124,8 @@ struct Decoder
 {
     using Pbf = protozero::pbf_reader;
     Decoder() {}
-    static std::string to_printable(const std::string &pbf_bytes);
+    static std::string to_printable(const std::string &pbf_bytes,
+                                    const std::string &indent = "");
     mapbox::geojson::geojson decode(const std::string &pbf_bytes);
     bool decode(const std::string &input_path, const std::string &output_path,
                 bool indent = false, bool sort_keys = false);

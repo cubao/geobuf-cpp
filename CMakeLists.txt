@@ -19,6 +19,7 @@ endmacro()
 configure_output_directories()
 configure_version_h()
 
+set(CMAKE_CXX_STANDARD 17)
 include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/headers/include ${PROJECT_SOURCE_DIR}/src)
 
 option(BUILD_SHARED_LIBS "Build shared library." OFF)
@@ -84,7 +85,7 @@ add_custom_target(test_all COMMAND make -C .. test_all)
 
 # print_all_variables()
 
-set(PYBIND11_CPP_STANDARD -std=c++14)
+set(PYBIND11_CPP_STANDARD -std=c++17)
 add_subdirectory(pybind11)
 pybind11_add_module(pybind11_geobuf src/main.cpp)
 target_link_libraries(pybind11_geobuf PRIVATE ${PROJECT_NAME})

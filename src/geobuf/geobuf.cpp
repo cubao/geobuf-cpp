@@ -542,10 +542,11 @@ void Encoder::populateLine(std::vector<int64_t> &coords, //
     }
 }
 
-std::string Decoder::to_printable(const std::string &pbf_bytes)
+std::string Decoder::to_printable(const std::string &pbf_bytes,
+                                  const std::string &indent)
 {
     // TODO, read the code
-    return ::decode(pbf_bytes.data(), pbf_bytes.size(), "");
+    return ::decode(pbf_bytes.data(), pbf_bytes.size(), indent);
 }
 
 mapbox::geojson::geojson Decoder::decode(const std::string &pbf_bytes)
