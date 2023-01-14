@@ -622,7 +622,6 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
                 fc.custom_properties,                                  //
                 std::vector<uint32_t>(indexes.begin(), indexes.end()), //
                 keys, values);
-            pbf.skip();
         } else {
             pbf.skip();
         }
@@ -663,7 +662,6 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
                 f.custom_properties,                                   //
                 std::vector<uint32_t>(indexes.begin(), indexes.end()), //
                 keys, values);
-            pbf.skip();
         } else {
             pbf.skip();
         }
@@ -844,7 +842,6 @@ mapbox::geojson::geometry Decoder::readGeometry(Pbf &pbf)
                 g.custom_properties,                                   //
                 std::vector<uint32_t>(indexes.begin(), indexes.end()), //
                 keys, values);
-            pbf.skip();
         } else {
             pbf.skip();
         }
