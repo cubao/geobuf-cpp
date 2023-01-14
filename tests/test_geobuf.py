@@ -21,10 +21,10 @@ geojson = {
     },
     "geometry": {
         "coordinates": [
-            [120.40317479950272, 31.416966084052177],
-            [120.28451900911591, 31.30578266928819],
-            [120.35592249359615, 31.21781895672254],
-            [120.67093786630113, 31.299502266522722],
+            [120.40317479950272, 31.416966084052177, 1.111111],
+            [120.28451900911591, 31.30578266928819, 2.22],
+            [120.35592249359615, 31.21781895672254, 3.3333333333333],
+            [120.67093786630113, 31.299502266522722, 4.4],
         ],
         "type": "LineString",
         "extra_key": "extra_value",
@@ -39,7 +39,8 @@ print(str2json2str(json.dumps(geojson), indent=True, sort_keys=True))
 print("str2geojson2str:")
 print(str2geojson2str(json.dumps(geojson), indent=True, sort_keys=True))
 
-encoder = Encoder(max_precision=int(1e8))
+# precision: 6(default), 7, 8(recommand), 9
+encoder = Encoder(max_precision=int(10**8))
 encoded = encoder.encode(geojson=json.dumps(geojson))
 print("encoded pbf bytes")
 print(pbf_decode(encoded))
