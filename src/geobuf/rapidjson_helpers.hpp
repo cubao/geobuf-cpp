@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CUBAO_RAPIDJSON_HELPERS_HPP
+#define CUBAO_RAPIDJSON_HELPERS_HPP
 
 #include <mapbox/geojson/rapidjson.hpp>
 
@@ -139,3 +140,5 @@ inline int __len__(const RapidjsonValue &self)
     return 0;
 }
 } // namespace cubao
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CUBAO_GEOJSON_HELPERS_HPP
+#define CUBAO_GEOJSON_HELPERS_HPP
 
 // https://github.com/microsoft/vscode-cpptools/issues/9692
 #if __INTELLISENSE__
@@ -266,3 +267,5 @@ void clear_geojson_value(mapbox::geojson::value &self)
                [](std::string &str) { str.clear(); }, [](auto &) -> void {});
 }
 } // namespace cubao
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CUBAO_PYBIND11_HELPERS_HPP
+#define CUBAO_PYBIND11_HELPERS_HPP
 
 // https://github.com/microsoft/vscode-cpptools/issues/9692
 #if __INTELLISENSE__
@@ -242,4 +243,6 @@ inline geojson_value to_geojson_value(const py::handle &obj)
                 return self;                                                   \
             },                                                                 \
             rvp::reference_internal)
+#endif
+
 #endif
