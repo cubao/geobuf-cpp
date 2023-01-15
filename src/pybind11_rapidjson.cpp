@@ -77,7 +77,11 @@ inline RapidjsonValue to_rapidjson(const py::handle &obj,
         return RapidjsonValue(obj.cast<double>());
     }
     if (py::isinstance<py::bytes>(obj)) {
-        auto str = obj.cast<std::string>();
+        // https://github.com/pybind/pybind11_json/blob/master/include/pybind11_json/pybind11_json.hpp#L112
+        py::module base64 = py::module::import("base64");
+        auto str = base64.attr("b64encode")(obj)
+                       .attr("decode")("utf-8")
+                       .cast<std::string>();
         return RapidjsonValue(str.data(), str.size(), allocator);
     }
     if (py::isinstance<py::str>(obj)) {

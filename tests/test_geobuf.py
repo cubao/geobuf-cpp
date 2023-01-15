@@ -1,8 +1,6 @@
+import base64
 import json
 import os
-import sys
-import shutil
-
 import pickle
 from copy import deepcopy
 
@@ -77,8 +75,8 @@ assert obj.values()
 assert obj.dumps()
 assert obj.dumps(indent=True)
 
-mem = obj['type'].GetRawString()
-assert bytes(mem).decode('utf-8') == 'Feature'
+mem = obj["type"].GetRawString()
+assert bytes(mem).decode("utf-8") == "Feature"
 
 obj2 = obj.clone()
 obj3 = deepcopy(obj)
@@ -97,21 +95,24 @@ obj.SetNull()
 assert obj.GetType().name == "kNullType"
 assert obj() is None
 
-assert rapidjson(b'raw bytes')() == 'raw bytes'
+assert rapidjson(b"raw bytes")() == base64.b64encode(b"raw bytes").decode("utf-8")
+assert rapidjson(b"raw bytes")() == "cmF3IGJ5dGVz"
 
 __pwd = os.path.abspath(os.path.dirname(__file__))
-basename = 'rapidjson.png'
-path = f'{__pwd}/../data/{basename}'
-with open(path, 'rb') as f:
+basename = "rapidjson.png"
+path = f"{__pwd}/../data/{basename}"
+with open(path, "rb") as f:
     raw_bytes = f.read()
 assert len(raw_bytes) == 5259
 data = {basename: raw_bytes}
 
-path = f'{__pwd}/{basename}.json'
+path = f"{__pwd}/{basename}.json"
 if os.path.isfile(path):
-    shutil.remove(path)
-rapidjson(data).dump(path, indent=True)
+    os.remove(path)
+obj = rapidjson(data)
+obj.dump(path, indent=True)
 assert os.path.isfile(path)
 
 loaded = rapidjson().load(path)
-print()
+png = loaded["rapidjson.png"].GetRawString()
+assert len(base64.b64decode(png)) == 5259
