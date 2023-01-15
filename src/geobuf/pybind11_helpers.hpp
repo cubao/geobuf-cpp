@@ -16,7 +16,8 @@
 
 #include "rapidjson_helpers.hpp"
 
-namespace cubao {
+namespace cubao
+{
 namespace py = pybind11;
 using namespace pybind11::literals;
 using rvp = py::return_value_policy;
@@ -135,4 +136,4 @@ inline py::object to_python(const RapidjsonValue &j)
         return obj;
     }
 }
-}
+} // namespace cubao

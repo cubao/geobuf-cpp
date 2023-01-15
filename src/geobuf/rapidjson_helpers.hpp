@@ -10,7 +10,8 @@
 #include <fstream>
 #include <iostream>
 
-namespace cubao {
+namespace cubao
+{
 constexpr const auto RJFLAGS = rapidjson::kParseDefaultFlags |      //
                                rapidjson::kParseCommentsFlag |      //
                                rapidjson::kParseFullPrecisionFlag | //
@@ -137,4 +138,4 @@ inline int __len__(const RapidjsonValue &self)
     }
     return 0;
 }
-}
+} // namespace cubao
