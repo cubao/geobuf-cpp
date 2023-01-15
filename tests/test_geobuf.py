@@ -1,4 +1,5 @@
 import json
+import pickle
 from copy import deepcopy
 
 import pybind11_geobuf
@@ -76,7 +77,9 @@ obj2 = obj.clone()
 obj3 = deepcopy(obj)
 assert obj() == obj2() == obj3()
 
+pickled = pickle.dumps(obj)
+obj4 = pickle.loads(pickled)
+assert obj() == obj4()
+
 obj.loads("{}")
 assert obj() == {}
-
-print()

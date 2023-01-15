@@ -106,7 +106,7 @@ inline RapidjsonValue to_rapidjson(const py::handle &obj,
         py::repr(obj).cast<std::string>());
 }
 
-inline RapidjsonValue to_rapidjson(const py::object &obj)
+inline RapidjsonValue to_rapidjson(const py::handle &obj)
 {
     RapidjsonAllocator allocator;
     return to_rapidjson(obj, allocator);
@@ -474,6 +474,10 @@ void bind_rapidjson(py::module &m)
                  [](const RapidjsonValue &self) -> RapidjsonValue {
                      return deepcopy(self);
                  })
+            // https://pybind11.readthedocs.io/en/stable/advanced/classes.html?highlight=pickle#pickling-support
+            .def(py::pickle(
+                [](const RapidjsonValue &self) { return to_python(self); },
+                [](py::object o) -> RapidjsonValue { return to_rapidjson(o); }))
             .def(py::self == py::self)
             .def(py::self != py::self)
         //
