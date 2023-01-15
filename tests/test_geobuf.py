@@ -62,7 +62,7 @@ arr[2] = arr()
 arr[0].set({"key": "value"})
 assert arr.dumps() == '[{"key":"value"},3,[1,3,789,{"key":3.2}],{"key":3.2}]'
 
-obj = rapidjson({'arr': arr})
+obj = rapidjson({"arr": arr})
 assert obj.dumps() == '{"arr":[{"key":"value"},3,[1,3,789,{"key":3.2}],{"key":3.2}]}'
 
 obj = rapidjson(geojson)
