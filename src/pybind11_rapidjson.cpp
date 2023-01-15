@@ -64,7 +64,7 @@ inline RapidjsonValue to_rapidjson(const py::handle &obj,
     }
     if (py::isinstance<py::str>(obj)) {
         auto str = obj.cast<std::string>();
-        return RapidjsonValue(str.data(), str.size());
+        return RapidjsonValue(str.data(), str.size(), allocator);
     }
     if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
         RapidjsonValue arr(rapidjson::kArrayType);
@@ -82,6 +82,11 @@ inline RapidjsonValue to_rapidjson(const py::handle &obj,
         }
         return kv;
     }
+    // TODO
+    // if (py::isinstance<RapidjsonValue>(obj)) {
+    //     auto v = obj.cast<RapidjsonValue>();
+    //     return v;
+    // }
     throw std::runtime_error(
         "to_rapidjson not implemented for this type of object: " +
         py::repr(obj).cast<std::string>());
@@ -246,9 +251,27 @@ void bind_rapidjson(py::module &m)
                 },
                 "indent"_a = false)
             .def(
+                "get",
+                [](RapidjsonValue &self,
+                   const std::string &key) -> RapidjsonValue * {
+                    auto itr = self.FindMember(key.c_str());
+                    if (itr == self.MemberEnd()) {
+                        return nullptr;
+                    } else {
+                        return &itr->value;
+                    }
+                },
+                "key"_a, rvp::reference_internal)
+            .def(
                 "__getitem__",
-                [](RapidjsonValue &self, const std::string &key)
-                    -> RapidjsonValue * { return nullptr; },
+                [](RapidjsonValue &self,
+                   const std::string &key) -> RapidjsonValue * {
+                    auto itr = self.FindMember(key.c_str());
+                    if (itr == self.MemberEnd()) {
+                        throw pybind11::key_error(key);
+                    }
+                    return &itr->value;
+                },
                 rvp::reference_internal)
             .def(
                 "__getitem__",
@@ -302,8 +325,28 @@ void bind_rapidjson(py::module &m)
                 rvp::reference_internal)
             .def(
                 "__setitem__",
-                [](RapidjsonValue &self, const std::string &json_pointer,
-                   const py::object &obj) { return obj; },
+                [](RapidjsonValue &self, int index, const py::object &obj) {
+                    self[index >= 0 ? index : index + (int)self.Size()] =
+                        to_rapidjson(obj);
+                    return obj;
+                },
+                "index"_a, "value"_a, rvp::reference_internal)
+            .def(
+                "__setitem__",
+                [](RapidjsonValue &self, const std::string &key,
+                   const py::object &obj) {
+                    auto itr = self.FindMember(key.c_str());
+                    if (itr == self.MemberEnd()) {
+                        RapidjsonAllocator allocator;
+                        self.AddMember(
+                            RapidjsonValue(key.data(), key.size(), allocator),
+                            to_rapidjson(obj, allocator), allocator);
+                    } else {
+                        RapidjsonAllocator allocator;
+                        itr->value = to_rapidjson(obj, allocator);
+                    }
+                    return obj;
+                },
                 rvp::reference_internal)
             .def(
                 "push_back",

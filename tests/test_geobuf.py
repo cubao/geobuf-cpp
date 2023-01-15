@@ -5,6 +5,7 @@ from pybind11_geobuf import (  # noqa
     Decoder,
     Encoder,
     pbf_decode,
+    rapidjson,
     str2geojson2str,
     str2json2str,
 )
@@ -48,3 +49,20 @@ print(pbf_decode(encoded))
 decoder = Decoder()
 geojson_text = decoder.decode(encoded, indent=True)
 print(geojson_text)
+
+arr = rapidjson([1, 3, "text", {"key": 3.2}])
+assert arr[2]() == "text"
+arr[2] = 789
+assert arr[2]() == 789
+arr[2] = arr()
+
+obj = rapidjson(geojson)
+assert obj["type"]
+assert obj["type"]() == "Feature"
+try:
+    assert obj["missing_key"]
+except KeyError as e:
+    assert "missing_key" in repr(e)
+obj.get("missing_key") is None
+
+print()
