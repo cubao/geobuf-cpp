@@ -1,4 +1,8 @@
 import json
+import os
+import sys
+import shutil
+
 import pickle
 from copy import deepcopy
 
@@ -73,6 +77,9 @@ assert obj.values()
 assert obj.dumps()
 assert obj.dumps(indent=True)
 
+mem = obj['type'].GetRawString()
+assert bytes(mem).decode('utf-8') == 'Feature'
+
 obj2 = obj.clone()
 obj3 = deepcopy(obj)
 assert obj() == obj2() == obj3()
@@ -89,3 +96,22 @@ assert not rapidjson(2**63 - 1).IsLosslessDouble()
 obj.SetNull()
 assert obj.GetType().name == "kNullType"
 assert obj() is None
+
+assert rapidjson(b'raw bytes')() == 'raw bytes'
+
+__pwd = os.path.abspath(os.path.dirname(__file__))
+basename = 'rapidjson.png'
+path = f'{__pwd}/../data/{basename}'
+with open(path, 'rb') as f:
+    raw_bytes = f.read()
+assert len(raw_bytes) == 5259
+data = {basename: raw_bytes}
+
+path = f'{__pwd}/{basename}.json'
+if os.path.isfile(path):
+    shutil.remove(path)
+rapidjson(data).dump(path, indent=True)
+assert os.path.isfile(path)
+
+loaded = rapidjson().load(path)
+print()

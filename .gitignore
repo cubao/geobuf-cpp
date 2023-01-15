@@ -2,3 +2,4 @@ build
 roundtrip_cache
 dist
 *.egg-info
+tests/rapidjson.png.json

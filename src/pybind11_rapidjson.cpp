@@ -76,6 +76,10 @@ inline RapidjsonValue to_rapidjson(const py::handle &obj,
     if (py::isinstance<py::float_>(obj)) {
         return RapidjsonValue(obj.cast<double>());
     }
+    if (py::isinstance<py::bytes>(obj)) {
+        auto str = obj.cast<std::string>();
+        return RapidjsonValue(str.data(), str.size(), allocator);
+    }
     if (py::isinstance<py::str>(obj)) {
         auto str = obj.cast<std::string>();
         return RapidjsonValue(str.data(), str.size(), allocator);
@@ -418,6 +422,13 @@ void bind_rapidjson(py::module &m)
                                         self.GetStringLength()};
                  })
             .def("GetStringLength", &RapidjsonValue::GetStringLength)
+            // https://pybind11.readthedocs.io/en/stable/advanced/pycpp/numpy.html?highlight=MemoryView#memory-view
+            .def("GetRawString", [](const RapidjsonValue &self) {
+                return py::memoryview::from_memory(
+                    self.GetString(),
+                    self.GetStringLength()
+                );
+            }, rvp::reference_internal)
             .def("Get",
                  [](const RapidjsonValue &self) { return ::to_python(self); })
             .def("__call__",
