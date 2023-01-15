@@ -265,9 +265,23 @@ void bind_rapidjson(py::module &m)
             .def("IsInt64", &RapidjsonValue::IsInt64)   //
             .def("IsUint64", &RapidjsonValue::IsUint64) //
             .def("IsDouble", &RapidjsonValue::IsDouble) //
+            .def("IsFloat", &RapidjsonValue::IsFloat)   //
             .def("IsString", &RapidjsonValue::IsString) //
             //
             .def("IsLosslessDouble", &RapidjsonValue::IsLosslessDouble) //
+            .def("IsLosslessFloat", &RapidjsonValue::IsLosslessFloat)   //
+            //
+            .def("SetNull", &RapidjsonValue::SetNull)     //
+            .def("SetObject", &RapidjsonValue::SetObject) //
+            .def("SetArray", &RapidjsonValue::SetArray)   //
+            .def("SetInt", &RapidjsonValue::SetInt)       //
+            .def("SetUint", &RapidjsonValue::SetUint)     //
+            .def("SetInt64", &RapidjsonValue::SetInt64)   //
+            .def("SetUint64", &RapidjsonValue::SetUint64) //
+            .def("SetDouble", &RapidjsonValue::SetDouble) //
+            .def("SetFloat", &RapidjsonValue::SetFloat)   //
+            // setstring
+            // get string
             //
             .def("Empty",
                  [](const RapidjsonValue &self) { return __bool__(self); })
@@ -403,6 +417,7 @@ void bind_rapidjson(py::module &m)
                      return std::string{self.GetString(),
                                         self.GetStringLength()};
                  })
+            .def("GetStringLength", &RapidjsonValue::GetStringLength)
             .def("Get",
                  [](const RapidjsonValue &self) { return ::to_python(self); })
             .def("__call__",

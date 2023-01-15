@@ -83,3 +83,9 @@ assert obj() == obj4()
 
 obj.loads("{}")
 assert obj() == {}
+
+assert not rapidjson(2**63 - 1).IsLosslessDouble()
+
+obj.SetNull()
+assert obj.GetType().name == "kNullType"
+assert obj() is None
