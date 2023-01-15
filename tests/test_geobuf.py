@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 
 import pybind11_geobuf
 from pybind11_geobuf import (  # noqa
@@ -55,6 +56,7 @@ assert arr[2]() == "text"
 arr[2] = 789
 assert arr[2]() == 789
 arr[2] = arr()
+arr[0].set({"key": "value"})
 
 obj = rapidjson(geojson)
 assert obj["type"]
@@ -64,5 +66,16 @@ try:
 except KeyError as e:
     assert "missing_key" in repr(e)
 obj.get("missing_key") is None
+assert obj.keys()
+assert obj.values()
+
+assert obj.dumps()
+assert obj.dumps(indent=True)
+
+# obj2 = deepcopy(obj)
+# print()
+
+obj.loads("{}")
+assert obj() == {}
 
 print()

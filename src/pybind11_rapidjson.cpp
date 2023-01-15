@@ -6,12 +6,26 @@
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
 
+#include "rapidjson/error/en.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/filewritestream.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
+#include <fstream>
+#include <iostream>
+
+constexpr const auto RJFLAGS = rapidjson::kParseDefaultFlags |      //
+                               rapidjson::kParseCommentsFlag |      //
+                               rapidjson::kParseFullPrecisionFlag | //
+                               rapidjson::kParseTrailingCommasFlag;
+
 namespace py = pybind11;
 using namespace pybind11::literals;
 using rvp = py::return_value_policy;
 
 using RapidjsonValue = mapbox::geojson::rapidjson_value;
 using RapidjsonAllocator = mapbox::geojson::rapidjson_allocator;
+using RapidjsonDocument = mapbox::geojson::rapidjson_document;
 
 template <typename T> RapidjsonValue int_to_rapidjson(T const &num)
 {
@@ -130,6 +144,66 @@ inline py::object to_python(const RapidjsonValue &j)
     }
 }
 
+inline RapidjsonValue load_json(const std::string &path)
+{
+    FILE *fp = fopen(path.c_str(), "rb");
+    if (!fp) {
+        throw std::runtime_error("can't open for reading: " + path);
+    }
+    char readBuffer[65536];
+    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    RapidjsonDocument d;
+    d.ParseStream<RJFLAGS>(is);
+    fclose(fp);
+    return RapidjsonValue{std::move(d.Move())};
+}
+inline bool dump_json(const std::string &path, const RapidjsonValue &json,
+                      bool indent = false)
+{
+    FILE *fp = fopen(path.c_str(), "wb");
+    if (!fp) {
+        std::cerr << "can't open for writing: " + path << std::endl;
+        return false;
+    }
+    using namespace rapidjson;
+    char writeBuffer[65536];
+    FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
+    if (indent) {
+        PrettyWriter<FileWriteStream> writer(os);
+        json.Accept(writer);
+    } else {
+        Writer<FileWriteStream> writer(os);
+        json.Accept(writer);
+    }
+    fclose(fp);
+    return true;
+}
+
+inline RapidjsonValue loads(const std::string &json)
+{
+    RapidjsonDocument d;
+    rapidjson::StringStream ss(json.data());
+    d.ParseStream<RJFLAGS>(ss);
+    if (d.HasParseError()) {
+        throw std::invalid_argument(
+            "invalid json, offset: " + std::to_string(d.GetErrorOffset()) +
+            ", error: " + rapidjson::GetParseError_En(d.GetParseError()));
+    }
+    return RapidjsonValue{std::move(d.Move())};
+}
+inline std::string dumps(const RapidjsonValue &json, bool indent = false)
+{
+    rapidjson::StringBuffer buffer;
+    if (indent) {
+        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+        json.Accept(writer);
+    } else {
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        json.Accept(writer);
+    }
+    return buffer.GetString();
+}
+
 inline bool __bool__(const RapidjsonValue &self)
 {
     if (self.IsArray()) {
@@ -217,12 +291,25 @@ void bind_rapidjson(py::module &m)
                      }
                      return keys;
                  })
+            .def(
+                "values",
+                [](RapidjsonValue &self) {
+                    std::vector<RapidjsonValue *> values;
+                    if (self.IsObject()) {
+                        values.reserve(self.MemberCount());
+                        for (auto &m : self.GetObject()) {
+                            values.push_back(&m.value);
+                        }
+                    }
+                    return values;
+                },
+                rvp::reference_internal)
             // load/dump file
             .def(
                 "load",
                 [](RapidjsonValue &self,
                    const std::string &path) -> RapidjsonValue & {
-                    //  self = utils::LoadJson(path);
+                    self = load_json(path);
                     return self;
                 },
                 rvp::reference_internal)
@@ -230,8 +317,7 @@ void bind_rapidjson(py::module &m)
                 "dump",
                 [](const RapidjsonValue &self, const std::string &path,
                    bool indent) -> bool {
-                    //  return utils::DumpJson(path, self, indent);
-                    return false;
+                    return dump_json(path, self, indent);
                 },
                 "path"_a, py::kw_only(), "indent"_a = false)
             // loads/dumps string
@@ -239,17 +325,16 @@ void bind_rapidjson(py::module &m)
                 "loads",
                 [](RapidjsonValue &self,
                    const std::string &json) -> RapidjsonValue & {
-                    //  self = tb::parse(json);
+                    self = loads(json);
                     return self;
                 },
                 rvp::reference_internal)
             .def(
                 "dumps",
                 [](const RapidjsonValue &self, bool indent) -> std::string {
-                    //  return tb::dump(self, indent);
-                    return "";
+                    return dumps(self, indent);
                 },
-                "indent"_a = false)
+                py::kw_only(), "indent"_a = false)
             .def(
                 "get",
                 [](RapidjsonValue &self,
@@ -366,6 +451,9 @@ void bind_rapidjson(py::module &m)
                                                  return self;
                                              },
                 rvp::reference_internal)
+            // __deepcopy__
+            // TODO
+
             .def(py::self == py::self)
             .def(py::self != py::self)
         //
