@@ -27,6 +27,17 @@ using RapidjsonValue = mapbox::geojson::rapidjson_value;
 using RapidjsonAllocator = mapbox::geojson::rapidjson_allocator;
 using RapidjsonDocument = mapbox::geojson::rapidjson_document;
 
+inline RapidjsonValue deepcopy(const RapidjsonValue &json, RapidjsonAllocator &allocator)
+{
+    RapidjsonValue copy;
+    copy.CopyFrom(json, allocator);
+    return copy;
+}
+inline RapidjsonValue deepcopy(const RapidjsonValue &json) {
+    RapidjsonAllocator allocator;
+    return deepcopy(json, allocator);
+}
+
 template <typename T> RapidjsonValue int_to_rapidjson(T const &num)
 {
     if (sizeof(T) < sizeof(int64_t)) {
@@ -104,11 +115,10 @@ inline RapidjsonValue to_rapidjson(const py::handle &obj,
         }
         return kv;
     }
-    // TODO
-    // if (py::isinstance<RapidjsonValue>(obj)) {
-    //     auto v = obj.cast<RapidjsonValue>();
-    //     return v;
-    // }
+    if (py::isinstance<RapidjsonValue>(obj)) {
+        auto ptr = py::cast<const RapidjsonValue *>(obj);
+        return deepcopy(*ptr, allocator);
+    }
     throw std::runtime_error(
         "to_rapidjson not implemented for this type of object: " +
         py::repr(obj).cast<std::string>());
@@ -210,14 +220,6 @@ inline std::string dumps(const RapidjsonValue &json, bool indent = false)
         json.Accept(writer);
     }
     return buffer.GetString();
-}
-
-inline RapidjsonValue deepcopy(const RapidjsonValue &json)
-{
-    RapidjsonValue copy;
-    RapidjsonAllocator allocator;
-    copy.CopyFrom(json, allocator);
-    return copy;
 }
 
 inline bool __bool__(const RapidjsonValue &self)
