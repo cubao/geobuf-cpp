@@ -204,6 +204,14 @@ inline std::string dumps(const RapidjsonValue &json, bool indent = false)
     return buffer.GetString();
 }
 
+inline RapidjsonValue deepcopy(const RapidjsonValue &json)
+{
+    RapidjsonValue copy;
+    RapidjsonAllocator allocator;
+    copy.CopyFrom(json, allocator);
+    return copy;
+}
+
 inline bool __bool__(const RapidjsonValue &self)
 {
     if (self.IsArray()) {
@@ -451,9 +459,21 @@ void bind_rapidjson(py::module &m)
                                                  return self;
                                              },
                 rvp::reference_internal)
-            // __deepcopy__
-            // TODO
-
+            // https://pybind11.readthedocs.io/en/stable/advanced/classes.html?highlight=__deepcopy__#deepcopy-support
+            .def("__copy__",
+                 [](const RapidjsonValue &self, py::dict) -> RapidjsonValue {
+                     return deepcopy(self);
+                 })
+            .def(
+                "__deepcopy__",
+                [](const RapidjsonValue &self, py::dict) -> RapidjsonValue {
+                    return deepcopy(self);
+                },
+                "memo"_a)
+            .def("clone",
+                 [](const RapidjsonValue &self) -> RapidjsonValue {
+                     return deepcopy(self);
+                 })
             .def(py::self == py::self)
             .def(py::self != py::self)
         //

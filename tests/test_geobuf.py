@@ -65,15 +65,16 @@ try:
     assert obj["missing_key"]
 except KeyError as e:
     assert "missing_key" in repr(e)
-obj.get("missing_key") is None
+assert obj.get("missing_key") is None
 assert obj.keys()
 assert obj.values()
 
 assert obj.dumps()
 assert obj.dumps(indent=True)
 
-# obj2 = deepcopy(obj)
-# print()
+obj2 = obj.clone()
+obj3 = deepcopy(obj)
+assert obj() == obj2() == obj3()
 
 obj.loads("{}")
 assert obj() == {}
