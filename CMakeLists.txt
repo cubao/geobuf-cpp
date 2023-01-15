@@ -87,6 +87,10 @@ add_custom_target(test_all COMMAND make -C .. test_all)
 
 set(PYBIND11_CPP_STANDARD -std=c++17)
 add_subdirectory(pybind11)
-pybind11_add_module(pybind11_geobuf src/main.cpp src/pybind11_rapidjson.cpp)
+pybind11_add_module(
+    pybind11_geobuf
+    src/main.cpp
+    src/pybind11_rapidjson.cpp
+    src/pybind11_geojson.cpp)
 target_link_libraries(pybind11_geobuf PRIVATE ${PROJECT_NAME})
 target_compile_definitions(pybind11_geobuf PRIVATE VERSION_INFO=${PYBIND11_GEOBUF_VERSION_INFO})

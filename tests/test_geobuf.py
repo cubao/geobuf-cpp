@@ -63,7 +63,10 @@ arr[0].set({"key": "value"})
 assert arr.dumps() == '[{"key":"value"},3,[1,3,789,{"key":3.2}],{"key":3.2}]'
 
 obj = rapidjson({"arr": arr})
-assert obj.dumps() == '{"arr":[{"key":"value"},3,[1,3,789,{"key":3.2}],{"key":3.2}]}'
+assert (
+    obj.dumps()
+    == '{"arr":[{"key":"value"},3,[1,3,789,{"key":3.2}],{"key":3.2}]}'  # noqa
+)
 
 obj = rapidjson(geojson)
 assert obj["type"]
@@ -99,7 +102,9 @@ obj.SetNull()
 assert obj.GetType().name == "kNullType"
 assert obj() is None
 
-assert rapidjson(b"raw bytes")() == base64.b64encode(b"raw bytes").decode("utf-8")
+assert rapidjson(b"raw bytes")() == base64.b64encode(b"raw bytes").decode(
+    "utf-8"
+)  # noqa
 assert rapidjson(b"raw bytes")() == "cmF3IGJ5dGVz"
 
 __pwd = os.path.abspath(os.path.dirname(__file__))

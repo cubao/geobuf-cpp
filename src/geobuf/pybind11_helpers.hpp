@@ -25,6 +25,7 @@ using rvp = py::return_value_policy;
 using RapidjsonValue = mapbox::geojson::rapidjson_value;
 using RapidjsonAllocator = mapbox::geojson::rapidjson_allocator;
 using RapidjsonDocument = mapbox::geojson::rapidjson_document;
+using geojson_value = mapbox::geojson::value;
 
 inline RapidjsonValue py_int_to_rapidjson(const py::handle &obj)
 {
@@ -122,18 +123,123 @@ inline py::object to_python(const RapidjsonValue &j)
     } else if (j.IsString()) {
         return py::str(std::string{j.GetString(), j.GetStringLength()});
     } else if (j.IsArray()) {
-        py::list obj;
-        for (const auto &el : j.GetArray()) {
-            obj.append(to_python(el));
+        py::list ret;
+        for (const auto &e : j.GetArray()) {
+            ret.append(to_python(e));
         }
-        return obj;
+        return ret;
     } else {
-        py::dict obj;
+        py::dict ret;
         for (auto &m : j.GetObject()) {
-            obj[py::str(m.name.GetString(), m.name.GetStringLength())] =
+            ret[py::str(m.name.GetString(), m.name.GetStringLength())] =
                 to_python(m.value);
         }
-        return obj;
+        return ret;
     }
 }
+
+inline py::object to_python(const mapbox::geojson::value &j)
+{
+    if (j.is<mapbox::feature::null_value_t>()) {
+        return py::none();
+    } else if (j.is<bool>()) {
+        return py::bool_(j.get<bool>());
+    } else if (j.is<uint64_t>()) {
+        return py::int_(j.get<uint64_t>());
+    } else if (j.is<int64_t>()) {
+        return py::int_(j.get<int64_t>());
+    } else if (j.is<double>()) {
+        return py::float_(j.get<double>());
+    } else if (j.is<std::string>()) {
+        return py::str(j.get<std::string>());
+    } else if (j.is<mapbox::feature::value::array_type>()) {
+        py::list ret;
+        auto &arr = j.get<mapbox::feature::value::array_type>();
+        for (const auto &e : arr) {
+            ret.append(to_python(e));
+        }
+        return ret;
+    } else if (j.is<mapbox::feature::value::object_type>()) {
+        py::dict ret;
+        auto &obj = j.get<mapbox::feature::value::object_type>();
+        for (auto &p : obj) {
+            ret[py::str(p.first)] = to_python(p.second);
+        }
+        return ret;
+    }
+    return py::none();
+}
+
+inline py::object to_python(const mapbox::geojson::value::array_type &arr)
+{
+    py::list ret;
+    for (const auto &e : arr) {
+        ret.append(to_python(e));
+    }
+    return ret;
+}
+inline py::object to_python(const mapbox::geojson::value::object_type &obj)
+{
+    py::dict ret;
+    for (auto &p : obj) {
+        ret[py::str(p.first)] = to_python(p.second);
+    }
+    return ret;
+}
+
+inline geojson_value to_geojson_value(const py::handle &obj)
+{
+    if (obj.ptr() == nullptr || obj.is_none()) {
+        return nullptr;
+    }
+    if (py::isinstance<py::bool_>(obj)) {
+        return obj.cast<bool>();
+    }
+    if (py::isinstance<py::int_>(obj)) {
+        auto val = obj.cast<long long>();
+        if (val < 0) {
+            return int64_t(val);
+        } else {
+            return uint64_t(val);
+        }
+    }
+    if (py::isinstance<py::float_>(obj)) {
+        return obj.cast<double>();
+    }
+    if (py::isinstance<py::str>(obj)) {
+        return obj.cast<std::string>();
+    }
+    // TODO, bytes
+    if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
+        geojson_value::array_type ret;
+        for (const py::handle &e : obj) {
+            ret.push_back(to_geojson_value(e));
+        }
+        return ret;
+    }
+    if (py::isinstance<py::dict>(obj)) {
+        geojson_value::object_type ret;
+        for (const py::handle &key : obj) {
+            ret[py::str(key).cast<std::string>()] = to_geojson_value(obj[key]);
+        }
+        return ret;
+    }
+    throw std::runtime_error(
+        "to_geojson_value not implemented for this type of object: " +
+        py::repr(obj).cast<std::string>());
+}
 } // namespace cubao
+
+#ifndef BIND_PY_FLUENT_ATTRIBUTE
+#define BIND_PY_FLUENT_ATTRIBUTE(Klass, type, var)                             \
+    .def(                                                                      \
+        #var, [](Klass &self) -> type & { return self.var; },                  \
+        rvp::reference_internal)                                               \
+        .def(                                                                  \
+            #var,                                                              \
+            [](Klass &self, const type &v) -> Klass & {                        \
+                self.var = v;                                                  \
+                return self;                                                   \
+            },                                                                 \
+            rvp::reference_internal)
+#endif
