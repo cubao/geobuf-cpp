@@ -18,6 +18,8 @@
 namespace py = pybind11;
 using namespace pybind11::literals;
 
+void bind_rapidjson(py::module &m);
+
 PYBIND11_MODULE(pybind11_geobuf, m)
 {
     using Encoder = mapbox::geobuf::Encoder;
@@ -117,6 +119,8 @@ PYBIND11_MODULE(pybind11_geobuf, m)
             "sort_keys"_a = false)
         //
         ;
+
+    bind_rapidjson(m);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
