@@ -28,6 +28,7 @@ file(GLOB_RECURSE HEADERS src/**/*.hpp)
 file(GLOB_RECURSE SOURCES src/**/*.cpp)
 add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_VISIBILITY_PRESET "hidden")
 print_all_linked_libraries(${PROJECT_NAME})
 install(
     TARGETS ${PROJECT_NAME}
