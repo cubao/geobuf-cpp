@@ -1,4 +1,5 @@
 #include "geobuf/geobuf.hpp"
+#include "geobuf/rapidjson_helpers.hpp"
 #include <iostream>
 
 int main(int argc, char *argv[])
@@ -11,8 +12,7 @@ int main(int argc, char *argv[])
     auto encoder =
         precision ? mapbox::geobuf::Encoder(std::pow(10, std::atoi(precision)))
                   : mapbox::geobuf::Encoder();
-    auto json = argc > 1 ? mapbox::geobuf::load_json(argv[1])
-                         : mapbox::geobuf::load_json();
+    auto json = argc > 1 ? cubao::load_json(argv[1]) : cubao::load_json();
     auto geojson = mapbox::geojson::convert(json);
     auto pbf = encoder.encode(geojson);
     if (argc > 2) {

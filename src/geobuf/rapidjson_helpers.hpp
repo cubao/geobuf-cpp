@@ -48,19 +48,27 @@ template <typename T> RapidjsonValue int_to_rapidjson(T const &num)
     }
 }
 
-inline RapidjsonValue load_json(const std::string &path)
+// note that fp will be closed from inside after reading!
+inline RapidjsonValue load_json(FILE *fp)
 {
-    FILE *fp = fopen(path.c_str(), "rb");
-    if (!fp) {
-        throw std::runtime_error("can't open for reading: " + path);
-    }
     char readBuffer[65536];
     rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
     RapidjsonDocument d;
     d.ParseStream<RJFLAGS>(is);
-    fclose(fp);
     return RapidjsonValue{std::move(d.Move())};
 }
+inline RapidjsonValue load_json(const std::string &path)
+{
+    FILE *fp = fopen(path.c_str(), "rb");
+    if (!fp) {
+        return {};
+    }
+    auto json = load_json(fp);
+    fclose(fp);
+    return json;
+}
+inline RapidjsonValue load_json() { return load_json(stdin); }
+
 inline bool dump_json(const std::string &path, const RapidjsonValue &json,
                       bool indent = false)
 {

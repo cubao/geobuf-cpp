@@ -5,6 +5,8 @@
 #include <mapbox/geojson_impl.hpp>
 #include <mapbox/geojson_value_impl.hpp>
 
+#include "rapidjson_helpers.hpp"
+
 #include "rapidjson/error/en.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/filewritestream.h"
@@ -38,27 +40,6 @@ namespace mapbox
 {
 namespace geobuf
 {
-// note that fp will be closed from inside after reading!
-static RapidjsonValue load_json(FILE *fp)
-{
-    char readBuffer[65536];
-    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
-    RapidjsonDocument d;
-    d.ParseStream<RJFLAGS>(is);
-    fclose(fp);
-
-    // https://github.com/Tencent/rapidjson/issues/380
-    return RapidjsonValue{std::move(d.Move())};
-}
-RapidjsonValue load_json(const std::string &path)
-{
-    FILE *fp = fopen(path.c_str(), "rb");
-    if (!fp) {
-        return {};
-    }
-    return load_json(fp);
-}
-RapidjsonValue load_json() { return load_json(stdin); }
 
 // note that fp will be closed from inside after writing!
 bool dump_json(FILE *fp, const RapidjsonValue &json, bool indent,
@@ -258,7 +239,7 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
 std::string Encoder::encode(const std::string &geojson_text)
 {
     if (geojson_text[0] != '{') {
-        auto json = mapbox::geobuf::load_json(geojson_text);
+        auto json = cubao::load_json(geojson_text);
         return encode(mapbox::geojson::convert(json));
     }
     auto geojson = mapbox::geojson::convert(parse(geojson_text));
@@ -268,7 +249,7 @@ std::string Encoder::encode(const std::string &geojson_text)
 bool Encoder::encode(const std::string &input_path,
                      const std::string &output_path)
 {
-    auto json = mapbox::geobuf::load_json(input_path);
+    auto json = cubao::load_json(input_path);
     auto bytes = encode(mapbox::geojson::convert(json));
     return dump_bytes(output_path, bytes);
 }

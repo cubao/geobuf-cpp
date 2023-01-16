@@ -20,8 +20,6 @@ using PolygonsType = mapbox::geojson::multi_polygon::container_type;
 using RapidjsonValue = mapbox::geojson::rapidjson_value;
 using RapidjsonAllocator = mapbox::geojson::rapidjson_allocator;
 
-RapidjsonValue load_json(const std::string &path);
-RapidjsonValue load_json(); // read from stdin
 bool dump_json(const std::string &path, const RapidjsonValue &json,
                bool indent = false, bool sort_keys = false);
 bool dump_json(const RapidjsonValue &json, //

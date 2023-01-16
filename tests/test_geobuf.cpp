@@ -1,4 +1,5 @@
 #include "geobuf/geobuf.hpp"
+#include "geobuf/rapidjson_helpers.hpp"
 #include "geobuf/version.h"
 
 #define DBG_MACRO_NO_WARNING
@@ -29,7 +30,7 @@ void roundtripTest(const std::string &fixture_basename)
     // npm install -g geobuf
     // json2geobuf input.json > output.pbf
 
-    auto geojson = mapbox::geojson::convert(mapbox::geobuf::load_json(input));
+    auto geojson = mapbox::geojson::convert(cubao::load_json(input));
     auto encoder = mapbox::geobuf::Encoder();
     auto pbf = encoder.encode(geojson);
     dbg(pbf.size());
@@ -50,7 +51,7 @@ TEST_CASE("read write json")
             dbg(std::string{FIXTURES_DIR + std::string("/") + basename});
         auto output =
             dbg(std::string{PROJECT_BINARY_DIR + std::string("/") + basename});
-        auto json = mapbox::geobuf::load_json(input);
+        auto json = cubao::load_json(input);
         CHECK(mapbox::geobuf::dump_json(output, json));
 
         auto bytes = mapbox::geobuf::load_bytes(output);
@@ -117,7 +118,7 @@ TEST_CASE("custom properties test")
     mapbox::geojson::feature feature;
     dbg(feature.custom_properties.size());
     auto path = std::string(PROJECT_SOURCE_DIR "/data/sample1.json");
-    auto json = mapbox::geobuf::load_json(path);
+    auto json = cubao::load_json(path);
     auto geojson = mapbox::geojson::convert(json);
     auto &fc = geojson.get<mapbox::geojson::feature_collection>();
     dbg(fc.size());

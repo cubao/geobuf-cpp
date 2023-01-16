@@ -1,5 +1,3 @@
-#include <mapbox/geojson.hpp>
-
 #include <pybind11/eigen.h>
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
@@ -9,6 +7,7 @@
 #include "geobuf/geojson_helpers.hpp"
 #include "geobuf/pybind11_helpers.hpp"
 #include "geobuf/rapidjson_helpers.hpp"
+#include <mapbox/geojson.hpp>
 
 #include <fstream>
 #include <iostream>

@@ -1,11 +1,3 @@
-#include <mapbox/geojson.hpp>
-#include <mapbox/geojson/rapidjson.hpp>
-
-#include <pybind11/iostream.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/stl_bind.h>
-
 #include "rapidjson/error/en.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/filewritestream.h"
@@ -13,6 +5,14 @@
 #include "rapidjson/stringbuffer.h"
 #include <fstream>
 #include <iostream>
+#include <mapbox/geojson.hpp>
+#include <mapbox/geojson/rapidjson.hpp>
+
+#include <pybind11/eigen.h>
+#include <pybind11/iostream.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
 
 #include "geobuf/pybind11_helpers.hpp"
 #include "geobuf/rapidjson_helpers.hpp"
