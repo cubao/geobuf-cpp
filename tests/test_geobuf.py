@@ -175,4 +175,15 @@ def test_geojson_multi_point():
     assert g1.as_numpy().shape == (0, 3)
     g1 = geojson.MultiPoint([[1, 2, 3], [4, 5, 6]])
     assert g1.as_numpy().shape == (2, 3)
+    assert len(g1) == 2
     assert np.all(g1.as_numpy() == [[1, 2, 3], [4, 5, 6]])
+    assert g1() == [[1, 2, 3], [4, 5, 6]]
+
+    assert g1[0]() == [1, 2, 3]
+    assert g1[1]() == [4, 5, 6]
+    g1[0] = [7, 8, 9]
+    g1[1] = [1, 2]
+    assert g1() == [[7, 8, 9], [1, 2, 0]]
+    g1[1] = geojson.Point([7, 8, 9])
+    g1[0] = geojson.Point([1, 2])
+    assert g1() == [[1, 2, 0], [7, 8, 9]]

@@ -126,6 +126,10 @@ void bind_geojson(py::module &m)
                  auto json = mapbox::geojson::convert(self, allocator);
                  return json;
              })
+        .def("__call__",
+             [](const mapbox::geojson::geometry &self) {
+                 return to_python(self);
+             })
         //
         ;
 
@@ -167,6 +171,8 @@ void bind_geojson(py::module &m)
              })
         .def(py::self == py::self) //
         .def(py::self != py::self) //
+        .def("__call__",
+             [](const mapbox::geojson::point &self) { return to_python(self); })
         //
         ;
 
@@ -176,6 +182,10 @@ void bind_geojson(py::module &m)
         eigen2geom(points, self);                                              \
         return self;                                                           \
     }))                                                                        \
+        .def("__call__",                                                       \
+             [](const mapbox::geojson::geom_type &self) {                      \
+                 return to_python(self);                                       \
+             })                                                                \
         .def(                                                                  \
             "__getitem__",                                                     \
             [](mapbox::geojson::geom_type &self,                               \
@@ -191,11 +201,11 @@ void bind_geojson(py::module &m)
              })                                                                \
         .def("__setitem__",                                                    \
              [](mapbox::geojson::geom_type &self, int index,                   \
-                const Eigen::Vector3d &p) {                                    \
+                const Eigen::VectorXd &p) {                                    \
                  index = index >= 0 ? index : index + (int)self.size();        \
                  self[index].x = p[0];                                         \
                  self[index].y = p[1];                                         \
-                 self[index].z = p[2];                                         \
+                 self[index].z = p.size() > 2 ? p[2] : 0.0;                    \
                  return p;                                                     \
              })                                                                \
         .def("__len__",                                                        \
@@ -527,6 +537,9 @@ void bind_geojson(py::module &m)
         BIND_PY_FLUENT_ATTRIBUTE(mapbox::geojson::feature,      //
                                  PropertyMap,                   //
                                  properties)                    //
+        BIND_PY_FLUENT_ATTRIBUTE(mapbox::geojson::feature,      //
+                                 PropertyMap,                   //
+                                 custom_properties)             //
 
 // geometry from point, mulipoint, etc
 #define GeometryFromType(geom_type)                                            \
@@ -648,6 +661,10 @@ void bind_geojson(py::module &m)
              [](const mapbox::geojson::feature &self) -> RowVectors {
                  return as_row_vectors(self.geometry);
              }) //
+        .def("__call__",
+             [](const mapbox::geojson::feature &self) {
+                 return to_python(self);
+             })
         //
         ;
 
