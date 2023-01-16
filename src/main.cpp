@@ -20,8 +20,9 @@ using namespace pybind11::literals;
 
 namespace cubao
 {
+void bind_geojson(py::module &m);
 void bind_rapidjson(py::module &m);
-}
+} // namespace cubao
 
 PYBIND11_MODULE(pybind11_geobuf, m)
 {
@@ -123,6 +124,7 @@ PYBIND11_MODULE(pybind11_geobuf, m)
         //
         ;
 
+    cubao::bind_geojson(m);
     cubao::bind_rapidjson(m);
 
 #ifdef VERSION_INFO

@@ -15,6 +15,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
 
+#include "geojson_helpers.hpp"
 #include "rapidjson_helpers.hpp"
 
 namespace cubao
@@ -184,6 +185,130 @@ inline py::object to_python(const mapbox::geojson::value::object_type &obj)
     py::dict ret;
     for (auto &p : obj) {
         ret[py::str(p.first)] = to_python(p.second);
+    }
+    return ret;
+}
+
+inline py::object to_python(const mapbox::geojson::point &g)
+{
+    py::list ret;
+    ret.append(g.x);
+    ret.append(g.y);
+    ret.append(g.z);
+    return ret;
+}
+inline py::object to_python(const std::vector<mapbox::geojson::point> &g)
+{
+    py::list ret;
+    for (auto &e : g) {
+        ret.append(to_python(e));
+    }
+    return ret;
+}
+inline py::object to_python(const mapbox::geojson::multi_point &g)
+{
+    py::list ret;
+    for (auto &e : g) {
+        ret.append(to_python(e));
+    }
+    return ret;
+}
+inline py::object to_python(const mapbox::geojson::line_string &g)
+{
+    py::list ret;
+    for (auto &e : g) {
+        ret.append(to_python(e));
+    }
+    return ret;
+}
+inline py::object to_python(const mapbox::geojson::multi_line_string &g)
+{
+    py::list ret;
+    for (auto &e : g) {
+        ret.append(to_python(e));
+    }
+    return ret;
+}
+inline py::object to_python(const mapbox::geojson::polygon &g)
+{
+    py::list ret;
+    for (auto &e : g) {
+        ret.append(to_python(e));
+    }
+    return ret;
+}
+inline py::object to_python(const mapbox::geojson::multi_polygon &g)
+{
+    py::list ret;
+    for (auto &e : g) {
+        ret.append(to_python(e));
+    }
+    return ret;
+}
+// TODO, some container types
+inline py::object to_python(const mapbox::geojson::geometry &obj)
+{
+    py::dict ret;
+    ret["type"] = geometry_type(obj);
+    ret["geometry"] = obj.match(
+        [](const mapbox::geojson::point &g) { return to_python(g); },
+        [](const mapbox::geojson::line_string &g) { return to_python(g); },
+        [](const mapbox::geojson::polygon &g) { return to_python(g); },
+        [](const mapbox::geojson::multi_point &g) { return to_python(g); },
+        [](const mapbox::geojson::multi_line_string &g) {
+            return to_python(g);
+        },
+        [](const mapbox::geojson::multi_polygon &g) { return to_python(g); },
+        [](const mapbox::geojson::geometry_collection &g) {
+            // TODO
+            return py::list();
+        },
+        [](const auto &g) -> py::object { return py::none(); });
+    return ret;
+}
+
+inline py::object to_python(const mapbox::geojson::feature &f)
+{
+    py::dict ret;
+    ret["type"] = "Feature";
+    ret["geometry"] = to_python(f.geometry);
+    ret["properties"] = to_python(f.properties);
+    if (!f.custom_properties.empty()) {
+        for (auto &p : f.custom_properties) {
+            const auto &k = p.first;
+            if (k == "type" || k == "geometry" || k == "properties") {
+                continue;
+            }
+            ret[py::str(p.first)] = to_python(p.second);
+        }
+    }
+    return ret;
+}
+
+inline py::object
+to_python(const std::vector<mapbox::geojson::feature> &features)
+{
+    py::list ret;
+    for (auto &f : features) {
+        ret.append(to_python(f));
+    }
+    return ret;
+}
+
+inline py::object to_python(const mapbox::geojson::feature_collection &features)
+{
+    py::dict ret;
+    ret["type"] = "FeatureCollection";
+    ret["features"] =
+        to_python((const std::vector<mapbox::geojson::feature> &)features);
+    if (!features.custom_properties.empty()) {
+        for (auto &p : features.custom_properties) {
+            const auto &k = p.first;
+            if (k == "type" || k == "features") {
+                continue;
+            }
+            ret[py::str(p.first)] = to_python(p.second);
+        }
     }
     return ret;
 }

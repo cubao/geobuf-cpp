@@ -258,7 +258,7 @@ inline std::string get_type(const mapbox::geojson::value &self)
         [](const auto &) -> std::string { return "null"; });
 }
 
-void clear_geojson_value(mapbox::geojson::value &self)
+inline void clear_geojson_value(mapbox::geojson::value &self)
 {
     self.match([](mapbox::geojson::value::array_type &arr) { arr.clear(); },
                [](mapbox::geojson::value::object_type &obj) { obj.clear(); },
