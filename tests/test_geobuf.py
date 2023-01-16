@@ -4,10 +4,12 @@ import os
 import pickle
 from copy import deepcopy
 
+import numpy as np
 import pybind11_geobuf
 from pybind11_geobuf import (  # noqa
     Decoder,
     Encoder,
+    geojson,
     pbf_decode,
     rapidjson,
     str2geojson2str,
@@ -141,3 +143,36 @@ def test_rapidjson_obj():
     loaded = rapidjson().load(path)
     png = loaded["rapidjson.png"].GetRawString()
     assert len(base64.b64decode(png)) == 5259
+
+
+def test_geojson_point():
+    # as_numpy
+    g1 = geojson.Point()
+    assert np.all(g1.as_numpy() == [0, 0, 0])
+    g2 = geojson.Point(1, 2)
+    assert np.all(g2.as_numpy() == [1, 2, 0])
+    g3 = geojson.Point(1, 2, 3)
+    assert np.all(g3.as_numpy() == [1, 2, 3])
+
+    g1.as_numpy()[:] = 5
+    assert np.all(g1.as_numpy() == [5, 5, 5])
+    g2.as_numpy()[::2] = 5
+    assert np.all(g2.as_numpy() == [5, 2, 5])
+    g3.as_numpy()[1:] *= 2
+    assert np.all(g3.as_numpy() == [1, 4, 6])
+
+    # to_numpy
+    g3.to_numpy()[1:] *= 2
+    assert np.all(g3.as_numpy() == [1, 4, 6])
+
+    # from_numpy
+    g3.from_numpy([3, 7, 2])
+    assert np.all(g3.as_numpy() == [3, 7, 2])
+
+
+def test_geojson_multi_point():
+    g1 = geojson.MultiPoint()
+    assert g1.as_numpy().shape == (0, 3)
+    g1 = geojson.MultiPoint([[1, 2, 3], [4, 5, 6]])
+    assert g1.as_numpy().shape == (2, 3)
+    assert np.all(g1.as_numpy() == [[1, 2, 3], [4, 5, 6]])

@@ -1,5 +1,6 @@
 #include <mapbox/geojson.hpp>
 
+#include <pybind11/eigen.h>
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -170,13 +171,18 @@ void bind_geojson(py::module &m)
         ;
 
 #define BIND_FOR_VECTOR_POINT_TYPE(geom_type)                                  \
-    .def(                                                                      \
-        "__getitem__",                                                         \
-        [](mapbox::geojson::geom_type &self,                                   \
-           int index) -> mapbox::geojson::point & {                            \
-            return self[index >= 0 ? index : index + (int)self.size()];        \
-        },                                                                     \
-        rvp::reference_internal)                                               \
+    .def(py::init([](Eigen::Ref<const MatrixXdRowMajor> points) {              \
+        mapbox::geojson::geom_type self;                                       \
+        eigen2geom(points, self);                                              \
+        return self;                                                           \
+    }))                                                                        \
+        .def(                                                                  \
+            "__getitem__",                                                     \
+            [](mapbox::geojson::geom_type &self,                               \
+               int index) -> mapbox::geojson::point & {                        \
+                return self[index >= 0 ? index : index + (int)self.size()];    \
+            },                                                                 \
+            rvp::reference_internal)                                           \
         .def("__setitem__",                                                    \
              [](mapbox::geojson::geom_type &self, int index,                   \
                 const mapbox::geojson::point &p) {                             \

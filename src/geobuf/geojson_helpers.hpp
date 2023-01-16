@@ -175,7 +175,7 @@ inline void eigen2geom(const Eigen::MatrixXd &mat,
         points.clear();
         return;
     }
-    if (mat.cols() != 2 || mat.cols() != 3) {
+    if (mat.cols() != 2 && mat.cols() != 3) {
         return;
     }
     points.resize(mat.rows());
@@ -193,7 +193,7 @@ inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> mat,
         points.clear();
         return;
     }
-    if (mat.cols() != 2 || mat.cols() != 3) {
+    if (mat.cols() != 2 && mat.cols() != 3) {
         return;
     }
     points.resize(mat.rows());
