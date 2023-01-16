@@ -73,6 +73,9 @@ void bind_geojson(py::module &m)
         .def(py::init([](const mapbox::geojson::polygon &g) { return g; }))
         .def(
             py::init([](const mapbox::geojson::multi_polygon &g) { return g; }))
+        .def(py::init(
+            [](const mapbox::geojson::geometry_collection &g) { return g; }))
+        .def(py::init([](const mapbox::geojson::geometry &g) { return g; }))
         // check geometry type
         is_geometry_type(empty)               //
         is_geometry_type(point)               //
@@ -90,6 +93,73 @@ void bind_geojson(py::module &m)
         as_geometry_type(multi_line_string)   //
         as_geometry_type(multi_polygon)       //
         as_geometry_type(geometry_collection) //
+        .def(
+            "__getitem__",
+            [](mapbox::geojson::geometry &self,
+               const std::string &key) -> mapbox::geojson::value & {
+                return self.custom_properties.at(key);
+            },
+            rvp::reference_internal) //
+        .def(
+            "get",
+            [](mapbox::geojson::geometry &self,
+               const std::string &key) -> mapbox::geojson::value * {
+                auto &props = self.custom_properties;
+                auto itr = props.find(key);
+                if (itr == props.end()) {
+                    return nullptr;
+                }
+                return &itr->second;
+            },
+            "key"_a, rvp::reference_internal)
+        .def("__setitem__",
+             [](mapbox::geojson::geometry &self, const std::string &key,
+                const py::object &value) {
+                 self.custom_properties[key] = to_geojson_value(value);
+                 return value;
+             })
+        .def(
+            "push_back",
+            [](mapbox::geojson::geometry &self,
+               const mapbox::geojson::point &point)
+                -> mapbox::geojson::geometry & {
+                geometry_push_back(self, point);
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "push_back",
+            [](mapbox::geojson::geometry &self,
+               const Eigen::VectorXd &point) -> mapbox::geojson::geometry & {
+                geometry_push_back(self, point);
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "push_back",
+            [](mapbox::geojson::geometry &self,
+               const mapbox::geojson::geometry &geom)
+                -> mapbox::geojson::geometry & {
+                geometry_push_back(self, geom);
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "pop_back",
+            [](mapbox::geojson::geometry &self,
+               const mapbox::geojson::point &point)
+                -> mapbox::geojson::geometry & {
+                geometry_pop_back(self);
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "clear",
+            [](mapbox::geojson::geometry &self) -> mapbox::geojson::geometry & {
+                geometry_clear(self);
+                return self;
+            },
+            rvp::reference_internal)
         .def("type",
              [](const mapbox::geojson::geometry &self) {
                  return geometry_type(self);

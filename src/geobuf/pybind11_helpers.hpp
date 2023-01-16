@@ -248,22 +248,49 @@ inline py::object to_python(const mapbox::geojson::multi_polygon &g)
 // TODO, some container types
 inline py::object to_python(const mapbox::geojson::geometry &obj)
 {
+    if (obj.is<mapbox::geojson::empty>()) {
+        return py::none();
+    }
     py::dict ret;
     ret["type"] = geometry_type(obj);
-    ret["geometry"] = obj.match(
-        [](const mapbox::geojson::point &g) { return to_python(g); },
-        [](const mapbox::geojson::line_string &g) { return to_python(g); },
-        [](const mapbox::geojson::polygon &g) { return to_python(g); },
-        [](const mapbox::geojson::multi_point &g) { return to_python(g); },
-        [](const mapbox::geojson::multi_line_string &g) {
-            return to_python(g);
+    obj.match(
+        [&](const mapbox::geojson::point &g) {
+            ret["coordinates"] = to_python(g);
         },
-        [](const mapbox::geojson::multi_polygon &g) { return to_python(g); },
-        [](const mapbox::geojson::geometry_collection &g) {
-            // TODO
-            return py::list();
+        [&](const mapbox::geojson::line_string &g) {
+            ret["coordinates"] = to_python(g);
         },
-        [](const auto &g) -> py::object { return py::none(); });
+        [&](const mapbox::geojson::polygon &g) {
+            ret["coordinates"] = to_python(g);
+        },
+        [&](const mapbox::geojson::multi_point &g) {
+            ret["coordinates"] = to_python(g);
+        },
+        [&](const mapbox::geojson::multi_line_string &g) {
+            ret["coordinates"] = to_python(g);
+        },
+        [&](const mapbox::geojson::multi_polygon &g) {
+            ret["coordinates"] = to_python(g);
+        },
+        [&](const mapbox::geojson::geometry_collection &g) {
+            py::list geometries;
+            for (auto &gg : g) {
+                geometries.append(to_python(mapbox::geojson::geometry(gg)));
+            }
+            ret["geometries"] = geometries;
+        },
+        [&](const auto &g) -> void {
+            throw std::logic_error("something went wrong");
+        });
+    if (!obj.custom_properties.empty()) {
+        for (auto &p : obj.custom_properties) {
+            const auto &k = p.first;
+            if (k == "type" || k == "coordinates" || k == "geometries") {
+                continue;
+            }
+            ret[py::str(p.first)] = to_python(p.second);
+        }
+    }
     return ret;
 }
 

@@ -187,3 +187,58 @@ def test_geojson_multi_point():
     g1[1] = geojson.Point([7, 8, 9])
     g1[0] = geojson.Point([1, 2])
     assert g1() == [[1, 2, 0], [7, 8, 9]]
+    for idx, pt in enumerate(g1):
+        print(idx, pt)
+        assert isinstance(pt, geojson.Point)
+        if idx == 0:
+            assert pt() == [1, 2, 0]
+        if idx == 1:
+            assert pt() == [7, 8, 9]
+    g1.append(geojson.Point())
+    assert len(g1) == 2  # append not working, for now
+
+
+def test_geojson_line_string():
+    g1 = geojson.LineString()
+    assert g1.as_numpy().shape == (0, 3)
+    g1 = geojson.LineString([[1, 2, 3], [4, 5, 6]])
+    assert g1.as_numpy().shape == (2, 3)
+    assert len(g1) == 2
+    assert np.all(g1.as_numpy() == [[1, 2, 3], [4, 5, 6]])
+    assert g1() == [[1, 2, 3], [4, 5, 6]]
+
+
+def test_geojson_multi_line_string():
+    g1 = geojson.MultiLineString()
+    assert len(g1) == 0
+
+
+def test_geojson_polygon():
+    g1 = geojson.Polygon()
+    assert len(g1) == 0
+
+
+def test_geojson_multi_polygon():
+    g1 = geojson.MultiPolygon()
+    assert len(g1) == 0
+
+
+def test_geojson_geometry():
+    g1 = geojson.Geometry()
+    assert g1() is None
+    assert g1.type() == "None"
+    g2 = geojson.Geometry(geojson.Point())
+    assert g2.type() == "Point"
+    assert g2() == {"type": "Point", "coordinates": [0.0, 0.0, 0.0]}
+    g2["my_key"] = "my_value"
+    assert g2()["my_key"] == "my_value"
+
+    # g2['type'] = 'my_value' # TODO, should raise
+
+    g3 = geojson.Geometry(geojson.MultiPoint([[1, 2, 3]]))
+    g4 = geojson.Geometry(geojson.LineString([[1, 2, 3], [4, 5, 6]]))
+    gc = geojson.Geometry(geojson.GeometryCollection())
+    assert gc.type() == "GeometryCollection"
+    gc.push_back(g3)
+    gc.push_back(g4)
+    assert gc() == {"type": gc.type(), "geometries": [g3(), g4()]}
