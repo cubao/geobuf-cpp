@@ -77,6 +77,9 @@ diff:
 test:
 	# make roundtrip_test_js roundtrip_test_cpp diff
 	python3 geobuf-roundtrip-test.py pygeobuf/test/fixtures
+pytest:
+	pytest tests
+.PHONY: test pytest
 
 clean_test:
 	rm -rf $(OUTPUT_DIR_JS) $(OUTPUT_DIR_CPP) build/roundtrip_test
