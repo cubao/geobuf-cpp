@@ -378,6 +378,10 @@ def test_geobuf_from_geojson():
     )
 
     # sometimes fail
+    # __pwd = os.path.abspath(os.path.dirname(__file__))
+    # path = os.path.abspath(f'{__pwd}/../build/test.json')
+    # os.makedirs(os.path.dirname(path), exist_ok=True)
+    # j.dump(path, indent=True)
     print(j(), j.dumps())
 
     expected = str2json2str(json.dumps(feature), indent=True, sort_keys=True)
