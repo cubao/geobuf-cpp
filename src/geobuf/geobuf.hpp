@@ -82,7 +82,21 @@ struct Encoder
     {
     }
     std::string encode(const mapbox::geojson::geojson &geojson);
+    std::string encode(const mapbox::geojson::feature_collection &features)
+    {
+        return encode(mapbox::geojson::geojson{features});
+    }
+    std::string encode(const mapbox::geojson::feature &feature)
+    {
+        return encode(mapbox::geojson::geojson{feature});
+    }
+    std::string encode(const mapbox::geojson::geometry &geometry)
+    {
+        return encode(mapbox::geojson::geojson{geometry});
+    }
+
     std::string encode(const std::string &geojson);
+    std::string encode(const RapidjsonValue &json);
     bool encode(const std::string &input_path, const std::string &output_path);
 
   private:

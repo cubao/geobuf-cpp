@@ -265,6 +265,12 @@ std::string Encoder::encode(const std::string &geojson_text)
     return encode(geojson);
 }
 
+std::string Encoder::encode(const RapidjsonValue &json)
+{
+    auto geojson = mapbox::geojson::convert(json);
+    return encode(geojson);
+}
+
 bool Encoder::encode(const std::string &input_path,
                      const std::string &output_path)
 {
