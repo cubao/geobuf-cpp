@@ -169,6 +169,18 @@ def test_geojson_point():
     g3.from_numpy([3, 7, 2])
     assert np.all(g3.as_numpy() == [3, 7, 2])
 
+    assert g3() == [3, 7, 2]
+
+    # from/to_rapidjson
+    j = g3.to_rapidjson()()
+    assert j == {"type": "Point", "coordinates": [3.0, 7.0, 2.0]}
+    # update
+    g3[0] = 0.0
+    assert g3.to_rapidjson()() != {"type": "Point", "coordinates": [3.0, 7.0, 2.0]}
+    # reset
+    g3.from_rapidjson(rapidjson(j))
+    assert g3.to_rapidjson()() == {"type": "Point", "coordinates": [3.0, 7.0, 2.0]}
+
 
 def test_geojson_multi_point():
     g1 = geojson.MultiPoint()
@@ -247,6 +259,29 @@ def test_geojson_geometry():
     gc.push_back(g4)
     assert gc() == {"type": gc.type(), "geometries": [g3(), g4()]}
 
+    # update value
+    g31 = g3.clone()
+    g32 = g3.clone()
+    assert g32 == g31
+    g31.as_multi_point()[0][0] = 5
+    assert g31.as_multi_point()[0][0] == 5
+    assert g32 != g31
+
+    gc2 = gc.clone()
+    assert gc2() == gc()
+    assert id(gc2) != id(gc)
+
+    pickled = pickle.dumps(gc2)
+    gc3 = pickle.loads(pickled)
+    assert gc3() == gc()
+    assert id(gc3) != id(gc)
+
+    gc4 = deepcopy(gc3)
+    assert gc4() == gc()
+    assert id(gc4) != id(gc)
+
+    assert gc4.__geo_interface__ == gc()
+
 
 def test_geobuf_from_geojson():
     encoder = Encoder(max_precision=int(10**8))
@@ -256,7 +291,9 @@ def test_geobuf_from_geojson():
 
     expected = str2json2str(json.dumps(feature), indent=True, sort_keys=True)
     actually = str2json2str(decoded, indent=True, sort_keys=True)
-    # assert expected == actually
+    assert len(expected) > 0
+    assert len(actually) > 0
+    # assert expected == actually # TODO
 
     encoded1 = encoder.encode(rapidjson(feature))
     assert len(encoded1) == len(encoded)
