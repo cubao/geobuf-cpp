@@ -235,24 +235,72 @@ def test_geojson_line_string():
     assert np.all(g1.as_numpy() == [[1, 2, 3], [4, 5, 6]])
     assert g1() == [[1, 2, 3], [4, 5, 6]]
 
+    j = g1.to_rapidjson()
+    j["coordinates"] = [[1, 1, 1], [2, 2, 2]]
+    g1.from_rapidjson(j)
+    assert g1() == [[1, 1, 1], [2, 2, 2]]
+    G = geojson.Geometry(g1)
+    assert G.to_rapidjson() == g1.to_rapidjson()
+    assert G.type() == "LineString"
+
 
 def test_geojson_multi_line_string():
     g1 = geojson.MultiLineString()
     assert isinstance(g1, geojson.MultiLineString)
-    # TODO, fix
-    # assert len(g1) == 0
+    assert isinstance(g1, geojson.LineStringList)
+    assert len(g1) == 0
+
+    xyzs = [[1, 2, 3], [4, 5, 6]]
+    g1.from_numpy(xyzs)
+    assert len(g1) == 1
+    assert np.all(g1.to_numpy() == xyzs)
+
+    j = g1.to_rapidjson()
+    g1.as_numpy()[:] = 1
+    assert g1.as_numpy().sum() == 6
+    g1.from_rapidjson(j)
+    assert np.all(g1.to_numpy() == xyzs)
+
+    coords = np.array(j["coordinates"]())
+    assert coords.ndim == 3
+    assert coords.shape == (1, 2, 3)
 
 
 def test_geojson_polygon():
     g1 = geojson.Polygon()
     assert isinstance(g1, geojson.Polygon)
-    # assert len(g1) == 0
+    assert isinstance(g1, geojson.LinearRingList)
+    assert len(g1) == 0
+    assert g1.to_rapidjson()() == {"type": "Polygon", "coordinates": []}
+
+    g1.from_numpy([[1, 0], [1, 1], [0, 1], [1, 0]])
+    assert np.all(
+        g1.to_numpy()
+        == [
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [1, 0, 0],
+        ]
+    )
 
 
 def test_geojson_multi_polygon():
     g1 = geojson.MultiPolygon()
     assert isinstance(g1, geojson.MultiPolygon)
-    # assert len(g1) == 0
+    assert len(g1) == 0
+    assert g1.to_rapidjson()() == {"type": "MultiPolygon", "coordinates": []}
+    g1.from_numpy([[1, 0], [1, 1], [0, 1], [1, 0]])
+
+    assert g1.to_rapidjson()() == {
+        "type": "MultiPolygon",
+        "coordinates": [[[[1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [1.0, 0.0]]]],
+    }
+    coords = np.array(g1.to_rapidjson()["coordinates"]())
+    assert coords.shape == (1, 1, 4, 2)
+
+    g2 = geojson.MultiPolygon().from_rapidjson(g1.to_rapidjson())
+    assert g1 == g2
 
 
 def test_geojson_geometry():

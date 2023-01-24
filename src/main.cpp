@@ -162,7 +162,9 @@ PYBIND11_MODULE(pybind11_geobuf, m)
         //
         ;
 
-    cubao::bind_geojson(m);
+    auto geojson = m.def_submodule("geojson");
+    cubao::bind_geojson(geojson);
+
     cubao::bind_rapidjson(m);
 
 #ifdef VERSION_INFO
