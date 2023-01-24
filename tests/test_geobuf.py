@@ -176,10 +176,16 @@ def test_geojson_point():
     assert j == {"type": "Point", "coordinates": [3.0, 7.0, 2.0]}
     # update
     g3[0] = 0.0
-    assert g3.to_rapidjson()() != {"type": "Point", "coordinates": [3.0, 7.0, 2.0]}
+    assert g3.to_rapidjson()() != {
+        "type": "Point",
+        "coordinates": [3.0, 7.0, 2.0],
+    }
     # reset
     g3.from_rapidjson(rapidjson(j))
-    assert g3.to_rapidjson()() == {"type": "Point", "coordinates": [3.0, 7.0, 2.0]}
+    assert g3.to_rapidjson()() == {
+        "type": "Point",
+        "coordinates": [3.0, 7.0, 2.0],
+    }
 
 
 def test_geojson_multi_point():
@@ -208,6 +214,16 @@ def test_geojson_multi_point():
             assert pt() == [7, 8, 9]
     g1.append(geojson.Point())
     assert len(g1) == 2  # append not working, for now
+
+    j = g1.to_rapidjson()
+    gg = geojson.MultiPoint().from_rapidjson(j)
+    assert g1 == gg
+    assert gg() == [[1, 2, 0], [7, 8, 9]]
+    assert j() == gg.to_rapidjson()()
+    # rapidjson is comparable
+    assert j == gg.to_rapidjson()
+    j["another_key"] = "value"
+    assert j != gg.to_rapidjson()
 
 
 def test_geojson_line_string():

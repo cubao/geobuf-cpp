@@ -275,7 +275,16 @@ void bind_geojson(py::module &m)
                 *(&self.x + (index >= 0 ? index : index + 3)) = v;
                 return v;
             },
-            "index"_a, "value"_a)
+            "index"_a, "value"_a) copy_deepcopy_clone(mapbox::geojson::point)
+        .def(py::pickle(
+            [](const mapbox::geojson::point &self) {
+                return to_python(mapbox::geojson::geometry(self));
+            },
+            [](py::object o) -> mapbox::geojson::point {
+                auto json = to_rapidjson(o);
+                return mapbox::geojson::convert<mapbox::geojson::geometry>(json)
+                    .get<mapbox::geojson::point>();
+            }))
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::point &self) -> py::object {
@@ -384,10 +393,41 @@ void bind_geojson(py::module &m)
                 eigen2geom(points, self);                                      \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)
+            rvp::reference_internal)                                           \
+            copy_deepcopy_clone(mapbox::geojson::geom_type)                    \
+        .def(py::pickle(                                                       \
+            [](const mapbox::geojson::geom_type &self) {                       \
+                return to_python(mapbox::geojson::geometry{self});             \
+            },                                                                 \
+            [](py::object o) -> mapbox::geojson::geom_type {                   \
+                auto json = to_rapidjson(o);                                   \
+                return mapbox::geojson::convert<mapbox::geojson::geometry>(    \
+                           json)                                               \
+                    .get<mapbox::geojson::geom_type>();                        \
+            }))                                                                \
+        .def_property_readonly(                                                \
+            "__geo_interface__",                                               \
+            [](const mapbox::geojson::geom_type &self) -> py::object {         \
+                return to_python(mapbox::geojson::geometry(self));             \
+            })                                                                 \
+        .def("from_rapidjson",                                                 \
+             [](mapbox::geojson::geom_type &self,                              \
+                const RapidjsonValue &json) -> mapbox::geojson::geom_type & {  \
+                 self =                                                        \
+                     mapbox::geojson::convert<mapbox::geojson::geometry>(json) \
+                         .get<mapbox::geojson::geom_type>();                   \
+                 return self;                                                  \
+             })                                                                \
+        .def("to_rapidjson", [](const mapbox::geojson::geom_type &self) {      \
+            RapidjsonAllocator allocator;                                      \
+            auto json = mapbox::geojson::convert(                              \
+                mapbox::geojson::geometry{self}, allocator);                   \
+            return json;                                                       \
+        })
 
     py::class_<mapbox::geojson::multi_point,
-               std::vector<mapbox::geojson::point>>(geojson, "MultiPoint")
+               std::vector<mapbox::geojson::point>>(geojson,
+                                                    "MultiPoint")
         .def(py::init<>())                      //
         BIND_FOR_VECTOR_POINT_TYPE(multi_point) //
         .def(py::self == py::self)              //
@@ -402,6 +442,122 @@ void bind_geojson(py::module &m)
         .def(py::self != py::self)              //
         //
         ;
+
+    py::class_<mapbox::geojson::linear_ring,
+               mapbox::geojson::linear_ring::container_type>(geojson,
+                                                             "LinearRing") //
+        .def(py::init<>())                                                 //
+        .def(py::self == py::self)                                         //
+        .def(py::self != py::self)                                         //
+        //
+        ;
+
+    py::bind_vector<std::vector<mapbox::geojson::linear_ring>>(
+        m, "LinearRingList");
+    py::bind_vector<mapbox::geojson::multi_line_string::container_type>(
+        m, "LinearRingListList");
+
+    py::class_<mapbox::geojson::multi_line_string,
+               mapbox::geojson::multi_line_string::container_type>(
+        geojson, "MultiLineString") //
+        .def(py::init<>())
+        .def(py::init<mapbox::geojson::multi_line_string::container_type>())
+        .def(py::init([](std::vector<mapbox::geojson::point> line_string) {
+            return mapbox::geojson::multi_line_string({std::move(line_string)});
+        }))
+        .def(
+            "as_numpy",
+            [](mapbox::geojson::multi_line_string &self)
+                -> Eigen::Map<RowVectors> { return as_row_vectors(self); },
+            rvp::reference_internal)
+        .def("to_numpy",
+             [](const mapbox::geojson::multi_line_string &self) -> RowVectors {
+                 return as_row_vectors(self);
+             }) //
+        .def(
+            "from_numpy",
+            [](mapbox::geojson::multi_line_string &self,
+               Eigen::Ref<const MatrixXdRowMajor> points)
+                -> mapbox::geojson::multi_line_string & {
+                eigen2geom(points, self);
+                return self;
+            },
+            rvp::reference_internal) //
+        //
+        ;
+
+    py::class_<mapbox::geojson::polygon,
+               mapbox::geojson::polygon::container_type>(geojson, "Polygon") //
+        .def(py::init<>())
+        .def(py::init<mapbox::geojson::polygon::container_type>())
+        .def(py::init([](std::vector<mapbox::geojson::point> shell) {
+            return mapbox::geojson::polygon({std::move(shell)});
+        }))
+        .def(
+            "as_numpy",
+            [](mapbox::geojson::polygon &self) -> Eigen::Map<RowVectors> {
+                auto &shell = self[0];
+                return Eigen::Map<RowVectors>(&shell[0].x, shell.size(), 3);
+            },
+            rvp::reference_internal)
+        .def("to_numpy",
+             [](const mapbox::geojson::polygon &self) -> RowVectors {
+                 auto &shell = self[0];
+                 return Eigen::Map<const RowVectors>(&shell[0].x, shell.size(),
+                                                     3);
+             }) //
+        .def(
+            "from_numpy",
+            [](mapbox::geojson::polygon &self,
+               Eigen::Ref<const MatrixXdRowMajor> points)
+                -> mapbox::geojson::polygon & {
+                eigen2geom(points, self);
+                return self;
+            },
+            rvp::reference_internal) //
+        //
+        ;
+
+    py::bind_vector<std::vector<mapbox::geojson::polygon>>(geojson,
+                                                           "PolygonList");
+    py::class_<mapbox::geojson::multi_polygon,
+               mapbox::geojson::multi_polygon::container_type>(
+        geojson, "MultiPolygon") //
+        .def("__call__",
+             [](const mapbox::geojson::multi_polygon &self) {
+                 return to_python(self);
+             })
+        .def(py::init<>())
+        .def(py::init<mapbox::geojson::multi_polygon>())
+        .def(py::init<mapbox::geojson::multi_polygon::container_type>())
+        .def(
+            "as_numpy",
+            [](mapbox::geojson::multi_polygon &self) -> Eigen::Map<RowVectors> {
+                return as_row_vectors(self);
+            },
+            rvp::reference_internal)
+        .def("to_numpy",
+             [](const mapbox::geojson::polygon &self) -> RowVectors {
+                 return as_row_vectors(self);
+             }) //
+        .def(
+            "from_numpy",
+            [](mapbox::geojson::multi_polygon &self,
+               Eigen::Ref<const MatrixXdRowMajor> points)
+                -> mapbox::geojson::multi_polygon & {
+                eigen2geom(points, self);
+                return self;
+            },
+            rvp::reference_internal) //
+        //
+        ;
+
+    py::bind_vector<std::vector<mapbox::geojson::geometry>>(geojson,
+                                                            "GeometryList");
+    py::class_<mapbox::geojson::geometry_collection,
+               mapbox::geojson::geometry_collection::container_type>(
+        geojson, "GeometryCollection") //
+        .def(py::init<>());
 
     auto geojson_value =
         py::class_<mapbox::geojson::value>(geojson, "value")
@@ -808,122 +964,5 @@ void bind_geojson(py::module &m)
         .def("__call__", [](const mapbox::geojson::feature_collection &self) {
             return to_python(self);
         });
-
-    py::class_<mapbox::geojson::linear_ring,
-               mapbox::geojson::linear_ring::container_type>(geojson,
-                                                             "LinearRing") //
-        .def(py::init<>());
-    py::bind_vector<std::vector<mapbox::geojson::linear_ring>>(
-        m, "LinearRingList");
-    py::bind_vector<mapbox::geojson::multi_line_string::container_type>(
-        m, "LinearRingListList");
-
-    py::class_<mapbox::geojson::multi_line_string,
-               mapbox::geojson::multi_line_string::container_type>(
-        geojson, "MultiLineString") //
-        .def(py::init<>())
-        .def(py::init<mapbox::geojson::multi_line_string::container_type>())
-        .def(py::init([](std::vector<mapbox::geojson::point> line_string) {
-            return mapbox::geojson::multi_line_string({std::move(line_string)});
-        }))
-        .def(
-            "as_numpy",
-            [](mapbox::geojson::multi_line_string &self)
-                -> Eigen::Map<RowVectors> { return as_row_vectors(self); },
-            rvp::reference_internal)
-        .def("to_numpy",
-             [](const mapbox::geojson::multi_line_string &self) -> RowVectors {
-                 return as_row_vectors(self);
-             }) //
-        .def(
-            "from_numpy",
-            [](mapbox::geojson::multi_line_string &self,
-               Eigen::Ref<const MatrixXdRowMajor> points)
-                -> mapbox::geojson::multi_line_string & {
-                eigen2geom(points, self);
-                return self;
-            },
-            rvp::reference_internal) //
-        //
-        ;
-
-    py::class_<mapbox::geojson::polygon,
-               mapbox::geojson::polygon::container_type>(geojson, "Polygon") //
-        .def(py::init<>())
-        .def(py::init<mapbox::geojson::polygon::container_type>())
-        .def(py::init([](std::vector<mapbox::geojson::point> shell) {
-            return mapbox::geojson::polygon({std::move(shell)});
-        }))
-        .def(
-            "as_numpy",
-            [](mapbox::geojson::polygon &self) -> Eigen::Map<RowVectors> {
-                auto &shell = self[0];
-                return Eigen::Map<RowVectors>(&shell[0].x, shell.size(), 3);
-            },
-            rvp::reference_internal)
-        .def("to_numpy",
-             [](const mapbox::geojson::polygon &self) -> RowVectors {
-                 auto &shell = self[0];
-                 return Eigen::Map<const RowVectors>(&shell[0].x, shell.size(),
-                                                     3);
-             }) //
-        .def(
-            "from_numpy",
-            [](mapbox::geojson::polygon &self,
-               Eigen::Ref<const MatrixXdRowMajor> points)
-                -> mapbox::geojson::polygon & {
-                eigen2geom(points, self);
-                return self;
-            },
-            rvp::reference_internal) //
-        //
-        ;
-
-    py::bind_vector<std::vector<mapbox::geojson::polygon>>(geojson,
-                                                           "PolygonList")
-        .def("__call__",
-             [](const std::vector<mapbox::geojson::polygon> &self) {
-                 //
-             })
-        //
-        ;
-    py::class_<mapbox::geojson::multi_polygon,
-               mapbox::geojson::multi_polygon::container_type>(
-        geojson, "MultiPolygon") //
-        .def("__call__",
-             [](const mapbox::geojson::multi_polygon &self) {
-                 return to_python(self);
-             })
-        .def(py::init<>())
-        .def(py::init<mapbox::geojson::multi_polygon>())
-        .def(py::init<mapbox::geojson::multi_polygon::container_type>())
-        .def(
-            "as_numpy",
-            [](mapbox::geojson::multi_polygon &self) -> Eigen::Map<RowVectors> {
-                return as_row_vectors(self);
-            },
-            rvp::reference_internal)
-        .def("to_numpy",
-             [](const mapbox::geojson::polygon &self) -> RowVectors {
-                 return as_row_vectors(self);
-             }) //
-        .def(
-            "from_numpy",
-            [](mapbox::geojson::multi_polygon &self,
-               Eigen::Ref<const MatrixXdRowMajor> points)
-                -> mapbox::geojson::multi_polygon & {
-                eigen2geom(points, self);
-                return self;
-            },
-            rvp::reference_internal) //
-        //
-        ;
-
-    py::bind_vector<std::vector<mapbox::geojson::geometry>>(geojson,
-                                                            "GeometryList");
-    py::class_<mapbox::geojson::geometry_collection,
-               mapbox::geojson::geometry_collection::container_type>(
-        geojson, "GeometryCollection") //
-        .def(py::init<>());
 }
 } // namespace cubao
