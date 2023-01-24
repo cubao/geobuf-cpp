@@ -350,8 +350,22 @@ def test_geojson_geometry():
 def test_geobuf_from_geojson():
     encoder = Encoder(max_precision=int(10**8))
     feature = sample_geojson()
+    encoded_0 = encoder.encode(json.dumps(feature))
     encoded = encoder.encode(feature)
+    assert encoded == encoded_0
     decoded = Decoder().decode(encoded)
+
+    decoded_again = Decoder().decode(
+        Encoder(max_precision=int(10**8)).encode(decoded)
+    )
+    assert decoded_again == decoded
+
+    j = Decoder().decode_to_rapidjson(encoded)
+    g = Decoder().decode_to_geojson(encoded)
+    assert g.is_feature()
+    f = g.as_feature()
+
+    print()
 
     expected = str2json2str(json.dumps(feature), indent=True, sort_keys=True)
     actually = str2json2str(decoded, indent=True, sort_keys=True)
@@ -362,3 +376,8 @@ def test_geobuf_from_geojson():
     encoded1 = encoder.encode(rapidjson(feature))
     assert len(encoded1) == len(encoded)
     # geojson.Feature().from_rapidjson
+
+    print()
+
+
+test_geobuf_from_geojson()

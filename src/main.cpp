@@ -85,12 +85,6 @@ PYBIND11_MODULE(pybind11_geobuf, m)
         //
         .def(
             "encode",
-            [](Encoder &self, const std::string &geojson) {
-                return py::bytes(self.encode(geojson));
-            },
-            py::kw_only(), "geojson"_a)
-        .def(
-            "encode",
             [](Encoder &self, const mapbox::geojson::geojson &geojson) {
                 return py::bytes(self.encode(geojson));
             },
@@ -123,6 +117,10 @@ PYBIND11_MODULE(pybind11_geobuf, m)
         .def(
             "encode",
             [](Encoder &self, const py::object &geojson) {
+                if (py::isinstance<py::str>(geojson)) {
+                    auto str = geojson.cast<std::string>();
+                    return py::bytes(self.encode(str));
+                }
                 return py::bytes(self.encode(cubao::to_rapidjson(geojson)));
             },
             "geojson"_a)
@@ -145,6 +143,22 @@ PYBIND11_MODULE(pybind11_geobuf, m)
             },
             "geobuf"_a, py::kw_only(), "indent"_a = false,
             "sort_keys"_a = false)
+        .def(
+            "decode_to_rapidjson",
+            [](Decoder &self, const std::string &geobuf, bool sort_keys) {
+                auto json = geojson2json(self.decode(geobuf));
+                if (sort_keys) {
+                    sort_keys_inplace(json);
+                }
+                return json;
+            },
+            "geobuf"_a, py::kw_only(), "sort_keys"_a = false)
+        .def(
+            "decode_to_geojson",
+            [](Decoder &self, const std::string &geobuf) {
+                return self.decode(geobuf);
+            },
+            "geobuf"_a)
         .def(
             "decode",
             [](Decoder &self,              //
