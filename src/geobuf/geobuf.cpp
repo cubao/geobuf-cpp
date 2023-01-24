@@ -138,6 +138,7 @@ RapidjsonValue geojson2json(const mapbox::geojson::value &geojson,
 RapidjsonValue geojson2json(const mapbox::geojson::geojson &geojson,
                             bool sort_keys)
 {
+    // bug here???
     RapidjsonAllocator allocator;
     auto json = mapbox::geojson::convert(geojson, allocator);
     if (sort_keys) {

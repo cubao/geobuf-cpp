@@ -133,7 +133,8 @@ inline py::object to_python(const RapidjsonValue &j)
     } else {
         py::dict ret;
         for (auto &m : j.GetObject()) {
-            ret[py::str(m.name.GetString(), m.name.GetStringLength())] =
+            ret[py::str(
+                std::string{m.name.GetString(), m.name.GetStringLength()})] =
                 to_python(m.value);
         }
         return ret;

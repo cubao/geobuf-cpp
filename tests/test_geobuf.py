@@ -6,6 +6,7 @@ from copy import deepcopy
 
 import numpy as np
 import pybind11_geobuf
+import pytest
 from pybind11_geobuf import (  # noqa
     Decoder,
     Encoder,
@@ -359,13 +360,25 @@ def test_geobuf_from_geojson():
         Encoder(max_precision=int(10**8)).encode(decoded)
     )
     assert decoded_again == decoded
+    assert decoded_again == Decoder().decode(encoded)
 
     j = Decoder().decode_to_rapidjson(encoded)
     g = Decoder().decode_to_geojson(encoded)
     assert g.is_feature()
     f = g.as_feature()
+    assert isinstance(f, geojson.Feature)
+    with pytest.raises(RuntimeError) as excinfo:
+        g.as_geometry()
+    assert "in get<T>()" in str(excinfo)
+    assert str2json2str(json.dumps(f()), sort_keys=True) == str2json2str(
+        decoded, sort_keys=True
+    )
+    assert str2geojson2str(json.dumps(f()), sort_keys=True) == str2geojson2str(
+        decoded, sort_keys=True
+    )
 
-    print()
+    # sometimes fail
+    print(j(), j.dumps())
 
     expected = str2json2str(json.dumps(feature), indent=True, sort_keys=True)
     actually = str2json2str(decoded, indent=True, sort_keys=True)
