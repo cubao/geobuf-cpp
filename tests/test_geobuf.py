@@ -246,3 +246,18 @@ def test_geojson_geometry():
     gc.push_back(g3)
     gc.push_back(g4)
     assert gc() == {"type": gc.type(), "geometries": [g3(), g4()]}
+
+
+def test_geobuf_from_geojson():
+    encoder = Encoder(max_precision=int(10**8))
+    feature = sample_geojson()
+    encoded = encoder.encode(feature)
+    decoded = Decoder().decode(encoded)
+
+    expected = str2json2str(json.dumps(feature), indent=True, sort_keys=True)
+    actually = str2json2str(decoded, indent=True, sort_keys=True)
+    # assert expected == actually
+
+    encoded1 = encoder.encode(rapidjson(feature))
+    assert len(encoded1) == len(encoded)
+    # geojson.Feature().from_rapidjson
