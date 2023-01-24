@@ -36,7 +36,7 @@ void bind_geojson(py::module &geojson)
         },                                                                     \
         rvp::reference_internal)
 
-    py::class_<mapbox::geojson::geojson>(geojson, "GeoJSON")
+    py::class_<mapbox::geojson::geojson>(geojson, "GeoJSON", py::module_local())
         is_geojson_type(geometry)           //
         is_geojson_type(feature)            //
         is_geojson_type(feature_collection) //
@@ -95,8 +95,9 @@ void bind_geojson(py::module &geojson)
         .def("clone", [](const Type &self) -> Type { return self; })
 
     using GeometryBase = mapbox::geometry::geometry_base<double, std::vector>;
-    py::class_<GeometryBase>(geojson, "GeometryBase");
-    py::class_<mapbox::geojson::geometry, GeometryBase>(geojson, "Geometry")
+    py::class_<GeometryBase>(geojson, "GeometryBase", py::module_local());
+    py::class_<mapbox::geojson::geometry, GeometryBase>(geojson, "Geometry",
+                                                        py::module_local())
         .def(py::init<>())
         .def(py::init([](const mapbox::geojson::point &g) { return g; }))
         .def(py::init([](const mapbox::geojson::multi_point &g) { return g; }))
@@ -255,7 +256,7 @@ void bind_geojson(py::module &geojson)
         //
         ;
 
-    py::class_<mapbox::geojson::point>(geojson, "Point")
+    py::class_<mapbox::geojson::point>(geojson, "Point", py::module_local())
         .def(py::init<>())
         .def(py::init<double, double, double>(), "x"_a, "y"_a, "z"_a = 0.0)
         .def(py::init([](const Eigen::VectorXd &p) {
@@ -452,8 +453,8 @@ void bind_geojson(py::module &geojson)
         })
 
     py::class_<mapbox::geojson::multi_point,
-               std::vector<mapbox::geojson::point>>(geojson,
-                                                    "MultiPoint")
+               std::vector<mapbox::geojson::point>>(geojson, "MultiPoint",
+                                                    py::module_local())
         .def(py::init<>())                      //
         BIND_FOR_VECTOR_POINT_TYPE(multi_point) //
         .def(py::self == py::self)              //
@@ -461,7 +462,8 @@ void bind_geojson(py::module &geojson)
         //
         ;
     py::class_<mapbox::geojson::line_string,
-               std::vector<mapbox::geojson::point>>(geojson, "LineString")
+               std::vector<mapbox::geojson::point>>(geojson, "LineString",
+                                                    py::module_local())
         .def(py::init<>())                      //
         BIND_FOR_VECTOR_POINT_TYPE(line_string) //
         .def(py::self == py::self)              //
@@ -542,20 +544,20 @@ void bind_geojson(py::module &geojson)
         })
 
     py::class_<mapbox::geojson::linear_ring,
-               mapbox::geojson::linear_ring::container_type>(geojson,
-                                                             "LinearRing") //
-        .def(py::init<>())                                                 //
-        .def(py::self == py::self)                                         //
-        .def(py::self != py::self)                                         //
+               mapbox::geojson::linear_ring::container_type>(
+        geojson, "LinearRing", py::module_local()) //
+        .def(py::init<>())                         //
+        .def(py::self == py::self)                 //
+        .def(py::self != py::self)                 //
         //
         ;
 
     py::bind_vector<mapbox::geojson::multi_line_string::container_type>(
-        geojson, "LineStringList");
+        geojson, "LineStringList", py::module_local());
 
     py::class_<mapbox::geojson::multi_line_string,
                mapbox::geojson::multi_line_string::container_type>(
-        geojson, "MultiLineString") //
+        geojson, "MultiLineString", py::module_local()) //
         .def(py::init<>())
         .def(py::init<mapbox::geojson::multi_line_string::container_type>())
         .def(py::init([](std::vector<mapbox::geojson::point> line_string) {
@@ -568,10 +570,11 @@ void bind_geojson(py::module &geojson)
         //
         ;
 
-    py::bind_vector<mapbox::geojson::polygon::container_type>(geojson,
-                                                              "LinearRingList");
+    py::bind_vector<mapbox::geojson::polygon::container_type>(
+        geojson, "LinearRingList", py::module_local());
     py::class_<mapbox::geojson::polygon,
-               mapbox::geojson::polygon::container_type>(geojson, "Polygon") //
+               mapbox::geojson::polygon::container_type>(geojson, "Polygon",
+                                                         py::module_local()) //
         .def(py::init<>())
         .def(py::init<mapbox::geojson::polygon::container_type>())
         .def(py::init([](std::vector<mapbox::geojson::point> shell) {
@@ -588,7 +591,7 @@ void bind_geojson(py::module &geojson)
         geojson, "PolygonList");
     py::class_<mapbox::geojson::multi_polygon,
                mapbox::geojson::multi_polygon::container_type>(
-        geojson, "MultiPolygon") //
+        geojson, "MultiPolygon", py::module_local()) //
         .def("__call__",
              [](const mapbox::geojson::multi_polygon &self) {
                  return to_python(self);
@@ -673,14 +676,14 @@ void bind_geojson(py::module &geojson)
         ;
 
     py::bind_vector<mapbox::geojson::geometry_collection::container_type>(
-        geojson, "GeometryList");
+        geojson, "GeometryList", py::module_local());
     py::class_<mapbox::geojson::geometry_collection,
                mapbox::geojson::geometry_collection::container_type>(
-        geojson, "GeometryCollection") //
+        geojson, "GeometryCollection", py::module_local()) //
         .def(py::init<>());
 
     auto geojson_value =
-        py::class_<mapbox::geojson::value>(geojson, "value")
+        py::class_<mapbox::geojson::value>(geojson, "value", py::module_local())
             .def(py::init<>())
             .def(
                 py::init([](const py::object &obj) { return to_geojson_value(obj); }))
@@ -874,8 +877,8 @@ void bind_geojson(py::module &geojson)
 
     // py::class_<mapbox::geojson::value::array_type>(geojson_value,
     // "array_type")
-    py::bind_vector<mapbox::geojson::value::array_type>(geojson_value,
-                                                        "array_type")
+    py::bind_vector<mapbox::geojson::value::array_type>(
+        geojson_value, "array_type", py::module_local())
         .def(py::init<>())
         .def(py::init([](const py::handle &arr) {
             return to_geojson_value(arr)
@@ -902,9 +905,8 @@ void bind_geojson(py::module &geojson)
         //
         ;
 
-    // py::class_<mapbox::geojson::value::object_type>(geojson_value,
-    py::bind_map<mapbox::geojson::value::object_type>(geojson_value,
-                                                      "object_type")
+    py::bind_map<mapbox::geojson::value::object_type>(
+        geojson_value, "object_type", py::module_local())
         .def(py::init<>())
         .def(py::init([](const py::object &obj) {
             return to_geojson_value(obj)
@@ -935,7 +937,7 @@ void bind_geojson(py::module &geojson)
         //
         ;
 
-    py::class_<mapbox::geojson::feature>(geojson, "Feature")
+    py::class_<mapbox::geojson::feature>(geojson, "Feature", py::module_local())
         .def(py::init<>())
             BIND_PY_FLUENT_ATTRIBUTE(mapbox::geojson::feature,  //
                                      mapbox::geojson::geometry, //
@@ -1081,8 +1083,8 @@ void bind_geojson(py::module &geojson)
             return to_python(self);
         });
     py::class_<mapbox::geojson::feature_collection,
-               std::vector<mapbox::geojson::feature>>(geojson,
-                                                      "FeatureCollection")
+               std::vector<mapbox::geojson::feature>>(
+        geojson, "FeatureCollection", py::module_local())
         //
         .def("__call__", [](const mapbox::geojson::feature_collection &self) {
             return to_python(self);

@@ -376,8 +376,3 @@ def test_geobuf_from_geojson():
     encoded1 = encoder.encode(rapidjson(feature))
     assert len(encoded1) == len(encoded)
     # geojson.Feature().from_rapidjson
-
-    print()
-
-
-test_geobuf_from_geojson()
