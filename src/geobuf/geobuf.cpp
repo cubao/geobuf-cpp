@@ -595,7 +595,7 @@ bool Decoder::decode(const std::string &input_path,
     auto bytes = load_bytes(input_path);
     auto geojson = decode(bytes);
     auto json = geojson2json(geojson, sort_keys);
-    return dump_json(json, indent);
+    return dump_json(output_path, json, indent);
 }
 
 void unpack_properties(mapbox::geojson::prop_map &properties,
