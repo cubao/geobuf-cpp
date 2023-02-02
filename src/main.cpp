@@ -31,6 +31,19 @@ PYBIND11_MODULE(pybind11_geobuf, m)
     using namespace mapbox::geobuf;
 
     m.def(
+        "normalize_json",
+        [](const std::string &input, const std::string &output, bool indent,
+           bool sort_keys) {
+            auto json = mapbox::geobuf::load_json(input);
+            if (sort_keys) {
+                mapbox::geobuf::sort_keys_inplace(json);
+            }
+            return mapbox::geobuf::dump_json(output, json, indent);
+        },
+        "input_path"_a, "output_path"_a, //
+        py::kw_only(), "indent"_a = true, "sort_keys"_a = true);
+
+    m.def(
         "str2json2str",
         [](const std::string &json_string, //
            bool indent,                    //
