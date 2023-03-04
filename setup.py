@@ -137,5 +137,6 @@ setup(
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     python_requires=">=3.6",
+    install_requires=["numpy", "fire"],
     extras_require={"test": ["pytest>=6.0"]},
 )
