@@ -29,7 +29,9 @@ Call with --help/-h to see more options.
 #include <cstddef>
 #include <exception>
 #include <fstream>
+#ifndef _WIN64
 #include <getopt.h>
+#endif
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -229,14 +231,14 @@ std::string read_from_stdin()
 #if PBF_DECODER_ENABLE_MAIN
 int main(int argc, char *argv[])
 {
+    std::size_t offset = 0;
+    std::size_t length = std::numeric_limits<std::size_t>::max();
+#ifndef _WIN64
     static struct option long_options[] = {
         {"help", no_argument, nullptr, 'h'},
         {"length", required_argument, nullptr, 'l'},
         {"offset", required_argument, nullptr, 'o'},
         {nullptr, 0, nullptr, 0}};
-
-    std::size_t offset = 0;
-    std::size_t length = std::numeric_limits<std::size_t>::max();
 
     while (true) {
         const int c = getopt_long(argc, argv, "hl:o:", long_options, nullptr);
@@ -291,7 +293,30 @@ int main(int argc, char *argv[])
         std::cerr << ex.what() << '\n';
         return 1;
     }
+#else
+    std::cerr << "No getopt.h, skip all args" << std::endl;
+    try {
+        std::string buffer{argc > 1 ? read_from_file(argv[1])
+                                    : read_from_stdin()};
 
+        if (offset > buffer.size()) {
+            throw std::runtime_error{"offset is larger than file size"};
+        }
+
+        if (offset > 0) {
+            buffer.erase(0, offset);
+        }
+
+        if (length < buffer.size()) {
+            buffer.resize(length);
+        }
+
+        std::cout << decode(buffer.data(), buffer.size(), "");
+    } catch (const std::exception &ex) {
+        std::cerr << ex.what() << '\n';
+        return 1;
+    }
+#endif
     return 0;
 }
 #endif
