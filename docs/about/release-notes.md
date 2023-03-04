@@ -26,5 +26,5 @@ pip install -U pybind11-geobuf
 
 You can also checkout releases on:
 
--   GitHub: <https://github.com/cubao/concave_hull/releases>
--   PyPi: <https://pypi.org/project/concave-hull>
+-   GitHub: <https://github.com/cubao/geobuf-cpp/releases>
+-   PyPi: <https://pypi.org/project/pybind11-geobuf>
