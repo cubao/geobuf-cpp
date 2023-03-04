@@ -10,6 +10,9 @@ auto_build_type_and_compile_flags()
 configure_output_directories()
 configure_version_h()
 
+# MISC
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+
 set(CMAKE_CXX_STANDARD 17)
 include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/headers/include ${PROJECT_SOURCE_DIR}/src)
 
