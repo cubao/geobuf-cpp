@@ -7,9 +7,9 @@ and with python binding.
 
 Install
 
-```
+```bash
 # from pypi
-pip install pybind11_geobuf
+pip install -U pybind11_geobuf
 
 # from source
 git clone --recursive https://github.com/cubao/geobuf-cpp
@@ -41,29 +41,20 @@ All dependencies are header-only, including:
 
 Simple roundtrip tests pass, have identical results to JS implementation.
 
-Will be throughly tested later.
-
 ## Development
 
 pull all code:
 
-```
+```bash
 git submodule update --init --recursive
 ```
 
 compile & test:
 
-```
+```bash
 make build
 make test_all
 
 make roundtrip_test_js
 make roundtrip_test_cpp
 ```
-
-TODO:
-
--   diff js/py/c++
-    -   fix precision test
--   python binding
--   wasm binding

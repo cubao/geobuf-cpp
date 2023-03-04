@@ -1,15 +1,14 @@
-site_name: concave_hull
-site_url: https://concave_hull.readthedocs.io
-site_description: A very fast 2D concave hull algorithm, for python.
+site_name: pybind11-geobuf
+site_url: https://pybind11-geobuf.readthedocs.io
+site_description:  A compact binary encoding for geographic data, with python binding.
 site_author: district10
 
-repo_url: https://github.com/cubao/concave_hull
+repo_url: https://github.com/cubao/pybind11-geobuf
 edit_uri: blob/master/docs/
 
 theme: readthedocs
 nav:
     - Home: index.md
-    - WGS84: wgs84.md
     - About:
         - Release Notes: about/release-notes.md
         - License: about/license.md

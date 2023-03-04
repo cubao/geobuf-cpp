@@ -32,13 +32,6 @@ build:
 test_all:
 	@cd build && for t in $(wildcard $(BUILD_DIR)/bin/test_*); do echo $$t && eval $$t >/dev/null 2>&1 && echo 'ok' || echo $(RED)Not Ok$(NC); done
 
-build_all:
-	python3 -m mdk_tools.cli.run_in_build_env --docker-tag u16 make build
-	python3 -m mdk_tools.cli.run_in_build_env --docker-tag u18 make build
-	python3 -m mdk_tools.cli.run_in_build_env --docker-tag u20 make build
-	python3 -m mdk_tools.cli.run_in_build_env --docker-tag win make build
-	python3 -m mdk_tools.cli.run_in_build_env --docker-tag mph make build
-
 INPUT_GEOJSON_PATH ?= data/sample1.json
 # INPUT_GEOJSON_PATH := pygeobuf/test/fixtures/geometrycollection.json
 GEOJSON_BASENAME = $(shell basename $(abspath $(INPUT_GEOJSON_PATH)))
@@ -84,6 +77,11 @@ pytest:
 
 clean_test:
 	rm -rf $(OUTPUT_DIR_JS) $(OUTPUT_DIR_CPP) build/roundtrip_test
+
+docs_build:
+	mkdocs build
+docs_serve:
+	mkdocs serve -a 0.0.0.0:8088
 
 DOCKER_TAG_WINDOWS ?= ghcr.io/cubao/build-env-windows-x64:v0.0.1
 DOCKER_TAG_LINUX ?= ghcr.io/cubao/build-env-manylinux2014-x64:v0.0.1
@@ -132,7 +130,8 @@ python_build_all_in_windows: python_build_all
 
 repair_wheels:
 	python -m pip install auditwheel # sudo apt install patchelf
-	ls dist/* | xargs -n1 auditwheel repair --plat manylinux2014_x86_64
+	ls dist/*-linux_x86_64.whl | xargs -n1 auditwheel repair --plat manylinux2014_x86_64
+	rm -rf dist/*-linux_x86_64.whl && cp wheelhouse/*.whl dist && rm -rf wheelhouse
 
 pypi_remote ?= pypi
 upload_wheels:
