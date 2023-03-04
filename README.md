@@ -1,5 +1,7 @@
 # geobuf
 
+<!--intro-start-->
+
 C++ port of <https://github.com/mapbox/geobuf>,
 and with python binding.
 
@@ -40,6 +42,8 @@ All dependencies are header-only, including:
 *[`dbg-macro`](https://github.com/sharkdp/dbg-macro) and [`doctest`](https://github.com/onqtam/doctest) are dev dependencies.*
 
 Simple roundtrip tests pass, have identical results to JS implementation.
+
+<!--intro-end-->
 
 ## Development
 

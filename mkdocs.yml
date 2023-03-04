@@ -13,4 +13,7 @@ nav:
         - Release Notes: about/release-notes.md
         - License: about/license.md
 
+plugins:
+  - include-markdown
+
 copyright: Copyright &copy; 2023 <a href="https://github.com/cubao">cubao team</a>.
