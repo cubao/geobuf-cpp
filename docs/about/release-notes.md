@@ -10,6 +10,11 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.0.4 (2023-03-04)
+
+*   Use GitHub workflow to release to pypi
+*   Setup CI
+
 ## Version 0.0.3 (2023-02-02)
 
 *   Export `normalize_json`
