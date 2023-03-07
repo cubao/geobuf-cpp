@@ -23,6 +23,19 @@ macro(setup_username_hostname)
 endmacro()
 configure_version_h()
 
+set(VERSION_H "${CMAKE_BINARY_DIR}/${PROJECT_NAME}/version.h")
+file(READ ${VERSION_H} MY_VERSION_H)
+message(STATUS "${MY_VERSION_H}")
+
+message(STATUS "good\n")
+
+macro(setup_username_hostname)
+    set(USERNAME_HOSTNAME "no")
+endmacro()
+configure_version_h()
+file(READ ${VERSION_H} MY_VERSION_H)
+message(STATUS "${MY_VERSION_H}")
+
 # MISC
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
