@@ -8,6 +8,15 @@ include(${CUBAO_INCLUDE}/utils.cmake)
 activate_common_configuration()
 auto_build_type_and_compile_flags()
 configure_output_directories()
+
+macro(setup_username_hostname)
+    execute_process(
+        COMMAND bash "-c" "echo $(id -u -n)@$(hostname) | tr '\n' ' '"
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        OUTPUT_VARIABLE USERNAME_HOSTNAME
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(REPLACE "\\" "/" USERNAME_HOSTNAME "${USERNAME_HOSTNAME}")
+endmacro()
 configure_version_h()
 
 # MISC
