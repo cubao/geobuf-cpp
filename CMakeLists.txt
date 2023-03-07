@@ -9,11 +9,10 @@ activate_common_configuration()
 auto_build_type_and_compile_flags()
 configure_output_directories()
 
-set(CUBAO_USE_DUMMY_VERSION_H "True")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(CUBAO_USE_DUMMY_VERSION_H "True")
+endif()
 configure_version_h()
-set(VERSION_H "${CMAKE_BINARY_DIR}/${PROJECT_NAME}/version.h")
-file(READ ${VERSION_H} MY_VERSION_H)
-message(STATUS "${MY_VERSION_H}")
 
 # MISC
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
