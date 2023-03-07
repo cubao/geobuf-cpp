@@ -130,6 +130,7 @@ setup(
     version="0.0.4",
     author="tzx",
     author_email="dvorak4tzx@gmail.com",
+    url="https://geobuf-cpp.readthedocs.io",
     description="c++ geobuf with python binding",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
