@@ -36,7 +36,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # os: [ubuntu-latest, macos-latest]
+        os: [windows-latest]
 
     steps:
     - uses: actions/checkout@v3
@@ -57,7 +58,7 @@ jobs:
         CIBW_ARCHS_MACOS: x86_64 arm64
         CIBW_BEFORE_BUILD: pip install numpy fire --prefer-binary
         # https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
-        CIBW_SKIP: pp* *i686 *musllinux* *win*
+        CIBW_SKIP: pp* *i686 *musllinux*
         CIBW_TEST_SKIP: "*macosx* *win* *aarch64"
 
     - name: Verify clean directory
