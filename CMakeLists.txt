@@ -9,30 +9,9 @@ activate_common_configuration()
 auto_build_type_and_compile_flags()
 configure_output_directories()
 
-macro(setup_username_hostname)
-    execute_process(
-        COMMAND bash "-c" "echo $(id -u -n)@$(hostname) | tr '\n' ' '"
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-        OUTPUT_VARIABLE USERNAME_HOSTNAME
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-    string(
-        REPLACE "\\"
-                "/"
-                USERNAME_HOSTNAME
-                "${USERNAME_HOSTNAME}")
-endmacro()
+set(CUBAO_USE_DUMMY_VERSION_H "True")
 configure_version_h()
-
 set(VERSION_H "${CMAKE_BINARY_DIR}/${PROJECT_NAME}/version.h")
-file(READ ${VERSION_H} MY_VERSION_H)
-message(STATUS "${MY_VERSION_H}")
-
-message(STATUS "good\n")
-
-macro(setup_username_hostname)
-    set(USERNAME_HOSTNAME "no")
-endmacro()
-configure_version_h()
 file(READ ${VERSION_H} MY_VERSION_H)
 message(STATUS "${MY_VERSION_H}")
 
