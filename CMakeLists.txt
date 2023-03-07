@@ -15,7 +15,11 @@ macro(setup_username_hostname)
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         OUTPUT_VARIABLE USERNAME_HOSTNAME
         OUTPUT_STRIP_TRAILING_WHITESPACE)
-    string(REPLACE "\\" "/" USERNAME_HOSTNAME "${USERNAME_HOSTNAME}")
+    string(
+        REPLACE "\\"
+                "/"
+                USERNAME_HOSTNAME
+                "${USERNAME_HOSTNAME}")
 endmacro()
 configure_version_h()
 
