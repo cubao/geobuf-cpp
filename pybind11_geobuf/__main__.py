@@ -56,7 +56,24 @@ def normalize_geobuf(
     sort_keys: bool = True,
     precision: int = -1,
 ):
-    pass
+    logger.info(f"normalize_geobuf {input_path} ({__filesize(input_path):,} bytes)")
+    with open(input_path, 'rb') as f:
+        encoded = f.read()
+    decoder = Decoder()
+    json = decoder.decode_to_rapidjson(encoded, sort_keys=sort_keys)
+    if precision < 0:
+        precision = decoder.precision()
+        logger.info(f'auto precision from geobuf: {precision}')
+    else:
+        logger.info(f'user precision: {precision}')
+    encoder = Encoder(max_precision=int(10**precision))
+    encoded = encoder.encode(json)
+    logger.info(f"encoded #bytes: {len(encoded):,}")
+    output_path = output_path or input_path
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    with open(output_path, 'wb') as f:
+        f.write(encoded)
+    logger.info(f"wrote to {output_path} ({__filesize(output_path):,} bytes)")
 
 
 def normalize_json(

@@ -144,6 +144,7 @@ struct Decoder
     mapbox::geojson::geojson decode(const std::string &pbf_bytes);
     bool decode(const std::string &input_path, const std::string &output_path,
                 bool indent = false, bool sort_keys = false);
+    int precision() const { return std::log10(e); }
 
   private:
     mapbox::geojson::feature_collection readFeatureCollection(Pbf &pbf);
@@ -152,7 +153,7 @@ struct Decoder
     mapbox::geojson::value readValue(Pbf &pbf);
 
     uint32_t dim = MAPBOX_GEOBUF_DEFAULT_DIM;
-    uint32_t e = MAPBOX_GEOBUF_DEFAULT_PRECISION;
+    uint32_t e = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION);
     std::vector<std::string> keys;
 };
 
