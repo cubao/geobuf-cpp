@@ -1,4 +1,5 @@
 PROJECT_SOURCE_DIR ?= $(abspath ./)
+PROJECT_NAME ?= $(shell basename $(PROJECT_SOURCE_DIR))
 BUILD_DIR ?= $(PROJECT_SOURCE_DIR)/build
 INSTALL_DIR ?= $(BUILD_DIR)/install
 NUM_JOB ?= 8
@@ -102,8 +103,7 @@ python_build:
 python_sdist:
 	$(PYTHON) setup.py sdist
 	# tar -tvf dist/geobuf-*.tar.gz
-python_test:
-	pytest tests
+python_test: pytest
 
 cli_test:
 	python3 -m pybind11_geobuf
@@ -148,8 +148,8 @@ upload_wheels:
 	twine upload dist/*.whl -r $(pypi_remote)
 
 tar.gz:
-	tar -cvz --exclude .git -f ../geobuf.tar.gz .
-	ls -alh ../geobuf.tar.gz
+	tar -cvz --exclude .git -f ../$(PROJECT_NAME).tar.gz .
+	ls -alh ../$(PROJECT_NAME).tar.gz
 
 # https://stackoverflow.com/a/25817631
 echo-%  : ; @echo -n $($*)
