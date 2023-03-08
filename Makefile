@@ -108,8 +108,8 @@ python_test:
 cli_test:
 	python3 -m pybind11_geobuf
 	python3 -m pybind11_geobuf --help
-	python3 -m pybind11_geobuf geojson2geobuf data/sample1.json build/sample1.pbf
-	python3 -m pybind11_geobuf geobuf2geojson build/sample1.pbf build/sample1.json --indent=True --sort_keys=True
+	python3 -m pybind11_geobuf json2geobuf data/sample1.json build/sample1.pbf
+	python3 -m pybind11_geobuf geobuf2json build/sample1.pbf build/sample1.json --indent=True --sort_keys=True
 	python3 -m pybind11_geobuf pbf_decode build/sample1.pbf build/sample1.pbf.txt
 	python3 -m pybind11_geobuf normalize_json data/sample1.json build/sample1.normalized.json
 	python3 -m pybind11_geobuf normalize_json data/sample1.json build/sample1.normalized.precision2.json --precision=2

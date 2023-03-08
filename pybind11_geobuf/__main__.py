@@ -14,7 +14,7 @@ def __filesize(path: str) -> int:
     return os.stat(path).st_size
 
 
-def geobuf2geojson(
+def geobuf2json(
     input_path: str,
     output_path: str,
     *,
@@ -33,7 +33,7 @@ def geobuf2geojson(
     logger.info(f"wrote to {output_path} ({__filesize(output_path):,} bytes)")
 
 
-def geojson2geobuf(
+def json2geobuf(
     input_path: str,
     output_path: str,
     *,
@@ -111,8 +111,8 @@ if __name__ == "__main__":
     fire.core.Display = lambda lines, out: print(*lines, file=out)
     fire.Fire(
         {
-            "geobuf2geojson": geobuf2geojson,
-            "geojson2geobuf": geojson2geobuf,
+            "geobuf2json": geobuf2json,
+            "json2geobuf": json2geobuf,
             "normalize_geobuf": normalize_geobuf,
             "normalize_json": normalize_json,
             "pbf_decode": pbf_decode,
