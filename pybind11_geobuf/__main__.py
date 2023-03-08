@@ -1,5 +1,3 @@
-# noqa: E501
-
 import os
 
 from loguru import logger
@@ -21,7 +19,9 @@ def geobuf2json(
     indent: bool = False,
     sort_keys: bool = False,
 ):
-    logger.info(f"geobuf decoding {input_path} ({__filesize(input_path):,} bytes)...")
+    logger.info(
+        f"geobuf decoding {input_path} ({__filesize(input_path):,} bytes)..."
+    )  # noqa
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     decoder = Decoder()
     assert decoder.decode(
@@ -39,7 +39,9 @@ def json2geobuf(
     *,
     precision: int = 8,
 ):
-    logger.info(f"geobuf encoding {input_path} ({__filesize(input_path):,} bytes)...")
+    logger.info(
+        f"geobuf encoding {input_path} ({__filesize(input_path):,} bytes)..."
+    )  # noqa
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     encoder = Encoder(max_precision=int(10**precision))
     assert encoder.encode(
@@ -56,22 +58,24 @@ def normalize_geobuf(
     sort_keys: bool = True,
     precision: int = -1,
 ):
-    logger.info(f"normalize_geobuf {input_path} ({__filesize(input_path):,} bytes)")
-    with open(input_path, 'rb') as f:
+    logger.info(
+        f"normalize_geobuf {input_path} ({__filesize(input_path):,} bytes)"
+    )  # noqa
+    with open(input_path, "rb") as f:
         encoded = f.read()
     decoder = Decoder()
     json = decoder.decode_to_rapidjson(encoded, sort_keys=sort_keys)
     if precision < 0:
         precision = decoder.precision()
-        logger.info(f'auto precision from geobuf: {precision}')
+        logger.info(f"auto precision from geobuf: {precision}")
     else:
-        logger.info(f'user precision: {precision}')
+        logger.info(f"user precision: {precision}")
     encoder = Encoder(max_precision=int(10**precision))
     encoded = encoder.encode(json)
     logger.info(f"encoded #bytes: {len(encoded):,}")
     output_path = output_path or input_path
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-    with open(output_path, 'wb') as f:
+    with open(output_path, "wb") as f:
         f.write(encoded)
     logger.info(f"wrote to {output_path} ({__filesize(output_path):,} bytes)")
 
@@ -84,11 +88,15 @@ def normalize_json(
     sort_keys: bool = True,
     precision: int = -1,
 ):
-    logger.info(f"normalize_json {input_path} ({__filesize(input_path):,} bytes)")
+    logger.info(
+        f"normalize_json {input_path} ({__filesize(input_path):,} bytes)"
+    )  # noqa
     output_path = output_path or input_path
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     if precision > 0:
-        logger.info(f"convert to geobuf (precision: {precision}), then back to geojson")
+        logger.info(
+            f"convert to geobuf (precision: {precision}), then back to geojson"
+        )  # noqa
         encoder = Encoder(max_precision=int(10**precision))
         geojson = rapidjson().load(input_path)
         assert geojson.IsObject(), f"invalid geojson: {input_path}"
@@ -114,7 +122,9 @@ def pbf_decode(path: str, output_path: str = None, *, indent: str = ""):
         data = f.read()
     decoded = pbf_decode_impl(data, indent=indent)
     if output_path:
-        os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+        os.makedirs(
+            os.path.dirname(os.path.abspath(output_path)), exist_ok=True
+        )  # noqa
         with open(output_path, "w", encoding="utf8") as f:
             f.write(decoded)
         logger.info(f"wrote to {output_path}")

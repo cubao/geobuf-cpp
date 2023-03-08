@@ -13,6 +13,7 @@ pip install -U pybind11-geobuf
 ## Version 0.0.5 (2023-03-08)
 
 *   Add windows version
+*   Add cli interface
 
 ## Version 0.0.4 (2023-03-04)
 
