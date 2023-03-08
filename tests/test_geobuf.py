@@ -5,8 +5,9 @@ import pickle
 from copy import deepcopy
 
 import numpy as np
-import pybind11_geobuf
 import pytest
+
+import pybind11_geobuf
 from pybind11_geobuf import (  # noqa
     Decoder,
     Encoder,
