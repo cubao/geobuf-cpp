@@ -111,6 +111,8 @@ cli_test:
 	python3 -m pybind11_geobuf geojson2geobuf data/sample1.json build/sample1.pbf
 	python3 -m pybind11_geobuf geobuf2geojson build/sample1.pbf build/sample1.json --indent=True --sort_keys=True
 	python3 -m pybind11_geobuf pbf_decode build/sample1.pbf build/sample1.pbf.txt
+	python3 -m pybind11_geobuf normalize_json data/sample1.json build/sample1.normalized.json
+	python3 -m pybind11_geobuf normalize_json data/sample1.json build/sample1.normalized.precision2.json --precision=2
 
 # conda create -y -n py36 python=3.6
 # conda create -y -n py37 python=3.7
