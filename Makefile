@@ -103,7 +103,14 @@ python_sdist:
 	$(PYTHON) setup.py sdist
 	# tar -tvf dist/geobuf-*.tar.gz
 python_test:
-	# TODO
+	pytest tests
+
+cli_test:
+	python3 -m pybind11_geobuf
+	python3 -m pybind11_geobuf --help
+	python3 -m pybind11_geobuf geojson2geobuf data/sample1.json build/sample1.pbf
+	python3 -m pybind11_geobuf geobuf2geojson build/sample1.pbf build/sample1.json --indent=True --sort_keys=True
+	python3 -m pybind11_geobuf pbf_decode build/sample1.pbf build/sample1.pbf.txt
 
 # conda create -y -n py36 python=3.6
 # conda create -y -n py37 python=3.7
