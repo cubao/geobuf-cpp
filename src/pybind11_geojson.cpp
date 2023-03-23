@@ -66,7 +66,7 @@ void bind_geojson(py::module &geojson)
         .def(
             "from_numpy",
             [](std::vector<mapbox::geojson::point> &self,
-               Eigen::Ref<const MatrixXdRowMajor> points)
+               const Eigen::Ref<const MatrixXdRowMajor> &points)
                 -> std::vector<mapbox::geojson::point> & {
                 eigen2geom(points, self);
                 return self;
@@ -180,9 +180,7 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal)
         .def(
             "pop_back",
-            [](mapbox::geojson::geometry &self,
-               const mapbox::geojson::point &point)
-                -> mapbox::geojson::geometry & {
+            [](mapbox::geojson::geometry &self) -> mapbox::geojson::geometry & {
                 geometry_pop_back(self);
                 return self;
             },
@@ -212,7 +210,7 @@ void bind_geojson(py::module &geojson)
         .def(
             "from_numpy",
             [](mapbox::geojson::geometry &self,
-               Eigen::Ref<const MatrixXdRowMajor> points)
+               const Eigen::Ref<const MatrixXdRowMajor> &points)
                 -> mapbox::geojson::geometry & {
                 eigen2geom(points, self);
                 return self;
@@ -411,9 +409,9 @@ void bind_geojson(py::module &geojson)
         .def(                                                                  \
             "push_back",                                                       \
             [](mapbox::geojson::geom_type &self,                               \
-               const std::array<double, 3> &xyz)                               \
-                -> mapbox::geojson::geom_type & {                              \
-                self.emplace_back(xyz[0], xyz[1], xyz[2]);                     \
+               const Eigen::VectorXd &xyz) -> mapbox::geojson::geom_type & {   \
+                self.emplace_back(xyz[0], xyz[1],                              \
+                                  xyz.size() > 2 ? xyz[2] : 0.0);              \
                 return self;                                                   \
             },                                                                 \
             rvp::reference_internal)                                           \
@@ -431,7 +429,7 @@ void bind_geojson(py::module &geojson)
         .def(                                                                  \
             "from_numpy",                                                      \
             [](mapbox::geojson::geom_type &self,                               \
-               Eigen::Ref<const MatrixXdRowMajor> points)                      \
+               const Eigen::Ref<const MatrixXdRowMajor> &points)               \
                 -> mapbox::geojson::geom_type & {                              \
                 eigen2geom(points, self);                                      \
                 return self;                                                   \
@@ -546,7 +544,7 @@ void bind_geojson(py::module &geojson)
         .def(                                                                  \
             "from_numpy",                                                      \
             [](mapbox::geojson::geom_type &self,                               \
-               Eigen::Ref<const MatrixXdRowMajor> points)                      \
+               const Eigen::Ref<const MatrixXdRowMajor> &points)               \
                 -> mapbox::geojson::geom_type & {                              \
                 eigen2geom(points, self);                                      \
                 return self;                                                   \
@@ -654,7 +652,7 @@ void bind_geojson(py::module &geojson)
         .def(
             "from_numpy",
             [](mapbox::geojson::multi_polygon &self,
-               Eigen::Ref<const MatrixXdRowMajor> points)
+               const Eigen::Ref<const MatrixXdRowMajor> &points)
                 -> mapbox::geojson::multi_polygon & {
                 eigen2geom(points, self);
                 return self;
