@@ -428,6 +428,10 @@ def test_geojson_polygon():
         assert isinstance(gg, geojson.LinearRing)
         for pt in gg:
             assert isinstance(pt, geojson.Point)
+
+    g1[0].push_back([8, 9]).push_back(geojson.Point(10, 11))
+    assert np.all(g1[0].as_numpy()[-2:, :] == [[8, 9, 0], [10, 11, 0]])
+
     g1[0].from_numpy([[1, 2], [3, 4]])
     assert g1[0]() == [[1.0, 2.0, 0.0], [3.0, 4.0, 0.0]]
 
@@ -545,6 +549,11 @@ def test_geojson_geometry():
     assert g2() == {"type": "Point", "coordinates": [0.0, 0.0, 0.0]}
     g2["my_key"] = "my_value"
     assert g2()["my_key"] == "my_value"
+    assert g2() == {
+        "type": "Point",
+        "coordinates": [0.0, 0.0, 0.0],
+        "my_key": "my_value",
+    }
 
     # g2['type'] = 'my_value' # TODO, should raise
 
