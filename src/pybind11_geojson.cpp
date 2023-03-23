@@ -304,7 +304,8 @@ void bind_geojson(py::module &geojson)
                 *(&self.x + (index >= 0 ? index : index + 3)) = v;
                 return v;
             },
-            "index"_a, "value"_a) copy_deepcopy_clone(mapbox::geojson::point)
+            "index"_a, "value"_a) //
+        copy_deepcopy_clone(mapbox::geojson::point)
         .def(py::pickle(
             [](const mapbox::geojson::point &self) {
                 return to_python(mapbox::geojson::geometry(self));
@@ -319,14 +320,15 @@ void bind_geojson(py::module &geojson)
             [](const mapbox::geojson::point &self) -> py::object {
                 return to_python(self);
             })
-        .def("from_rapidjson",
-             [](mapbox::geojson::point &self,
-                const RapidjsonValue &json) -> mapbox::geojson::point & {
-                 self =
-                     mapbox::geojson::convert<mapbox::geojson::geometry>(json)
-                         .get<mapbox::geojson::point>();
-                 return self;
-             })
+        .def(
+            "from_rapidjson",
+            [](mapbox::geojson::point &self,
+               const RapidjsonValue &json) -> mapbox::geojson::point & {
+                self = mapbox::geojson::convert<mapbox::geojson::geometry>(json)
+                           .get<mapbox::geojson::point>();
+                return self;
+            },
+            rvp::reference_internal)
         .def("to_rapidjson",
              [](const mapbox::geojson::point &self) {
                  RapidjsonAllocator allocator;

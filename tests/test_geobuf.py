@@ -193,6 +193,45 @@ def test_geojson_point():
     }
 
 
+def test_geojson_point2():
+    pt = geojson.Point()
+    assert pt() == [0.0, 0.0, 0.0]
+    pt = geojson.Point([1, 2])
+    assert pt() == [1.0, 2.0, 0.0]
+    pt = geojson.Point([1, 2, 3])
+    assert pt() == [1.0, 2.0, 3.0]
+    pt.from_numpy([4, 5, 6])
+    assert pt() == [4.0, 5.0, 6.0]
+    pt.from_numpy([7, 8])
+    assert pt() == [7.0, 8.0, 0.0]
+    assert pt.x == 7.0
+    pt.x = 6.0
+    assert pt.x == 6.0
+    assert pt.y == 8.0 and pt.z == 0.0
+    assert pt.x == pt[0] == pt[-3]
+    assert pt.y == pt[1] == pt[-2]
+    assert pt.z == pt[2] == pt[-1]
+    pt[2] += 1.0
+    assert pt.z == 1.0
+    assert pt.to_rapidjson()() == {
+        "type": "Point",
+        "coordinates": [6.0, 8.0, 1.0],
+    }
+    pt.from_rapidjson(
+        rapidjson(
+            {
+                "type": "Point",
+                "coordinates": [2.0, 4.0, 1.0],
+            }
+        )
+    )
+    assert pt.as_numpy().tolist() == [2, 4, 1]
+    pt.from_rapidjson(
+        rapidjson({"type": "Point", "coordinates": [3.0, 5.0, 2.0]})
+    ).x = 33
+    assert pt.as_numpy().tolist() == [33, 5, 2]
+
+
 def test_geojson_multi_point():
     g1 = geojson.MultiPoint()
     assert g1.as_numpy().shape == (0, 3)
@@ -416,19 +455,6 @@ def test_geobuf_from_geojson():
     encoded1 = encoder.encode(rapidjson(feature))
     assert len(encoded1) == len(encoded)
     # geojson.Feature().from_rapidjson
-
-
-def test_geojson():
-    pt = geojson.Point()
-    assert pt() == [0.0, 0.0, 0.0]
-    pt = geojson.Point([1, 2])
-    assert pt() == [1.0, 2.0, 0.0]
-    pt = geojson.Point([1, 2, 3])
-    assert pt() == [1.0, 2.0, 3.0]
-    pt.from_numpy([4, 5, 6])
-    assert pt() == [4.0, 5.0, 6.0]
-    pt.from_numpy([7, 8])
-    assert pt() == [7.0, 8.0, 0.0]
 
 
 def pytest_main(dir: str, *, test_file: str = None):
