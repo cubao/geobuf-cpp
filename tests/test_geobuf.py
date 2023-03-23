@@ -68,6 +68,34 @@ def test_geobuf():
     print(geojson_text)
 
 
+def test_rapidjson_empty():
+    assert not bool(rapidjson())
+    assert not bool(rapidjson([]))
+    assert not bool(rapidjson({}))
+    assert not bool(rapidjson(0))
+    assert not bool(rapidjson(0.0))
+    assert not bool(rapidjson(""))
+    assert not bool(rapidjson(False))
+
+    assert bool(rapidjson([4]))
+    assert bool(rapidjson({"key": "value"}))
+    assert bool(rapidjson(-1))
+    assert bool(rapidjson(-1.0))
+    assert bool(rapidjson("text"))
+    assert bool(rapidjson(True))
+
+    assert not rapidjson([4]).Empty()
+    assert not rapidjson({"key": "value"}).Empty()
+    assert not rapidjson(-1).Empty()
+    assert not rapidjson(-1.0).Empty()
+    assert not rapidjson("text").Empty()
+    assert not rapidjson(True).Empty()
+
+    assert rapidjson([4, 2]).clear() == rapidjson([])
+    assert rapidjson([4, 2]).clear() != rapidjson({})
+    assert rapidjson({"key": "value"}).clear() == rapidjson({})
+
+
 def test_rapidjson_arr():
     arr = rapidjson([1, 3, "text", {"key": 3.2}])
     assert arr[2]() == "text"

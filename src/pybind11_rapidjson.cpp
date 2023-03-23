@@ -67,7 +67,7 @@ void bind_rapidjson(py::module &m)
             // get string
             //
             .def("Empty",
-                 [](const RapidjsonValue &self) { return __bool__(self); })
+                 [](const RapidjsonValue &self) { return !__bool__(self); })
             .def("__bool__",
                  [](const RapidjsonValue &self) { return __bool__(self); })
             .def(
@@ -185,13 +185,14 @@ void bind_rapidjson(py::module &m)
                          (index >= 0 ? index : index + (int)self.Size()));
                  })
             .def("clear",
-                 [](RapidjsonValue &self) {
+                 [](RapidjsonValue &self) -> RapidjsonValue & {
                      if (self.IsObject()) {
                          self.RemoveAllMembers();
                      } else if (self.IsArray()) {
                          self.Clear();
                      }
-                 })
+                     return self;
+                 }, rvp::reference_internal)
             // get (python copy)
             .def("GetBool", &RapidjsonValue::GetBool)
             .def("GetInt", &RapidjsonValue::GetInt)
