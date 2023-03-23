@@ -152,6 +152,23 @@ void bind_geojson(py::module &geojson)
                  self.custom_properties[key] = to_geojson_value(value);
                  return value;
              })
+        .def("__len__",
+             [](mapbox::geojson::geometry &self) {
+                 return self.match(
+                     [](mapbox::geojson::point &g) { return 3; },
+                     [](mapbox::geojson::multi_point &g) { return g.size(); },
+                     [](mapbox::geojson::line_string &g) { return g.size(); },
+                     [](mapbox::geojson::linear_ring &g) { return g.size(); },
+                     [](mapbox::geojson::multi_line_string &g) {
+                         return g.size();
+                     },
+                     [](mapbox::geojson::polygon &g) { return g.size(); },
+                     [](mapbox::geojson::multi_polygon &g) { return g.size(); },
+                     [](mapbox::geojson::geometry_collection &g) {
+                         return g.size();
+                     },
+                     [](auto &) -> int { return 0; });
+             })
         .def(
             "push_back",
             [](mapbox::geojson::geometry &self,
@@ -1101,7 +1118,8 @@ void bind_geojson(py::module &geojson)
         //
         ;
 
-    py::class_<mapbox::geojson::feature>(geojson, "Feature", py::module_local())
+    py::class_<mapbox::geojson::feature>(geojson, "Feature",
+                                         py::module_local())
         .def(py::init<>())
             BIND_PY_FLUENT_ATTRIBUTE(mapbox::geojson::feature,  //
                                      mapbox::geojson::geometry, //

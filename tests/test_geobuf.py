@@ -463,6 +463,7 @@ def test_geojson_geometry():
     gc.push_back(g3)
     gc.push_back(g4)
     assert gc() == {"type": gc.type(), "geometries": [g3(), g4()]}
+    assert len(gc) == 2
 
     # update value
     g31 = g3.clone()
