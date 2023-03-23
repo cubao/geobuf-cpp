@@ -292,7 +292,13 @@ def test_geojson_line_string():
     assert G.to_rapidjson() == g1.to_rapidjson()
     assert G.type() == "LineString"
 
-    print()  # TODO clear
+    assert len(g1) == 2
+    g1.push_back([1, 2, 3])
+    assert len(g1) == 3
+    g1.push_back([4, 5])
+    assert len(g1) == 4
+    g1.clear()
+    assert len(g1) == 0
 
 
 def test_geojson_multi_line_string():
@@ -461,7 +467,11 @@ def test_geobuf_from_geojson():
 
     encoded1 = encoder.encode(rapidjson(feature))
     assert len(encoded1) == len(encoded)
-    # geojson.Feature().from_rapidjson
+
+
+def test_geojson_feature():
+    feature = geojson.Feature().from_rapidjson()
+    print()
 
 
 def pytest_main(dir: str, *, test_file: str = None):

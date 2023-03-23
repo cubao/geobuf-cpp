@@ -354,7 +354,7 @@ void bind_geojson(py::module &geojson)
         ;
 
 #define BIND_FOR_VECTOR_POINT_TYPE(geom_type)                                  \
-    .def(py::init([](Eigen::Ref<const MatrixXdRowMajor> points) {              \
+    .def(py::init([](const Eigen::Ref<const MatrixXdRowMajor> &points) {       \
         mapbox::geojson::geom_type self;                                       \
         eigen2geom(points, self);                                              \
         return self;                                                           \
@@ -488,7 +488,7 @@ void bind_geojson(py::module &geojson)
         ;
 
 #define BIND_FOR_VECTOR_LINEAR_RING_TYPE(geom_type)                            \
-    .def(py::init([](Eigen::Ref<const MatrixXdRowMajor> points) {              \
+    .def(py::init([](const Eigen::Ref<const MatrixXdRowMajor> &points) {       \
         mapbox::geojson::geom_type self;                                       \
         eigen2geom(points, self);                                              \
         return self;                                                           \
@@ -659,7 +659,7 @@ void bind_geojson(py::module &geojson)
             },
             rvp::reference_internal) //
                                      //
-        .def(py::init([](Eigen::Ref<const MatrixXdRowMajor> points) {
+        .def(py::init([](const Eigen::Ref<const MatrixXdRowMajor> &points) {
             mapbox::geojson::multi_polygon self;
             eigen2geom(points, self);
             return self;
