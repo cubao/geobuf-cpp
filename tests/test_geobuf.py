@@ -421,6 +421,10 @@ def test_geojson_polygon():
     g1[0].from_numpy([[1, 2], [3, 4]])
     assert g1[0]() == [[1.0, 2.0, 0.0], [3.0, 4.0, 0.0]]
 
+    g1.clear()
+    assert len(g1) == 0
+    assert g1.clear() == g1
+
 
 def test_geojson_multi_polygon():
     g1 = geojson.MultiPolygon()
@@ -461,6 +465,11 @@ def test_geojson_multi_polygon():
                     assert isinstance(x, float)
                     value += x
     assert value == 5.0
+    assert len(g1) == 1
+    g1.clear()
+    assert len(g1) == 0
+
+    # g1[0]
 
 
 def test_geojson_geometry():

@@ -702,13 +702,14 @@ void bind_geojson(py::module &geojson)
     py::class_<mapbox::geojson::multi_polygon,
                mapbox::geojson::multi_polygon::container_type>(
         geojson, "MultiPolygon", py::module_local()) //
-        .def("__call__",
-             [](const mapbox::geojson::multi_polygon &self) {
-                 return to_python(self);
-             })
         .def(py::init<>())
         .def(py::init<mapbox::geojson::multi_polygon>())
         .def(py::init<mapbox::geojson::multi_polygon::container_type>())
+        .def(py::init([](const Eigen::Ref<const MatrixXdRowMajor> &points) {
+            mapbox::geojson::multi_polygon self;
+            eigen2geom(points, self);
+            return self;
+        }))
         .def(
             "as_numpy",
             [](mapbox::geojson::multi_polygon &self) -> Eigen::Map<RowVectors> {
@@ -729,11 +730,6 @@ void bind_geojson(py::module &geojson)
             },
             rvp::reference_internal) //
                                      //
-        .def(py::init([](const Eigen::Ref<const MatrixXdRowMajor> &points) {
-            mapbox::geojson::multi_polygon self;
-            eigen2geom(points, self);
-            return self;
-        }))
         .def("__call__",
              [](const mapbox::geojson::multi_polygon &self) {
                  return to_python(self);
@@ -748,7 +744,14 @@ void bind_geojson(py::module &geojson)
                 return py::make_iterator(self.begin(), self.end());
             },
             py::keep_alive<0, 1>())
-        .def("clear", &mapbox::geojson::multi_polygon::clear)
+        .def(
+            "clear",
+            [](mapbox::geojson::multi_polygon &self)
+                -> mapbox::geojson::multi_polygon & {
+                self.clear();
+                return self;
+            },
+            rvp::reference_internal)
         .def("pop_back", &mapbox::geojson::multi_polygon::pop_back)
         // TODO
         copy_deepcopy_clone(mapbox::geojson::multi_polygon)
