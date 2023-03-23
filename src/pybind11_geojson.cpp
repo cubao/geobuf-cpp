@@ -525,6 +525,13 @@ void bind_geojson(py::module &geojson)
             },                                                                 \
             py::keep_alive<0, 1>())                                            \
         .def(                                                                  \
+            "__getitem__",                                                     \
+            [](mapbox::geojson::geom_type &self,                               \
+               int index) -> decltype(self[0]) & {                             \
+                return self[index >= 0 ? index : index + (int)self.size()];    \
+            },                                                                 \
+            rvp::reference_internal)                                           \
+        .def(                                                                  \
             "clear",                                                           \
             [](mapbox::geojson::geom_type &self)                               \
                 -> mapbox::geojson::geom_type & {                              \
@@ -553,7 +560,7 @@ void bind_geojson(py::module &geojson)
             [](mapbox::geojson::geom_type &self,                               \
                const Eigen::Ref<const MatrixXdRowMajor> &points)               \
                 -> mapbox::geojson::geom_type & {                              \
-                mapbox::geojson::line_string ls;                               \
+                mapbox::geojson::geom_type::container_type::value_type ls;     \
                 eigen2geom(points, ls);                                        \
                 self.push_back(ls);                                            \
                 return self;                                                   \
