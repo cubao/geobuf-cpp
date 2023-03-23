@@ -273,6 +273,12 @@ def test_geojson_multi_point():
     j["another_key"] = "value"
     assert j != gg.to_rapidjson()
 
+    xyz = np.zeros(3)
+    for x in g1:  # iterable
+        xyz += x.as_numpy()
+    assert np.all(xyz == np.sum(g1.as_numpy(), axis=0))
+    assert np.all(xyz == g1[0].as_numpy() + g1[-1].as_numpy())
+
     assert len(g1) == 2
     g1.clear()
     assert len(g1) == 0
@@ -342,6 +348,7 @@ def test_geojson_multi_line_string():
         assert len(ls) == 2
         for pt in ls:
             assert isinstance(pt, geojson.Point)
+            assert len(pt) == 3
     # g1[0]
 
     g1.clear()
