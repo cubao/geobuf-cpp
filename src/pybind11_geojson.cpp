@@ -584,19 +584,20 @@ void bind_geojson(py::module &geojson)
         .def(                                                                  \
             "push_back",                                                       \
             [](mapbox::geojson::geom_type &self,                               \
-               const Eigen::VectorXd &xyz) -> mapbox::geojson::geom_type & {   \
-                self.back().push_back(eigen2geom(xyz));                        \
+               const Eigen::Ref<const MatrixXdRowMajor> &points)               \
+                -> mapbox::geojson::geom_type & {                              \
+                mapbox::geojson::geom_type::container_type::value_type ls;     \
+                eigen2geom(points, ls);                                        \
+                self.push_back(ls);                                            \
                 return self;                                                   \
             },                                                                 \
             rvp::reference_internal)                                           \
         .def(                                                                  \
             "push_back",                                                       \
             [](mapbox::geojson::geom_type &self,                               \
-               const Eigen::Ref<const MatrixXdRowMajor> &points)               \
-                -> mapbox::geojson::geom_type & {                              \
-                mapbox::geojson::geom_type::container_type::value_type ls;     \
-                eigen2geom(points, ls);                                        \
-                self.push_back(ls);                                            \
+               const mapbox::geojson::geom_type::container_type::value_type    \
+                   &g) -> mapbox::geojson::geom_type & {                       \
+                self.push_back(g);                                             \
                 return self;                                                   \
             },                                                                 \
             rvp::reference_internal)                                           \

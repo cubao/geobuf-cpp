@@ -269,6 +269,10 @@ def test_geojson_multi_point():
             assert pt() == [7, 8, 9]
     g1.append(geojson.Point())
     assert len(g1) == 2  # append not working, for now
+    g1.push_back(geojson.Point())
+    assert len(g1) == 3  # push_back works now
+    g1.pop_back()
+    assert len(g1) == 2
 
     j = g1.to_rapidjson()
     gg = geojson.MultiPoint().from_rapidjson(j)
@@ -366,8 +370,14 @@ def test_geojson_multi_line_string():
 
     g1.push_back([[1, 2], [3, 4]])
     assert len(g1) == 2
-    g1.push_back([5, 6])
-    assert len(g1) == 2
+    assert g1() == [
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        [[1.0, 2.0, 0.0], [3.0, 4.0, 0.0]],
+    ]
+    with pytest.raises(ValueError) as excinfo:
+        g1.push_back([5, 6])
+    assert "shape expected to be Nx2 or Nx3" in repr(excinfo)
+    g1[-1].push_back([5, 6])
     assert g1() == [
         [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
         [[1.0, 2.0, 0.0], [3.0, 4.0, 0.0], [5.0, 6.0, 0.0]],
