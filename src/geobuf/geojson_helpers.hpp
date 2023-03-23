@@ -202,6 +202,10 @@ inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> mat,
     M.leftCols(mat.cols()) = mat;
 }
 
+inline mapbox::geojson::point eigen2geom(const Eigen::VectorXd &xyz) {
+    return {xyz[0], xyz[1], xyz.size() > 2 ? xyz[2] : 0.0};
+}
+
 inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> points,
                        mapbox::geojson::point &g)
 {
@@ -279,9 +283,7 @@ inline void geometry_push_back(mapbox::geojson::geometry &self,
 inline void geometry_push_back(mapbox::geojson::geometry &self,
                                const Eigen::VectorXd &point)
 {
-    auto geom = mapbox::geojson::point(point[0], point[1],
-                                       point.size() > 2 ? point[2] : 0.0);
-    geometry_push_back(self, geom);
+    geometry_push_back(self, eigen2geom(point));
 }
 
 inline void geometry_push_back(mapbox::geojson::geometry &self,
@@ -324,7 +326,7 @@ inline void geometry_clear(mapbox::geojson::geometry &self)
                });
 }
 
-inline void clear_geojson_value(mapbox::geojson::value &self)
+inline void geojson_value_clear(mapbox::geojson::value &self)
 {
     self.match([](mapbox::geojson::value::array_type &arr) { arr.clear(); },
                [](mapbox::geojson::value::object_type &obj) { obj.clear(); },
