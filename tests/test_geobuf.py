@@ -373,6 +373,9 @@ def test_geojson_multi_line_string():
     g1.from_numpy([[1, 2, 3], [4, 5, 6]])
     assert g1() == [[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]]
 
+    g1[0] = [[7, 8], [2, 3]]
+    assert g1() == [[[7, 8, 0], [2, 3, 0]]]
+
     g1.clear()
     assert len(g1) == 0
 

@@ -531,6 +531,14 @@ void bind_geojson(py::module &geojson)
                 return self[index >= 0 ? index : index + (int)self.size()];    \
             },                                                                 \
             rvp::reference_internal)                                           \
+        .def("__setitem__",                                                    \
+             [](mapbox::geojson::geom_type &self, int index,                   \
+                const Eigen::Ref<const MatrixXdRowMajor> &points) {            \
+                 auto &g =                                                     \
+                     self[index >= 0 ? index : index + (int)self.size()];      \
+                 eigen2geom(points, g);                                        \
+                 return points;                                                \
+             })                                                                \
         .def(                                                                  \
             "clear",                                                           \
             [](mapbox::geojson::geom_type &self)                               \

@@ -194,12 +194,16 @@ inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> mat,
         points.clear();
         return;
     }
-    if (mat.cols() != 2 && mat.cols() != 3) {
+    const int cols = mat.cols();
+    if (cols != 2 && cols != 3) {
         return;
     }
     points.resize(mat.rows());
     Eigen::Map<RowVectors> M(&points[0].x, points.size(), 3);
     M.leftCols(mat.cols()) = mat;
+    if (cols == 2) {
+        M.col(2).setZero();
+    }
 }
 
 inline mapbox::geojson::point eigen2geom(const Eigen::VectorXd &xyz)
@@ -210,7 +214,9 @@ inline mapbox::geojson::point eigen2geom(const Eigen::VectorXd &xyz)
 inline void eigen2geom(const Eigen::Ref<const MatrixXdRowMajor> &points,
                        mapbox::geojson::point &g)
 {
-    Eigen::Vector3d::Map(&g.x) = points.row(0).transpose();
+    g.x = points(0, 0);
+    g.y = points(0, 1);
+    g.z = points.cols() > 2 ? points(0, 2) : 0.0;
 }
 
 inline void eigen2geom(const Eigen::Ref<const MatrixXdRowMajor> &points,
