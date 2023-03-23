@@ -549,6 +549,17 @@ void bind_geojson(py::module &geojson)
             },                                                                 \
             rvp::reference_internal)                                           \
         .def(                                                                  \
+            "push_back",                                                       \
+            [](mapbox::geojson::geom_type &self,                               \
+               const Eigen::Ref<const MatrixXdRowMajor> &points)               \
+                -> mapbox::geojson::geom_type & {                              \
+                mapbox::geojson::line_string ls;                               \
+                eigen2geom(points, ls);                                        \
+                self.push_back(ls);                                            \
+                return self;                                                   \
+            },                                                                 \
+            rvp::reference_internal)                                           \
+        .def(                                                                  \
             "as_numpy",                                                        \
             [](mapbox::geojson::geom_type &self) -> Eigen::Map<RowVectors> {   \
                 return as_row_vectors(self);                                   \

@@ -245,6 +245,10 @@ def test_geojson_multi_point():
     assert np.all(g1.as_numpy() == [[1, 2, 3], [4, 5, 6]])
     assert g1() == [[1, 2, 3], [4, 5, 6]]
 
+    # g2 = geojson.MultiPoint([g1[0], g1[1]])
+    g3 = geojson.MultiPoint([[1, 2], [3, 4]])
+    assert np.all(g3.as_numpy() == [[1, 2, 0], [3, 4, 0]])
+
     assert g1[0]() == [1, 2, 3]
     assert g1[1]() == [4, 5, 6]
     g1[0] = [7, 8, 9]
@@ -319,6 +323,10 @@ def test_geojson_line_string():
     assert len(g1) == 0
     assert g1 == g1.clear()
 
+    # TODO, fix append
+    g1.append(geojson.Point(1, 2))  # don't use append for now
+    assert len(g1) == 0
+
 
 def test_geojson_multi_line_string():
     g1 = geojson.MultiLineString()
@@ -350,6 +358,15 @@ def test_geojson_multi_line_string():
             assert isinstance(pt, geojson.Point)
             assert len(pt) == 3
     # g1[0]
+
+    g1.push_back([[1, 2], [3, 4]])
+    assert len(g1) == 2
+    g1.push_back([5, 6])
+    assert len(g1) == 2
+    assert g1() == [
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        [[1.0, 2.0, 0.0], [3.0, 4.0, 0.0], [1.0, 3.0, 5.0]],
+    ]
 
     g1.clear()
     assert len(g1) == 0
