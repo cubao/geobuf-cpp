@@ -510,8 +510,8 @@ void bind_geojson(py::module &geojson)
         .def(                                                                  \
             "clear",                                                           \
             [](mapbox::geojson::geom_type &self)                               \
-                -> mapbox::geojson::geom_type & {                           \
-                self.clear(); \
+                -> mapbox::geojson::geom_type & {                              \
+                self.clear();                                                  \
                 return self;                                                   \
             },                                                                 \
             rvp::reference_internal)                                           \
@@ -519,7 +519,7 @@ void bind_geojson(py::module &geojson)
             "pop_back",                                                        \
             [](mapbox::geojson::geom_type &self)                               \
                 -> mapbox::geojson::geom_type & {                              \
-                self.back().pop_back(); \
+                self.back().pop_back();                                        \
                 return self;                                                   \
             },                                                                 \
             rvp::reference_internal)                                           \
@@ -527,7 +527,7 @@ void bind_geojson(py::module &geojson)
             "push_back",                                                       \
             [](mapbox::geojson::geom_type &self,                               \
                const Eigen::VectorXd &xyz) -> mapbox::geojson::geom_type & {   \
-                self.back().push_back(eigen2geom(xyz));                                 \
+                self.back().push_back(eigen2geom(xyz));                        \
                 return self;                                                   \
             },                                                                 \
             rvp::reference_internal)                                           \

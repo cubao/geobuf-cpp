@@ -202,7 +202,8 @@ inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> mat,
     M.leftCols(mat.cols()) = mat;
 }
 
-inline mapbox::geojson::point eigen2geom(const Eigen::VectorXd &xyz) {
+inline mapbox::geojson::point eigen2geom(const Eigen::VectorXd &xyz)
+{
     return {xyz[0], xyz[1], xyz.size() > 2 ? xyz[2] : 0.0};
 }
 
@@ -318,9 +319,18 @@ inline void geometry_clear(mapbox::geojson::geometry &self)
 {
     self.match([&](mapbox::geojson::multi_point &g) { g.clear(); },
                [&](mapbox::geojson::line_string &g) { g.clear(); },
-               [&](mapbox::geojson::multi_line_string &g) { g.clear(); },
-               [&](mapbox::geojson::polygon &g) { g.clear(); },
-               [&](mapbox::geojson::multi_polygon &g) { g.clear(); },
+               [&](mapbox::geojson::multi_line_string &g) {
+                   g.clear();
+                   // not g.back().clear();
+               },
+               [&](mapbox::geojson::polygon &g) {
+                   g.clear();
+                   // not g.back().clear();
+               },
+               [&](mapbox::geojson::multi_polygon &g) {
+                   g.clear();
+                   // not g.back().back().clear();
+               },
                [&](auto &) {
                    // TODO, log
                });
