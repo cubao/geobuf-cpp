@@ -169,25 +169,10 @@ inline std::string geometry_type(const mapbox::geojson::geometry &self)
         [](const auto &g) -> std::string { return "None"; });
 }
 
-inline void eigen2geom(const Eigen::MatrixXd &mat,
-                       std::vector<mapbox::geojson::point> &points)
-{
-    if (mat.rows() == 0) {
-        points.clear();
-        return;
-    }
-    if (mat.cols() != 2 && mat.cols() != 3) {
-        return;
-    }
-    points.resize(mat.rows());
-    Eigen::Map<RowVectors> M(&points[0].x, points.size(), 3);
-    M.leftCols(mat.cols()) = mat;
-}
-
 using MatrixXdRowMajor =
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
-inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> mat,
+inline void eigen2geom(const Eigen::Ref<const MatrixXdRowMajor> &mat,
                        std::vector<mapbox::geojson::point> &points)
 {
     if (mat.rows() == 0) {
@@ -196,6 +181,9 @@ inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> mat,
     }
     const int cols = mat.cols();
     if (cols != 2 && cols != 3) {
+        throw std::invalid_argument(
+            "matrix shape expected to be Nx2 or Nx3, actual=" +
+            std::to_string(mat.rows()) + "x" + std::to_string(cols));
         return;
     }
     points.resize(mat.rows());

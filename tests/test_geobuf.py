@@ -431,6 +431,7 @@ def test_geojson_multi_polygon():
     assert isinstance(g1, geojson.MultiPolygon)
     assert len(g1) == 0
     assert np.array(g1()).shape == (0,)
+    assert g1() == []
     assert g1.to_rapidjson()() == {"type": "MultiPolygon", "coordinates": []}
     g1.from_numpy([[1, 0], [1, 1], [0, 1], [1, 0]])
     assert np.array(g1()).shape == (1, 1, 4, 3)
@@ -475,12 +476,30 @@ def test_geojson_multi_polygon():
     g1[0] = [[1, 2]]
     assert g1() == [[[[1.0, 2.0, 0.0]]]]
 
-    # g1[0] = [3, 4] # need to fix this
+    with pytest.raises(ValueError) as excinfo:
+        g1[0] = [3, 4]  # should be Nx2 or Nx3 (dim==2)
+    assert "matrix shape expected to be Nx2 or Nx3, actual=2x1" in repr(excinfo)  # noqa
+    assert g1() == [[[[1.0, 2.0, 0.0]]]]
+    with pytest.raises(ValueError) as excinfo:
+        g1.push_back([3, 4])
+    assert "matrix shape expected to be Nx2 or Nx3, actual=2x1" in repr(excinfo)  # noqa
+    assert g1() == [[[[1.0, 2.0, 0.0]]]]
+
+    g1.push_back([[3, 4]])
+    assert g1() == [
+        [[[1.0, 2.0, 0.0]]],
+        [[[3.0, 4.0, 0.0]]],
+    ]
+
+    g1.push_back(geojson.Polygon([[5, 6, 7]]))
+    assert g1() == [
+        [[[1.0, 2.0, 0.0]]],
+        [[[3.0, 4.0, 0.0]]],
+        [[[5.0, 6.0, 7.0]]],
+    ]
 
     g1.clear()
     assert len(g1) == 0
-
-    # g1[0]
 
 
 def test_geojson_geometry():
