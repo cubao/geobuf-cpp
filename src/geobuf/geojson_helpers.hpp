@@ -344,6 +344,37 @@ inline void geojson_value_clear(mapbox::geojson::value &self)
                [](int64_t &i) { i = 0; }, [](double &d) { d = 0.0; },
                [](std::string &str) { str.clear(); }, [](auto &) -> void {});
 }
+
+inline bool __bool__(const mapbox::geojson::value &self)
+{
+    return self.match(
+        [](const mapbox::geojson::value::object_type &obj) {
+            return !obj.empty();
+        },
+        [](const mapbox::geojson::value::array_type &arr) {
+            return !arr.empty();
+        },
+        [](const bool &b) { return b; },
+        [](const uint64_t &i) { return i != 0; },
+        [](const int64_t &i) { return i != 0; },
+        [](const double &d) { return d != 0; },
+        [](const std::string &s) { return !s.empty(); },
+        [](const mapbox::geojson::null_value_t &) { return false; },
+        [](auto &v) -> bool { return false; });
+}
+
+inline int __len__(const mapbox::geojson::value &self)
+{
+    return self.match(
+        [](const mapbox::geojson::value::array_type &arr) {
+            return arr.size();
+        },
+        [](const mapbox::geojson::value::object_type &obj) {
+            return obj.size();
+        },
+        [](auto &) -> int { return 0; });
+}
+
 } // namespace cubao
 
 #endif

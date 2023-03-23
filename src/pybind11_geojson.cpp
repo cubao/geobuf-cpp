@@ -880,44 +880,16 @@ void bind_geojson(py::module &geojson)
                  rvp::reference_internal)
             .def("__len__",
                  [](const mapbox::geojson::value &self) -> int {
-                     return self.match(
-                         [](const mapbox::geojson::value::array_type &arr) {
-                             return arr.size();
-                         },
-                         [](const mapbox::geojson::value::object_type &obj) {
-                             return obj.size();
-                         },
-                         [](auto &) -> int {
-                            return 0;
-                         });
+                    return __len__(self);
                  })
             .def("__bool__",
                  [](const mapbox::geojson::value &self) -> bool {
-                     return self.match(
-                         [](const mapbox::geojson::value::object_type &obj) {
-                             return !obj.empty();
-                         },
-                         [](const mapbox::geojson::value::array_type &arr) {
-                             return !arr.empty();
-                         },
-                         [](const bool &b) { return b; },
-                         [](const uint64_t &i) { return i != 0; },
-                         [](const int64_t &i) { return i != 0; },
-                         [](const double &d) { return d != 0; },
-                         [](const std::string &s) { return !s.empty(); },
-                         [](const mapbox::geojson::null_value_t &) {
-                             return false;
-                         },
-                         [](auto &v) -> bool {
-                            return false;
-                         });
+                    return __bool__(self);
                  })
         //
         //
         ;
 
-    // py::class_<mapbox::geojson::value::array_type>(geojson_value,
-    // "array_type")
     py::bind_vector<mapbox::geojson::value::array_type>(
         geojson_value, "array_type", py::module_local())
         .def(py::init<>())
