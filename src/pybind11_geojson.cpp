@@ -276,8 +276,10 @@ void bind_geojson(py::module &geojson)
         .def(
             "from_numpy",
             [](mapbox::geojson::point &self,
-               const Eigen::Vector3d &p) -> mapbox::geojson::point & {
-                Eigen::Vector3d::Map(&self.x) = p;
+               const Eigen::VectorXd &p) -> mapbox::geojson::point & {
+                self.x = p[0];
+                self.y = p[1];
+                self.z = p.size() > 2 ? p[2] : 0.0;
                 return self;
             },
             rvp::reference_internal)

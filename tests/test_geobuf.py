@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import pickle
+import sys
 from copy import deepcopy
 
 import numpy as np
@@ -91,6 +92,7 @@ def test_rapidjson_obj():
     obj = rapidjson(geojson)
     assert obj["type"]
     assert obj["type"]() == "Feature"
+    assert id(obj["type"]) == id(obj["type"])
     try:
         assert obj["missing_key"]
     except KeyError as e:
@@ -122,10 +124,11 @@ def test_rapidjson_obj():
     assert obj.GetType().name == "kNullType"
     assert obj() is None
 
+    # https://github.com/pybind/pybind11_json/blob/b02a2ad597d224c3faee1f05a56d81d4c4453092/include/pybind11_json/pybind11_json.hpp#L110
     assert rapidjson(b"raw bytes")() == base64.b64encode(b"raw bytes").decode(
         "utf-8"
     )  # noqa
-    assert rapidjson(b"raw bytes")() == "cmF3IGJ5dGVz"
+    assert rapidjson(b"raw bytes")() == "cmF3IGJ5dGVz"  # base64 encoded
 
     __pwd = os.path.abspath(os.path.dirname(__file__))
     basename = "rapidjson.png"
@@ -296,10 +299,19 @@ def test_geojson_multi_polygon():
 
     assert g1.to_rapidjson()() == {
         "type": "MultiPolygon",
-        "coordinates": [[[[1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [1.0, 0.0]]]],
+        "coordinates": [
+            [
+                [
+                    [1.0, 0.0, 0.0],
+                    [1.0, 1.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                ]
+            ]
+        ],
     }
     coords = np.array(g1.to_rapidjson()["coordinates"]())
-    assert coords.shape == (1, 1, 4, 2)
+    assert coords.shape == (1, 1, 4, 3)
 
     g2 = geojson.MultiPolygon().from_rapidjson(g1.to_rapidjson())
     assert g1 == g2
@@ -378,6 +390,21 @@ def test_geobuf_from_geojson():
         decoded, sort_keys=True
     )
 
+    coords = np.array(
+        [
+            [120.40317479950272, 31.416966084052177, 1.111111],
+            [120.28451900911591, 31.30578266928819, 2.22],
+            [120.35592249359615, 31.21781895672254, 3.3333333333333],
+            [120.67093786630113, 31.299502266522722, 4.4],
+        ]
+    )
+    np.testing.assert_allclose(coords, f.to_numpy(), atol=1e-9)
+    np.testing.assert_allclose(coords, f.as_numpy(), atol=1e-9)
+    f.to_numpy()[0, 2] = 0.0
+    assert 0.0 != f.as_numpy()[0, 2]
+    f.as_numpy()[0, 2] = 0.0
+    assert 0.0 == f.as_numpy()[0, 2]
+
     print(j(), j.dumps())
 
     expected = str2json2str(json.dumps(feature), indent=True, sort_keys=True)
@@ -389,3 +416,39 @@ def test_geobuf_from_geojson():
     encoded1 = encoder.encode(rapidjson(feature))
     assert len(encoded1) == len(encoded)
     # geojson.Feature().from_rapidjson
+
+
+def test_geojson():
+    pt = geojson.Point()
+    assert pt() == [0.0, 0.0, 0.0]
+    pt = geojson.Point([1, 2])
+    assert pt() == [1.0, 2.0, 0.0]
+    pt = geojson.Point([1, 2, 3])
+    assert pt() == [1.0, 2.0, 3.0]
+    pt.from_numpy([4, 5, 6])
+    assert pt() == [4.0, 5.0, 6.0]
+    pt.from_numpy([7, 8])
+    assert pt() == [7.0, 8.0, 0.0]
+
+
+def pytest_main(dir: str, *, test_file: str = None):
+
+    os.chdir(dir)
+    sys.exit(
+        pytest.main(
+            [
+                dir,
+                *(["-k", test_file] if test_file else []),
+                "--capture",
+                "tee-sys",
+                "-vv",
+                "-x",
+            ]
+        )
+    )
+
+
+if __name__ == "__main__":
+    np.set_printoptions(suppress=True)
+    pwd = os.path.abspath(os.path.dirname(__file__))
+    pytest_main(pwd, test_file=os.path.basename(__file__))
