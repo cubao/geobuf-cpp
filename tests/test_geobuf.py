@@ -231,8 +231,9 @@ def test_geojson_point2():
     ).x = 33
     assert pt.as_numpy().tolist() == [33, 5, 2]
 
-    # pt.clear()
-    # assert pt() == [0, 0, 0]
+    pt.clear()
+    assert pt() == [0, 0, 0]
+    assert pt.clear() == pt
 
 
 def test_geojson_multi_point():
@@ -272,7 +273,10 @@ def test_geojson_multi_point():
     j["another_key"] = "value"
     assert j != gg.to_rapidjson()
 
-    print()  # TODO clear
+    assert len(g1) == 2
+    g1.clear()
+    assert len(g1) == 0
+    assert g1.clear() == g1
 
 
 def test_geojson_line_string():
@@ -292,6 +296,8 @@ def test_geojson_line_string():
     assert G.to_rapidjson() == g1.to_rapidjson()
     assert G.type() == "LineString"
 
+    assert isinstance(g1, geojson.LineString)
+
     assert len(g1) == 2
     g1.push_back([1, 2, 3])
     assert len(g1) == 3
@@ -299,6 +305,7 @@ def test_geojson_line_string():
     assert len(g1) == 4
     g1.clear()
     assert len(g1) == 0
+    assert g1 == g1.clear()
 
 
 def test_geojson_multi_line_string():
@@ -321,6 +328,8 @@ def test_geojson_multi_line_string():
     coords = np.array(j["coordinates"]())
     assert coords.ndim == 3
     assert coords.shape == (1, 2, 3)
+
+    # g1.clear()
 
 
 def test_geojson_polygon():
@@ -470,7 +479,7 @@ def test_geobuf_from_geojson():
 
 
 def test_geojson_feature():
-    feature = geojson.Feature().from_rapidjson()
+    # feature = geojson.Feature().from_rapidjson()
     print()
 
 

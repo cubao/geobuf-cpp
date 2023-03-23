@@ -341,7 +341,7 @@ void bind_geojson(py::module &geojson)
         .def(
             "clear",
             [](mapbox::geojson::point &self)
-                -> mapbox::geojson::point & { // reset
+                -> mapbox::geojson::point & { // more like "reset"
                 self.x = 0.0;
                 self.y = 0.0;
                 self.z = 0.0;
@@ -395,8 +395,22 @@ void bind_geojson(py::module &geojson)
                 return py::make_iterator(self.begin(), self.end());            \
             },                                                                 \
             py::keep_alive<0, 1>())                                            \
-        .def("clear", &mapbox::geojson::geom_type::clear)                      \
-        .def("pop_back", &mapbox::geojson::geom_type::pop_back)                \
+        .def(                                                                  \
+            "clear",                                                           \
+            [](mapbox::geojson::geom_type &self)                               \
+                -> mapbox::geojson::geom_type & {                              \
+                self.clear();                                                  \
+                return self;                                                   \
+            },                                                                 \
+            rvp::reference_internal)                                           \
+        .def(                                                                  \
+            "pop_back",                                                        \
+            [](mapbox::geojson::geom_type &self)                               \
+                -> mapbox::geojson::geom_type & {                              \
+                self.pop_back();                                               \
+                return self;                                                   \
+            },                                                                 \
+            rvp::reference_internal)                                           \
         .def(                                                                  \
             "push_back",                                                       \
             [](mapbox::geojson::geom_type &self,                               \
@@ -680,7 +694,8 @@ void bind_geojson(py::module &geojson)
             py::keep_alive<0, 1>())
         .def("clear", &mapbox::geojson::multi_polygon::clear)
         .def("pop_back", &mapbox::geojson::multi_polygon::pop_back)
-            copy_deepcopy_clone(mapbox::geojson::multi_polygon)
+        // TODO
+        copy_deepcopy_clone(mapbox::geojson::multi_polygon)
         .def(py::pickle(
             [](const mapbox::geojson::multi_polygon &self) {
                 return to_python(mapbox::geojson::geometry{self});
