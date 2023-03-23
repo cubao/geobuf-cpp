@@ -231,6 +231,9 @@ def test_geojson_point2():
     ).x = 33
     assert pt.as_numpy().tolist() == [33, 5, 2]
 
+    # pt.clear()
+    # assert pt() == [0, 0, 0]
+
 
 def test_geojson_multi_point():
     g1 = geojson.MultiPoint()
@@ -269,6 +272,8 @@ def test_geojson_multi_point():
     j["another_key"] = "value"
     assert j != gg.to_rapidjson()
 
+    print()  # TODO clear
+
 
 def test_geojson_line_string():
     g1 = geojson.LineString()
@@ -286,6 +291,8 @@ def test_geojson_line_string():
     G = geojson.Geometry(g1)
     assert G.to_rapidjson() == g1.to_rapidjson()
     assert G.type() == "LineString"
+
+    print()  # TODO clear
 
 
 def test_geojson_multi_line_string():

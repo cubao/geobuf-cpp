@@ -264,6 +264,13 @@ inline void geometry_push_back(mapbox::geojson::geometry &self,
 {
     self.match([&](mapbox::geojson::multi_point &g) { g.push_back(point); },
                [&](mapbox::geojson::line_string &g) { g.push_back(point); },
+               [&](mapbox::geojson::multi_line_string &g) {
+                   g.back().push_back(point);
+               },
+               [&](mapbox::geojson::polygon &g) { g.back().push_back(point); },
+               [&](mapbox::geojson::multi_polygon &g) {
+                   g.back().back().push_back(point);
+               },
                [&](auto &) {
                    // TODO, log
                });
@@ -287,11 +294,34 @@ inline void geometry_push_back(mapbox::geojson::geometry &self,
 
 inline void geometry_pop_back(mapbox::geojson::geometry &self)
 {
-    // TODO
+    self.match([&](mapbox::geojson::multi_point &g) { g.pop_back(); },
+               [&](mapbox::geojson::line_string &g) { g.pop_back(); },
+               [&](mapbox::geojson::multi_line_string &g) {
+                   g.back().pop_back();
+                   // not g.pop_back()
+               },
+               [&](mapbox::geojson::polygon &g) {
+                   g.back().pop_back();
+                   // not g.pop_back()
+               },
+               [&](mapbox::geojson::multi_polygon &g) {
+                   g.back().back().pop_back();
+                   // not g.pop_back()
+               },
+               [&](auto &) {
+                   // TODO, log
+               });
 }
 inline void geometry_clear(mapbox::geojson::geometry &self)
 {
-    // TODO
+    self.match([&](mapbox::geojson::multi_point &g) { g.clear(); },
+               [&](mapbox::geojson::line_string &g) { g.clear(); },
+               [&](mapbox::geojson::multi_line_string &g) { g.clear(); },
+               [&](mapbox::geojson::polygon &g) { g.clear(); },
+               [&](mapbox::geojson::multi_polygon &g) { g.clear(); },
+               [&](auto &) {
+                   // TODO, log
+               });
 }
 
 inline void clear_geojson_value(mapbox::geojson::value &self)
