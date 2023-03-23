@@ -1,7 +1,6 @@
 {
     "type": "FeatureCollection",
     "key": "value",
-    "shit me": 42,
     "features": [
         {
             "type": "Feature",

@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import pickle
+import sys
 from copy import deepcopy
 
 import numpy as np
@@ -67,6 +68,34 @@ def test_geobuf():
     print(geojson_text)
 
 
+def test_rapidjson_empty():
+    assert not bool(rapidjson())
+    assert not bool(rapidjson([]))
+    assert not bool(rapidjson({}))
+    assert not bool(rapidjson(0))
+    assert not bool(rapidjson(0.0))
+    assert not bool(rapidjson(""))
+    assert not bool(rapidjson(False))
+
+    assert bool(rapidjson([4]))
+    assert bool(rapidjson({"key": "value"}))
+    assert bool(rapidjson(-1))
+    assert bool(rapidjson(-1.0))
+    assert bool(rapidjson("text"))
+    assert bool(rapidjson(True))
+
+    assert not rapidjson([4]).Empty()
+    assert not rapidjson({"key": "value"}).Empty()
+    assert not rapidjson(-1).Empty()
+    assert not rapidjson(-1.0).Empty()
+    assert not rapidjson("text").Empty()
+    assert not rapidjson(True).Empty()
+
+    assert rapidjson([4, 2]).clear() == rapidjson([])
+    assert rapidjson([4, 2]).clear() != rapidjson({})
+    assert rapidjson({"key": "value"}).clear() == rapidjson({})
+
+
 def test_rapidjson_arr():
     arr = rapidjson([1, 3, "text", {"key": 3.2}])
     assert arr[2]() == "text"
@@ -91,6 +120,7 @@ def test_rapidjson_obj():
     obj = rapidjson(geojson)
     assert obj["type"]
     assert obj["type"]() == "Feature"
+    assert id(obj["type"]) == id(obj["type"])
     try:
         assert obj["missing_key"]
     except KeyError as e:
@@ -122,10 +152,14 @@ def test_rapidjson_obj():
     assert obj.GetType().name == "kNullType"
     assert obj() is None
 
+    # https://github.com/pybind/pybind11_json/blob/b02a2ad597d224c3faee1f05a56d81d4c4453092/include/pybind11_json/pybind11_json.hpp#L110
     assert rapidjson(b"raw bytes")() == base64.b64encode(b"raw bytes").decode(
         "utf-8"
     )  # noqa
-    assert rapidjson(b"raw bytes")() == "cmF3IGJ5dGVz"
+    assert rapidjson(b"raw bytes")() == "cmF3IGJ5dGVz"  # base64 encoded
+    obj = rapidjson({"bytes": b"raw bytes"})
+    obj["other_bytes"] = b"bytes"
+    assert obj.dumps() == '{"bytes":"cmF3IGJ5dGVz","other_bytes":"Ynl0ZXM="}'
 
     __pwd = os.path.abspath(os.path.dirname(__file__))
     basename = "rapidjson.png"
@@ -147,6 +181,63 @@ def test_rapidjson_obj():
     assert len(base64.b64decode(png)) == 5259
 
 
+def test_rapidjson_sort_dump():
+    obj1 = rapidjson(
+        {
+            "key1": 42,
+            "key2": 3.14,
+        }
+    )
+    assert list(obj1.keys()) == ["key1", "key2"]
+    assert obj1.dumps() == '{"key1":42,"key2":3.14}'
+    assert list(obj1.sort_keys().keys()) == ["key1", "key2"]
+    obj2 = rapidjson(
+        {
+            "key2": 3.14,
+            "key1": 42,
+        }
+    )
+    assert list(obj2.keys()) == ["key2", "key1"]
+    assert obj2.dumps() == '{"key2":3.14,"key1":42}'
+    assert obj2.dumps(sort_keys=True) == '{"key1":42,"key2":3.14}'
+    assert (
+        obj1.dumps(sort_keys=True, indent=True)
+        == '{\n    "key1": 42,\n    "key2": 3.14\n}'
+    )
+    assert list(obj2.keys()) == ["key2", "key1"]  # won't modify obj
+    assert list(obj2.sort_keys().keys()) == ["key1", "key2"]
+    obj = rapidjson([obj1, obj2, {"obj2": obj2, "obj1": obj1}])
+    obj[0]["another"] = 5
+    assert obj1.dumps() == '{"key1":42,"key2":3.14}'
+    assert (
+        obj.dumps()
+        == '[{"key1":42,"key2":3.14,"another":5},{"key1":42,"key2":3.14},{"obj2":{"key1":42,"key2":3.14},"obj1":{"key1":42,"key2":3.14}}]'  # noqa
+    )
+    obj.sort_keys()
+    assert (
+        obj.dumps()
+        == '[{"another":5,"key1":42,"key2":3.14},{"key1":42,"key2":3.14},{"obj1":{"key1":42,"key2":3.14},"obj2":{"key1":42,"key2":3.14}}]'  # noqa
+    )
+
+    obj3 = obj
+    assert id(obj3) == id(obj)  # python assign
+    obj4 = obj.clone()
+    obj5 = rapidjson()
+    obj5.set(obj)
+    assert id(obj4) != id(obj)
+    assert id(obj5) != id(obj)
+    assert obj4 == obj5
+    assert obj4.dumps() == obj5.dumps()
+    obj4.push_back(42)
+    assert obj4 != obj5
+    obj5.push_back(42)
+    assert obj4 == obj5
+
+    obj6 = rapidjson().copy_from(obj5)
+    assert id(obj6) != id(obj5)
+    assert obj6 == obj5
+
+
 def test_geojson_point():
     # as_numpy
     g1 = geojson.Point()
@@ -155,7 +246,10 @@ def test_geojson_point():
     assert np.all(g2.as_numpy() == [1, 2, 0])
     g3 = geojson.Point(1, 2, 3)
     assert np.all(g3.as_numpy() == [1, 2, 3])
-
+    assert list(g3) == [1, 2, 3]
+    for x in g3:
+        x += 10  # more like value semantic (python can't provide you double&)
+    assert list(g3) == [1, 2, 3]
     g1.as_numpy()[:] = 5
     assert np.all(g1.as_numpy() == [5, 5, 5])
     g2.as_numpy()[::2] = 5
@@ -190,6 +284,49 @@ def test_geojson_point():
     }
 
 
+def test_geojson_point2():
+    pt = geojson.Point()
+    assert pt() == [0.0, 0.0, 0.0]
+    pt = geojson.Point([1, 2])
+    assert pt() == [1.0, 2.0, 0.0]
+    pt = geojson.Point([1, 2, 3])
+    assert pt() == [1.0, 2.0, 3.0]
+    pt.from_numpy([4, 5, 6])
+    assert pt() == [4.0, 5.0, 6.0]
+    pt.from_numpy([7, 8])
+    assert pt() == [7.0, 8.0, 0.0]
+    assert pt.x == 7.0
+    pt.x = 6.0
+    assert pt.x == 6.0
+    assert pt.y == 8.0 and pt.z == 0.0
+    assert pt.x == pt[0] == pt[-3]
+    assert pt.y == pt[1] == pt[-2]
+    assert pt.z == pt[2] == pt[-1]
+    pt[2] += 1.0
+    assert pt.z == 1.0
+    assert pt.to_rapidjson()() == {
+        "type": "Point",
+        "coordinates": [6.0, 8.0, 1.0],
+    }
+    pt.from_rapidjson(
+        rapidjson(
+            {
+                "type": "Point",
+                "coordinates": [2.0, 4.0, 1.0],
+            }
+        )
+    )
+    assert pt.as_numpy().tolist() == [2, 4, 1]
+    pt.from_rapidjson(
+        rapidjson({"type": "Point", "coordinates": [3.0, 5.0, 2.0]})
+    ).x = 33
+    assert pt.as_numpy().tolist() == [33, 5, 2]
+
+    pt.clear()
+    assert pt() == [0, 0, 0]
+    assert pt.clear() == pt
+
+
 def test_geojson_multi_point():
     g1 = geojson.MultiPoint()
     assert g1.as_numpy().shape == (0, 3)
@@ -198,6 +335,10 @@ def test_geojson_multi_point():
     assert len(g1) == 2
     assert np.all(g1.as_numpy() == [[1, 2, 3], [4, 5, 6]])
     assert g1() == [[1, 2, 3], [4, 5, 6]]
+
+    # g2 = geojson.MultiPoint([g1[0], g1[1]])
+    g3 = geojson.MultiPoint([[1, 2], [3, 4]])
+    assert np.all(g3.as_numpy() == [[1, 2, 0], [3, 4, 0]])
 
     assert g1[0]() == [1, 2, 3]
     assert g1[1]() == [4, 5, 6]
@@ -216,6 +357,10 @@ def test_geojson_multi_point():
             assert pt() == [7, 8, 9]
     g1.append(geojson.Point())
     assert len(g1) == 2  # append not working, for now
+    g1.push_back(geojson.Point())
+    assert len(g1) == 3  # push_back works now
+    g1.pop_back()
+    assert len(g1) == 2
 
     j = g1.to_rapidjson()
     gg = geojson.MultiPoint().from_rapidjson(j)
@@ -226,6 +371,17 @@ def test_geojson_multi_point():
     assert j == gg.to_rapidjson()
     j["another_key"] = "value"
     assert j != gg.to_rapidjson()
+
+    xyz = np.zeros(3)
+    for x in g1:  # iterable
+        xyz += x.as_numpy()
+    assert np.all(xyz == np.sum(g1.as_numpy(), axis=0))
+    assert np.all(xyz == g1[0].as_numpy() + g1[-1].as_numpy())
+
+    assert len(g1) == 2
+    g1.clear()
+    assert len(g1) == 0
+    assert g1.clear() == g1
 
 
 def test_geojson_line_string():
@@ -244,6 +400,27 @@ def test_geojson_line_string():
     G = geojson.Geometry(g1)
     assert G.to_rapidjson() == g1.to_rapidjson()
     assert G.type() == "LineString"
+
+    assert isinstance(g1, geojson.LineString)
+
+    xyz = np.zeros(3)
+    for x in g1:  # iterable
+        xyz += x.as_numpy()
+    assert np.all(xyz == np.sum(g1.as_numpy(), axis=0))
+    assert np.all(xyz == g1[0].as_numpy() + g1[-1].as_numpy())
+
+    assert len(g1) == 2
+    g1.push_back([1, 2, 3])
+    assert len(g1) == 3
+    g1.push_back([4, 5])
+    assert len(g1) == 4
+    g1.clear()
+    assert len(g1) == 0
+    assert g1 == g1.clear()
+
+    # TODO, fix append
+    g1.append(geojson.Point(1, 2))  # don't use append for now
+    assert len(g1) == 0
 
 
 def test_geojson_multi_line_string():
@@ -266,6 +443,42 @@ def test_geojson_multi_line_string():
     coords = np.array(j["coordinates"]())
     assert coords.ndim == 3
     assert coords.shape == (1, 2, 3)
+    assert np.array(g1()).shape == (1, 2, 3)
+
+    assert len(g1) == 1
+    g10 = g1[0]
+    assert isinstance(g10, geojson.LineString)
+    for ls in g1:
+        assert isinstance(ls, geojson.LineString)
+        assert g10 == ls
+        assert len(ls) == 2
+        for pt in ls:
+            assert isinstance(pt, geojson.Point)
+            assert len(pt) == 3
+
+    g1.push_back([[1, 2], [3, 4]])
+    assert len(g1) == 2
+    assert g1() == [
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        [[1.0, 2.0, 0.0], [3.0, 4.0, 0.0]],
+    ]
+    with pytest.raises(ValueError) as excinfo:
+        g1.push_back([5, 6])
+    assert "shape expected to be Nx2 or Nx3" in repr(excinfo)
+    g1[-1].push_back([5, 6])
+    assert g1() == [
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        [[1.0, 2.0, 0.0], [3.0, 4.0, 0.0], [5.0, 6.0, 0.0]],
+    ]
+    assert g1() == [g1[0](), g1[1]()]
+    g1.from_numpy([[1, 2, 3], [4, 5, 6]])
+    assert g1() == [[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]]
+
+    g1[0] = [[7, 8], [2, 3]]
+    assert g1() == [[[7, 8, 0], [2, 3, 0]]]
+
+    g1.clear()
+    assert len(g1) == 0
 
 
 def test_geojson_polygon():
@@ -276,6 +489,7 @@ def test_geojson_polygon():
     assert g1.to_rapidjson()() == {"type": "Polygon", "coordinates": []}
 
     g1.from_numpy([[1, 0], [1, 1], [0, 1], [1, 0]])
+    assert len(g1) == 1
     assert np.all(
         g1.to_numpy()
         == [
@@ -285,24 +499,133 @@ def test_geojson_polygon():
             [1, 0, 0],
         ]
     )
+    assert isinstance(g1[0], geojson.LinearRing)
+    assert g1[0]() == [
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [1.0, 0.0, 0.0],
+    ]
+    assert g1[0].as_numpy().shape == (4, 3)
+    assert len(g1[0]) == 4
+    assert len(g1[0][0]) == 3
+    for pt in g1[0]:
+        assert isinstance(pt, geojson.Point)
+    assert isinstance(g1[0][0], geojson.Point)
+    for gg in g1:
+        assert isinstance(gg, geojson.LinearRing)
+        for pt in gg:
+            assert isinstance(pt, geojson.Point)
+
+    g1[0].push_back([8, 9]).push_back(geojson.Point(10, 11))
+    assert np.all(g1[0].as_numpy()[-2:, :] == [[8, 9, 0], [10, 11, 0]])
+
+    g1[0].from_numpy([[1, 2], [3, 4]])
+    assert g1[0]() == [[1.0, 2.0, 0.0], [3.0, 4.0, 0.0]]
+
+    g1.clear()
+    assert len(g1) == 0
+    assert g1.clear() == g1
 
 
 def test_geojson_multi_polygon():
     g1 = geojson.MultiPolygon()
     assert isinstance(g1, geojson.MultiPolygon)
     assert len(g1) == 0
+    assert np.array(g1()).shape == (0,)
+    assert g1() == []
     assert g1.to_rapidjson()() == {"type": "MultiPolygon", "coordinates": []}
     g1.from_numpy([[1, 0], [1, 1], [0, 1], [1, 0]])
+    assert np.array(g1()).shape == (1, 1, 4, 3)
 
     assert g1.to_rapidjson()() == {
         "type": "MultiPolygon",
-        "coordinates": [[[[1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [1.0, 0.0]]]],
+        "coordinates": [
+            [
+                [
+                    [1.0, 0.0, 0.0],
+                    [1.0, 1.0, 0.0],
+                    [0.0, 1.0, 0.0],
+                    [1.0, 0.0, 0.0],
+                ]
+            ]
+        ],
     }
     coords = np.array(g1.to_rapidjson()["coordinates"]())
-    assert coords.shape == (1, 1, 4, 2)
+    assert coords.shape == (1, 1, 4, 3)
 
     g2 = geojson.MultiPolygon().from_rapidjson(g1.to_rapidjson())
     assert g1 == g2
+
+    value = 0
+    for polygon in g1:
+        assert isinstance(polygon, geojson.Polygon)
+        for ring in polygon:
+            assert isinstance(ring, geojson.LinearRing)
+            for pt in ring:
+                assert isinstance(pt, geojson.Point)
+                for x in pt:
+                    assert isinstance(x, float)
+                    value += x
+    assert value == 5.0
+    assert len(g1) == 1
+
+    assert g1() == [g1[0]()]
+    g1[0] = geojson.Polygon([[7, 6, 5]])
+    assert g1() == [[[[7.0, 6.0, 5.0]]]]
+    g1[0] = [[1, 2, 3]]
+    assert g1() == [[[[1.0, 2.0, 3.0]]]]
+    g1[0] = [[1, 2]]
+    assert g1() == [[[[1.0, 2.0, 0.0]]]]
+
+    with pytest.raises(ValueError) as excinfo:
+        g1[0] = [3, 4]  # should be Nx2 or Nx3 (dim==2)
+    assert "matrix shape expected to be Nx2 or Nx3, actual=2x1" in repr(excinfo)  # noqa
+    assert g1() == [[[[1.0, 2.0, 0.0]]]]
+    with pytest.raises(ValueError) as excinfo:
+        g1.push_back([3, 4])
+    assert "matrix shape expected to be Nx2 or Nx3, actual=2x1" in repr(excinfo)  # noqa
+    assert g1() == [[[[1.0, 2.0, 0.0]]]]
+
+    g1.push_back([[3, 4]])
+    assert g1() == [
+        [[[1.0, 2.0, 0.0]]],
+        [[[3.0, 4.0, 0.0]]],
+    ]
+
+    g1.push_back(geojson.Polygon([[5, 6, 7]]))
+    assert g1() == [
+        [[[1.0, 2.0, 0.0]]],
+        [[[3.0, 4.0, 0.0]]],
+        [[[5.0, 6.0, 7.0]]],
+    ]
+    g1[-1].push_back([[1, 2, 3]]).push_back([[4, 5, 6]])
+    assert g1() == [
+        [[[1.0, 2.0, 0.0]]],
+        [[[3.0, 4.0, 0.0]]],
+        [
+            [[5.0, 6.0, 7.0]],
+            [[1.0, 2.0, 3.0]],
+            [[4.0, 5.0, 6.0]],
+        ],
+    ]
+    g1[-1][-1].push_back([7, 8]).push_back([9, 10, 11, 12])
+    assert g1() == [
+        [[[1.0, 2.0, 0.0]]],
+        [[[3.0, 4.0, 0.0]]],
+        [
+            [[5.0, 6.0, 7.0]],
+            [[1.0, 2.0, 3.0]],
+            [
+                [4.0, 5.0, 6.0],
+                [7.0, 8.0, 0.0],
+                [9.0, 10.0, 11.0],
+            ],
+        ],
+    ]
+
+    g1.clear()
+    assert len(g1) == 0
 
 
 def test_geojson_geometry():
@@ -314,6 +637,11 @@ def test_geojson_geometry():
     assert g2() == {"type": "Point", "coordinates": [0.0, 0.0, 0.0]}
     g2["my_key"] = "my_value"
     assert g2()["my_key"] == "my_value"
+    assert g2() == {
+        "type": "Point",
+        "coordinates": [0.0, 0.0, 0.0],
+        "my_key": "my_value",
+    }
 
     # g2['type'] = 'my_value' # TODO, should raise
 
@@ -324,6 +652,7 @@ def test_geojson_geometry():
     gc.push_back(g3)
     gc.push_back(g4)
     assert gc() == {"type": gc.type(), "geometries": [g3(), g4()]}
+    assert len(gc) == 2
 
     # update value
     g31 = g3.clone()
@@ -378,6 +707,21 @@ def test_geobuf_from_geojson():
         decoded, sort_keys=True
     )
 
+    coords = np.array(
+        [
+            [120.40317479950272, 31.416966084052177, 1.111111],
+            [120.28451900911591, 31.30578266928819, 2.22],
+            [120.35592249359615, 31.21781895672254, 3.3333333333333],
+            [120.67093786630113, 31.299502266522722, 4.4],
+        ]
+    )
+    np.testing.assert_allclose(coords, f.to_numpy(), atol=1e-9)
+    np.testing.assert_allclose(coords, f.as_numpy(), atol=1e-9)
+    f.to_numpy()[0, 2] = 0.0
+    assert 0.0 != f.as_numpy()[0, 2]
+    f.as_numpy()[0, 2] = 0.0
+    assert 0.0 == f.as_numpy()[0, 2]
+
     print(j(), j.dumps())
 
     expected = str2json2str(json.dumps(feature), indent=True, sort_keys=True)
@@ -388,4 +732,34 @@ def test_geobuf_from_geojson():
 
     encoded1 = encoder.encode(rapidjson(feature))
     assert len(encoded1) == len(encoded)
-    # geojson.Feature().from_rapidjson
+
+
+def test_geojson_feature():
+    return
+    feature = geojson.Feature()
+    props = feature.properties()
+    assert not isinstance(props, dict)
+    assert isinstance(props, int)
+
+
+def pytest_main(dir: str, *, test_file: str = None):
+
+    os.chdir(dir)
+    sys.exit(
+        pytest.main(
+            [
+                dir,
+                *(["-k", test_file] if test_file else []),
+                "--capture",
+                "tee-sys",
+                "-vv",
+                "-x",
+            ]
+        )
+    )
+
+
+if __name__ == "__main__":
+    np.set_printoptions(suppress=True)
+    pwd = os.path.abspath(os.path.dirname(__file__))
+    pytest_main(pwd, test_file=os.path.basename(__file__))

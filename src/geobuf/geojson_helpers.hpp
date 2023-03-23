@@ -169,60 +169,59 @@ inline std::string geometry_type(const mapbox::geojson::geometry &self)
         [](const auto &g) -> std::string { return "None"; });
 }
 
-inline void eigen2geom(const Eigen::MatrixXd &mat,
-                       std::vector<mapbox::geojson::point> &points)
-{
-    if (mat.rows() == 0) {
-        points.clear();
-        return;
-    }
-    if (mat.cols() != 2 && mat.cols() != 3) {
-        return;
-    }
-    points.resize(mat.rows());
-    Eigen::Map<RowVectors> M(&points[0].x, points.size(), 3);
-    M.leftCols(mat.cols()) = mat;
-}
-
 using MatrixXdRowMajor =
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
-inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> mat,
+inline void eigen2geom(const Eigen::Ref<const MatrixXdRowMajor> &mat,
                        std::vector<mapbox::geojson::point> &points)
 {
     if (mat.rows() == 0) {
         points.clear();
         return;
     }
-    if (mat.cols() != 2 && mat.cols() != 3) {
+    const int cols = mat.cols();
+    if (cols != 2 && cols != 3) {
+        throw std::invalid_argument(
+            "matrix shape expected to be Nx2 or Nx3, actual=" +
+            std::to_string(mat.rows()) + "x" + std::to_string(cols));
         return;
     }
     points.resize(mat.rows());
     Eigen::Map<RowVectors> M(&points[0].x, points.size(), 3);
     M.leftCols(mat.cols()) = mat;
+    if (cols == 2) {
+        M.col(2).setZero();
+    }
 }
 
-inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> points,
+inline mapbox::geojson::point eigen2geom(const Eigen::VectorXd &xyz)
+{
+    return {xyz[0], xyz[1], xyz.size() > 2 ? xyz[2] : 0.0};
+}
+
+inline void eigen2geom(const Eigen::Ref<const MatrixXdRowMajor> &points,
                        mapbox::geojson::point &g)
 {
-    Eigen::Vector3d::Map(&g.x) = points.row(0).transpose();
+    g.x = points(0, 0);
+    g.y = points(0, 1);
+    g.z = points.cols() > 2 ? points(0, 2) : 0.0;
 }
 
-inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> points,
+inline void eigen2geom(const Eigen::Ref<const MatrixXdRowMajor> &points,
                        mapbox::geojson::multi_line_string &g)
 {
     g.resize(1);
     eigen2geom(points, g[0]);
 }
 
-inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> points,
+inline void eigen2geom(const Eigen::Ref<const MatrixXdRowMajor> &points,
                        mapbox::geojson::polygon &g)
 {
     g.resize(1);
     eigen2geom(points, g[0]);
 }
 
-inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> points,
+inline void eigen2geom(const Eigen::Ref<const MatrixXdRowMajor> &points,
                        mapbox::geojson::multi_polygon &g)
 {
     g.resize(1);
@@ -230,7 +229,7 @@ inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> points,
     eigen2geom(points, g[0][0]);
 }
 
-inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> points,
+inline void eigen2geom(const Eigen::Ref<const MatrixXdRowMajor> &points,
                        mapbox::geojson::geometry &geom)
 {
     geom.match(
@@ -240,10 +239,21 @@ inline void eigen2geom(Eigen::Ref<const MatrixXdRowMajor> points,
         [&](mapbox::geojson::multi_point &g) { eigen2geom(points, g); },
         [&](mapbox::geojson::multi_line_string &g) { eigen2geom(points, g); },
         [&](mapbox::geojson::multi_polygon &g) { eigen2geom(points, g); },
+        [&](mapbox::geojson::geometry_collection &g) {
+            g.resize(1);
+            eigen2geom(points, g[0]);
+        },
         [&](auto &g) -> void {
             std::cerr << "eigen2geom not handled for this type: "
                       << geometry_type(g) << std::endl;
         });
+}
+
+inline void eigen2geom(const Eigen::Ref<const MatrixXdRowMajor> &points,
+                       mapbox::geojson::geometry_collection &g)
+{
+    g.resize(1);
+    eigen2geom(points, g[0]);
 }
 
 inline std::string get_type(const mapbox::geojson::value &self)
@@ -264,17 +274,23 @@ inline void geometry_push_back(mapbox::geojson::geometry &self,
 {
     self.match([&](mapbox::geojson::multi_point &g) { g.push_back(point); },
                [&](mapbox::geojson::line_string &g) { g.push_back(point); },
-               [&](auto &) {
-                   // TODO, log
+               [&](mapbox::geojson::multi_line_string &g) {
+                   g.back().push_back(point);
+               },
+               [&](mapbox::geojson::polygon &g) { g.back().push_back(point); },
+               [&](mapbox::geojson::multi_polygon &g) {
+                   g.back().back().push_back(point);
+               },
+               [&](auto &g) {
+                   std::cerr << "geometry_push_back not handled for this type: "
+                             << geometry_type(g) << std::endl;
                });
 }
 
 inline void geometry_push_back(mapbox::geojson::geometry &self,
                                const Eigen::VectorXd &point)
 {
-    auto geom = mapbox::geojson::point(point[0], point[1],
-                                       point.size() > 2 ? point[2] : 0.0);
-    geometry_push_back(self, geom);
+    geometry_push_back(self, eigen2geom(point));
 }
 
 inline void geometry_push_back(mapbox::geojson::geometry &self,
@@ -282,19 +298,59 @@ inline void geometry_push_back(mapbox::geojson::geometry &self,
 {
     self.match(
         [&](mapbox::geojson::geometry_collection &g) { g.push_back(geom); },
-        [&](auto &) {});
+        [&](auto &g) {
+            std::cerr << "geometry_push_back(geom) not handled for this type: "
+                      << geometry_type(g) << std::endl;
+        });
 }
 
 inline void geometry_pop_back(mapbox::geojson::geometry &self)
 {
-    // TODO
+    self.match([&](mapbox::geojson::multi_point &g) { g.pop_back(); },
+               [&](mapbox::geojson::line_string &g) { g.pop_back(); },
+               [&](mapbox::geojson::multi_line_string &g) {
+                   g.back().pop_back();
+                   // not g.pop_back()
+               },
+               [&](mapbox::geojson::polygon &g) {
+                   g.back().pop_back();
+                   // not g.pop_back()
+               },
+               [&](mapbox::geojson::multi_polygon &g) {
+                   g.back().back().pop_back();
+                   // not g.pop_back()
+               },
+               [&](auto &g) {
+                   std::cerr
+                       << "geometry_pop_back() not handled for this type: "
+                       << geometry_type(g) << std::endl;
+               });
 }
 inline void geometry_clear(mapbox::geojson::geometry &self)
 {
-    // TODO
+    self.match([&](mapbox::geojson::multi_point &g) { g.clear(); },
+               [&](mapbox::geojson::line_string &g) { g.clear(); },
+               [&](mapbox::geojson::multi_line_string &g) {
+                   g.clear();
+                   // not g.back().clear();
+               },
+               [&](mapbox::geojson::polygon &g) {
+                   g.clear();
+                   // not g.back().clear();
+               },
+               [&](mapbox::geojson::multi_polygon &g) {
+                   g.clear();
+                   // not g.back().back().clear();
+               },
+               [&](mapbox::geojson::point &g) { g.x = g.y = g.z = 0.0; },
+               [&](mapbox::geojson::geometry_collection &g) { g.clear(); },
+               [&](auto &g) {
+                   std::cerr << "geometry_clear() not handled for this type: "
+                             << geometry_type(g) << std::endl;
+               });
 }
 
-inline void clear_geojson_value(mapbox::geojson::value &self)
+inline void geojson_value_clear(mapbox::geojson::value &self)
 {
     self.match([](mapbox::geojson::value::array_type &arr) { arr.clear(); },
                [](mapbox::geojson::value::object_type &obj) { obj.clear(); },
@@ -302,6 +358,50 @@ inline void clear_geojson_value(mapbox::geojson::value &self)
                [](int64_t &i) { i = 0; }, [](double &d) { d = 0.0; },
                [](std::string &str) { str.clear(); }, [](auto &) -> void {});
 }
+
+inline bool __bool__(const mapbox::geojson::value &self)
+{
+    return self.match(
+        [](const mapbox::geojson::value::object_type &obj) {
+            return !obj.empty();
+        },
+        [](const mapbox::geojson::value::array_type &arr) {
+            return !arr.empty();
+        },
+        [](const bool &b) { return b; },
+        [](const uint64_t &i) { return i != 0; },
+        [](const int64_t &i) { return i != 0; },
+        [](const double &d) { return d != 0; },
+        [](const std::string &s) { return !s.empty(); },
+        [](const mapbox::geojson::null_value_t &) { return false; },
+        [](auto &v) -> bool { return false; });
+}
+
+inline int __len__(const mapbox::geojson::value &self)
+{
+    return self.match(
+        [](const mapbox::geojson::value::array_type &arr) {
+            return arr.size();
+        },
+        [](const mapbox::geojson::value::object_type &obj) {
+            return obj.size();
+        },
+        [](auto &) -> int { return 0; });
+}
+inline int __len__(mapbox::geojson::geometry &self)
+{
+    return self.match(
+        [](mapbox::geojson::point &g) { return 3; },
+        [](mapbox::geojson::multi_point &g) { return g.size(); },
+        [](mapbox::geojson::line_string &g) { return g.size(); },
+        [](mapbox::geojson::linear_ring &g) { return g.size(); },
+        [](mapbox::geojson::multi_line_string &g) { return g.size(); },
+        [](mapbox::geojson::polygon &g) { return g.size(); },
+        [](mapbox::geojson::multi_polygon &g) { return g.size(); },
+        [](mapbox::geojson::geometry_collection &g) { return g.size(); },
+        [](auto &) -> int { return 0; });
+}
+
 } // namespace cubao
 
 #endif
