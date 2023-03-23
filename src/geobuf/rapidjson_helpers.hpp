@@ -48,6 +48,33 @@ template <typename T> RapidjsonValue int_to_rapidjson(T const &num)
     }
 }
 
+inline void sort_keys_inplace(RapidjsonValue &json)
+{
+    if (json.IsArray()) {
+        for (auto &e : json.GetArray()) {
+            sort_keys_inplace(e);
+        }
+    } else if (json.IsObject()) {
+        auto obj = json.GetObject();
+        // https://rapidjson.docsforge.com/master/sortkeys.cpp/
+        std::sort(obj.MemberBegin(), obj.MemberEnd(), [](auto &lhs, auto &rhs) {
+            return strcmp(lhs.name.GetString(), rhs.name.GetString()) < 0;
+        });
+        for (auto &kv : obj) {
+            sort_keys_inplace(kv.value);
+        }
+    }
+}
+
+inline RapidjsonValue sort_keys(const RapidjsonValue &json)
+{
+    RapidjsonAllocator allocator;
+    RapidjsonValue copy;
+    copy.CopyFrom(json, allocator);
+    sort_keys_inplace(copy);
+    return copy;
+}
+
 inline RapidjsonValue load_json(const std::string &path)
 {
     FILE *fp = fopen(path.c_str(), "rb");
@@ -62,7 +89,7 @@ inline RapidjsonValue load_json(const std::string &path)
     return RapidjsonValue{std::move(d.Move())};
 }
 inline bool dump_json(const std::string &path, const RapidjsonValue &json,
-                      bool indent = false)
+                      bool indent = false, bool sort_keys = false)
 {
     FILE *fp = fopen(path.c_str(), "wb");
     if (!fp) {
@@ -74,10 +101,18 @@ inline bool dump_json(const std::string &path, const RapidjsonValue &json,
     FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
     if (indent) {
         PrettyWriter<FileWriteStream> writer(os);
-        json.Accept(writer);
+        if (sort_keys) {
+            cubao::sort_keys(json).Accept(writer);
+        } else {
+            json.Accept(writer);
+        }
     } else {
         Writer<FileWriteStream> writer(os);
-        json.Accept(writer);
+        if (sort_keys) {
+            cubao::sort_keys(json).Accept(writer);
+        } else {
+            json.Accept(writer);
+        }
     }
     fclose(fp);
     return true;
@@ -95,8 +130,12 @@ inline RapidjsonValue loads(const std::string &json)
     }
     return RapidjsonValue{std::move(d.Move())};
 }
-inline std::string dumps(const RapidjsonValue &json, bool indent = false)
+inline std::string dumps(const RapidjsonValue &json, bool indent = false,
+                         bool sort_keys = false)
 {
+    if (sort_keys) {
+        return dumps(cubao::sort_keys(json), indent, !sort_keys);
+    }
     rapidjson::StringBuffer buffer;
     if (indent) {
         rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);

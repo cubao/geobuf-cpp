@@ -150,6 +150,45 @@ def test_rapidjson_obj():
     assert len(base64.b64decode(png)) == 5259
 
 
+def test_rapidjson_sort_dump():
+    obj1 = rapidjson(
+        {
+            "key1": 42,
+            "key2": 3.14,
+        }
+    )
+    assert list(obj1.keys()) == ["key1", "key2"]
+    assert obj1.dumps() == '{"key1":42,"key2":3.14}'
+    assert list(obj1.sort_keys().keys()) == ["key1", "key2"]
+    obj2 = rapidjson(
+        {
+            "key2": 3.14,
+            "key1": 42,
+        }
+    )
+    assert list(obj2.keys()) == ["key2", "key1"]
+    assert obj2.dumps() == '{"key2":3.14,"key1":42}'
+    assert obj2.dumps(sort_keys=True) == '{"key1":42,"key2":3.14}'
+    assert (
+        obj1.dumps(sort_keys=True, indent=True)
+        == '{\n    "key1": 42,\n    "key2": 3.14\n}'
+    )
+    assert list(obj2.keys()) == ["key2", "key1"]  # won't modify obj
+    assert list(obj2.sort_keys().keys()) == ["key1", "key2"]
+    obj = rapidjson([obj1, obj2, {"obj2": obj2, "obj1": obj1}])
+    obj[0]["another"] = 5
+    assert obj1.dumps() == '{"key1":42,"key2":3.14}'
+    assert (
+        obj.dumps()
+        == '[{"key1":42,"key2":3.14,"another":5},{"key1":42,"key2":3.14},{"obj2":{"key1":42,"key2":3.14},"obj1":{"key1":42,"key2":3.14}}]'  # noqa
+    )
+    obj.sort_keys()
+    assert (
+        obj.dumps()
+        == '[{"another":5,"key1":42,"key2":3.14},{"key1":42,"key2":3.14},{"obj1":{"key1":42,"key2":3.14},"obj2":{"key1":42,"key2":3.14}}]'  # noqa
+    )
+
+
 def test_geojson_point():
     # as_numpy
     g1 = geojson.Point()

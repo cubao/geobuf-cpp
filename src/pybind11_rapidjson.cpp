@@ -121,10 +121,10 @@ void bind_rapidjson(py::module &m)
             .def(
                 "dump",
                 [](const RapidjsonValue &self, const std::string &path,
-                   bool indent) -> bool {
-                    return dump_json(path, self, indent);
+                   bool indent, bool sort_keys) -> bool {
+                    return dump_json(path, self, indent, sort_keys);
                 },
-                "path"_a, py::kw_only(), "indent"_a = false)
+                "path"_a, py::kw_only(), "indent"_a = false, "sort_keys"_a = false)
             // loads/dumps string
             .def(
                 "loads",
@@ -136,10 +136,15 @@ void bind_rapidjson(py::module &m)
                 rvp::reference_internal)
             .def(
                 "dumps",
-                [](const RapidjsonValue &self, bool indent) -> std::string {
-                    return dumps(self, indent);
+                [](const RapidjsonValue &self, bool indent, bool sort_keys) -> std::string {
+                    return dumps(self, indent, sort_keys);
                 },
-                py::kw_only(), "indent"_a = false)
+                py::kw_only(), "indent"_a = false, "sort_keys"_a = false)
+            // sort_keys
+            .def("sort_keys", [](RapidjsonValue &self) -> RapidjsonValue & {
+                sort_keys_inplace(self);
+                return self;
+            }, rvp::reference_internal)
             .def(
                 "get",
                 [](RapidjsonValue &self,
