@@ -157,6 +157,9 @@ def test_rapidjson_obj():
         "utf-8"
     )  # noqa
     assert rapidjson(b"raw bytes")() == "cmF3IGJ5dGVz"  # base64 encoded
+    obj = rapidjson({"bytes": b"raw bytes"})
+    obj["other_bytes"] = b"bytes"
+    assert obj.dumps() == '{"bytes":"cmF3IGJ5dGVz","other_bytes":"Ynl0ZXM="}'
 
     __pwd = os.path.abspath(os.path.dirname(__file__))
     basename = "rapidjson.png"
