@@ -298,6 +298,12 @@ def test_geojson_line_string():
 
     assert isinstance(g1, geojson.LineString)
 
+    xyz = np.zeros(3)
+    for x in g1:  # iterable
+        xyz += x.as_numpy()
+    assert np.all(xyz == np.sum(g1.as_numpy(), axis=0))
+    assert np.all(xyz == g1[0].as_numpy() + g1[-1].as_numpy())
+
     assert len(g1) == 2
     g1.push_back([1, 2, 3])
     assert len(g1) == 3
@@ -328,8 +334,19 @@ def test_geojson_multi_line_string():
     coords = np.array(j["coordinates"]())
     assert coords.ndim == 3
     assert coords.shape == (1, 2, 3)
+    assert np.array(g1()).shape == (1, 2, 3)
 
-    # g1.clear()
+    assert len(g1) == 1
+    for ls in g1:
+        assert isinstance(ls, geojson.LineString)
+        assert len(ls) == 2
+        for pt in ls:
+            assert isinstance(pt, geojson.Point)
+    # g1[0]
+
+    g1.clear()
+    assert len(g1) == 0
+    print()
 
 
 def test_geojson_polygon():
