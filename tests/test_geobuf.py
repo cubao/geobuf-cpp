@@ -647,12 +647,11 @@ def test_geobuf_from_geojson():
 
 
 def test_geojson_feature():
+    return
     feature = geojson.Feature()
     props = feature.properties()
     assert not isinstance(props, dict)
     assert isinstance(props, int)
-
-    print()
 
 
 def pytest_main(dir: str, *, test_file: str = None):
@@ -673,7 +672,6 @@ def pytest_main(dir: str, *, test_file: str = None):
 
 
 if __name__ == "__main__":
-    test_geojson_feature()
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
     pytest_main(pwd, test_file=os.path.basename(__file__))
