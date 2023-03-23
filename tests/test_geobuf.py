@@ -188,6 +188,24 @@ def test_rapidjson_sort_dump():
         == '[{"another":5,"key1":42,"key2":3.14},{"key1":42,"key2":3.14},{"obj1":{"key1":42,"key2":3.14},"obj2":{"key1":42,"key2":3.14}}]'  # noqa
     )
 
+    obj3 = obj
+    assert id(obj3) == id(obj)  # python assign
+    obj4 = obj.clone()
+    obj5 = rapidjson()
+    obj5.set(obj)
+    assert id(obj4) != id(obj)
+    assert id(obj5) != id(obj)
+    assert obj4 == obj5
+    assert obj4.dumps() == obj5.dumps()
+    obj4.push_back(42)
+    assert obj4 != obj5
+    obj5.push_back(42)
+    assert obj4 == obj5
+
+    obj6 = rapidjson().copy_from(obj5)
+    assert id(obj6) != id(obj5)
+    assert obj6 == obj5
+
 
 def test_geojson_point():
     # as_numpy

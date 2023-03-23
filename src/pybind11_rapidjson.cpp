@@ -227,6 +227,22 @@ void bind_rapidjson(py::module &m)
                 },
                 rvp::reference_internal)
             .def(
+                "set",
+                [](RapidjsonValue &self,
+                   const RapidjsonValue &obj) -> RapidjsonValue & {
+                    self = deepcopy(obj);
+                    return self;
+                },
+                rvp::reference_internal)
+            .def( // same as set
+                "copy_from",
+                [](RapidjsonValue &self,
+                   const RapidjsonValue &obj) -> RapidjsonValue & {
+                    self = deepcopy(obj);
+                    return self;
+                },
+                rvp::reference_internal)
+            .def(
                 "__setitem__",
                 [](RapidjsonValue &self, int index, const py::object &obj) {
                     self[index >= 0 ? index : index + (int)self.Size()] =
