@@ -158,7 +158,10 @@ def test_geojson_point():
     assert np.all(g2.as_numpy() == [1, 2, 0])
     g3 = geojson.Point(1, 2, 3)
     assert np.all(g3.as_numpy() == [1, 2, 3])
-
+    assert list(g3) == [1, 2, 3]
+    for x in g3:
+        x += 10  # more like value semantic (python can't provide you double&)
+    assert list(g3) == [1, 2, 3]
     g1.as_numpy()[:] = 5
     assert np.all(g1.as_numpy() == [5, 5, 5])
     g2.as_numpy()[::2] = 5
@@ -413,6 +416,8 @@ def test_geojson_polygon():
     assert isinstance(g1[0][0], geojson.Point)
     for gg in g1:
         assert isinstance(gg, geojson.LinearRing)
+        for pt in gg:
+            assert isinstance(pt, geojson.Point)
     g1[0].from_numpy([[1, 2], [3, 4]])
     assert g1[0]() == [[1.0, 2.0, 0.0], [3.0, 4.0, 0.0]]
 
@@ -421,8 +426,10 @@ def test_geojson_multi_polygon():
     g1 = geojson.MultiPolygon()
     assert isinstance(g1, geojson.MultiPolygon)
     assert len(g1) == 0
+    assert np.array(g1()).shape == (0,)
     assert g1.to_rapidjson()() == {"type": "MultiPolygon", "coordinates": []}
     g1.from_numpy([[1, 0], [1, 1], [0, 1], [1, 0]])
+    assert np.array(g1()).shape == (1, 1, 4, 3)
 
     assert g1.to_rapidjson()() == {
         "type": "MultiPolygon",
@@ -442,6 +449,18 @@ def test_geojson_multi_polygon():
 
     g2 = geojson.MultiPolygon().from_rapidjson(g1.to_rapidjson())
     assert g1 == g2
+
+    value = 0
+    for polygon in g1:
+        assert isinstance(polygon, geojson.Polygon)
+        for ring in polygon:
+            assert isinstance(ring, geojson.LinearRing)
+            for pt in ring:
+                assert isinstance(pt, geojson.Point)
+                for x in pt:
+                    assert isinstance(x, float)
+                    value += x
+    assert value == 5.0
 
 
 def test_geojson_geometry():

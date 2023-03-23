@@ -324,6 +324,12 @@ void bind_geojson(py::module &geojson)
             "index"_a, "value"_a) //
         .def("__len__",
              [](const mapbox::geojson::point &self) -> int { return 3; })
+        .def(
+            "__iter__",
+            [](mapbox::geojson::point &self) {
+                return py::make_iterator(&self.x, &self.x + 3);
+            },
+            py::keep_alive<0, 1>())
         //
         copy_deepcopy_clone(mapbox::geojson::point)
         .def(py::pickle(
