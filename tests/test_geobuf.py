@@ -466,6 +466,17 @@ def test_geojson_multi_polygon():
                     value += x
     assert value == 5.0
     assert len(g1) == 1
+
+    assert g1() == [g1[0]()]
+    g1[0] = geojson.Polygon([[7, 6, 5]])
+    assert g1() == [[[[7.0, 6.0, 5.0]]]]
+    g1[0] = [[1, 2, 3]]
+    assert g1() == [[[[1.0, 2.0, 3.0]]]]
+    g1[0] = [[1, 2]]
+    assert g1() == [[[[1.0, 2.0, 0.0]]]]
+
+    # g1[0] = [3, 4] # need to fix this
+
     g1.clear()
     assert len(g1) == 0
 

@@ -745,6 +745,27 @@ void bind_geojson(py::module &geojson)
             },
             py::keep_alive<0, 1>())
         .def(
+            "__getitem__",
+            [](mapbox::geojson::multi_polygon &self,
+               int index) -> mapbox::geojson::polygon & {
+                return self[index >= 0 ? index : index + (int)self.size()];
+            },
+            rvp::reference_internal)
+        .def("__setitem__",
+             [](mapbox::geojson::multi_polygon &self, int index,
+                const mapbox::geojson::polygon &polygon) {
+                 self[index >= 0 ? index : index + (int)self.size()] = polygon;
+                 return polygon;
+             })
+        .def("__setitem__",
+             [](mapbox::geojson::multi_polygon &self, int index,
+                const Eigen::Ref<const MatrixXdRowMajor> &points) {
+                 auto &polygon =
+                     self[index >= 0 ? index : index + (int)self.size()];
+                 eigen2geom(points, polygon);
+                 return polygon;
+             })
+        .def(
             "clear",
             [](mapbox::geojson::multi_polygon &self)
                 -> mapbox::geojson::multi_polygon & {
@@ -752,9 +773,35 @@ void bind_geojson(py::module &geojson)
                 return self;
             },
             rvp::reference_internal)
-        .def("pop_back", &mapbox::geojson::multi_polygon::pop_back)
-        // TODO
-        copy_deepcopy_clone(mapbox::geojson::multi_polygon)
+        .def(
+            "pop_back",
+            [](mapbox::geojson::multi_polygon &self)
+                -> mapbox::geojson::multi_polygon & {
+                self.pop_back();
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "push_back",
+            [](mapbox::geojson::multi_polygon &self,
+               const Eigen::Ref<const MatrixXdRowMajor> &points)
+                -> mapbox::geojson::multi_polygon & {
+                mapbox::geojson::polygon polygon;
+                eigen2geom(points, polygon);
+                self.push_back(std::move(polygon));
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "push_back",
+            [](mapbox::geojson::multi_polygon &self,
+               const mapbox::geojson::polygon &polygon)
+                -> mapbox::geojson::multi_polygon & {
+                self.push_back(polygon);
+                return self;
+            },
+            rvp::reference_internal)
+            copy_deepcopy_clone(mapbox::geojson::multi_polygon)
         .def(py::pickle(
             [](const mapbox::geojson::multi_polygon &self) {
                 return to_python(mapbox::geojson::geometry{self});
