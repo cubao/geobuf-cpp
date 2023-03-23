@@ -388,6 +388,7 @@ def test_geojson_polygon():
     assert g1.to_rapidjson()() == {"type": "Polygon", "coordinates": []}
 
     g1.from_numpy([[1, 0], [1, 1], [0, 1], [1, 0]])
+    assert len(g1) == 1
     assert np.all(
         g1.to_numpy()
         == [
@@ -397,6 +398,23 @@ def test_geojson_polygon():
             [1, 0, 0],
         ]
     )
+    assert isinstance(g1[0], geojson.LinearRing)
+    assert g1[0]() == [
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [1.0, 0.0, 0.0],
+    ]
+    assert g1[0].as_numpy().shape == (4, 3)
+    assert len(g1[0]) == 4
+    assert len(g1[0][0]) == 3
+    for pt in g1[0]:
+        assert isinstance(pt, geojson.Point)
+    assert isinstance(g1[0][0], geojson.Point)
+    for gg in g1:
+        assert isinstance(gg, geojson.LinearRing)
+    g1[0].from_numpy([[1, 2], [3, 4]])
+    assert g1[0]() == [[1.0, 2.0, 0.0], [3.0, 4.0, 0.0]]
 
 
 def test_geojson_multi_polygon():
