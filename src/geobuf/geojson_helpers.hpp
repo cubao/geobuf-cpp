@@ -388,6 +388,19 @@ inline int __len__(const mapbox::geojson::value &self)
         },
         [](auto &) -> int { return 0; });
 }
+inline int __len__(mapbox::geojson::geometry &self)
+{
+    return self.match(
+        [](mapbox::geojson::point &g) { return 3; },
+        [](mapbox::geojson::multi_point &g) { return g.size(); },
+        [](mapbox::geojson::line_string &g) { return g.size(); },
+        [](mapbox::geojson::linear_ring &g) { return g.size(); },
+        [](mapbox::geojson::multi_line_string &g) { return g.size(); },
+        [](mapbox::geojson::polygon &g) { return g.size(); },
+        [](mapbox::geojson::multi_polygon &g) { return g.size(); },
+        [](mapbox::geojson::geometry_collection &g) { return g.size(); },
+        [](auto &) -> int { return 0; });
+}
 
 } // namespace cubao
 
