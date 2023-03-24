@@ -844,8 +844,17 @@ void bind_geojson(py::module &geojson)
                mapbox::geojson::geometry_collection::container_type>(
         geojson, "GeometryCollection", py::module_local()) //
         .def(py::init<>())
-    // .def(py::init<int>(), "N"_a)
-    // .def("resize", &mapbox::geojson::geometry_collection::resize)
+        .def(py::init(
+                 [](int N) { return mapbox::geojson::geometry_collection(N); }),
+             "N"_a)
+        .def(
+            "resize",
+            [](mapbox::geojson::geometry_collection &self,
+               int N) -> mapbox::geojson::geometry_collection & {
+                self.resize(N);
+                return self;
+            },
+            rvp::reference_internal)
 #define SETITEM_FOR_TYPE(geom_type)                                            \
     .def(                                                                      \
         "__setitem__",                                                         \

@@ -694,6 +694,38 @@ def test_geojson_geometry_collection():
     for g in gc:
         isinstance(g, geojson.Geometry)
 
+    gc3 = geojson.GeometryCollection(3)
+    assert len(gc3) == 3
+    assert gc3() == {
+        "type": "GeometryCollection",
+        "geometries": [
+            None,
+            None,
+            None,
+        ],
+    }
+    gc3[0] = geojson.Point(1, 2)
+    gc3[1] = geojson.Point(3, 4)
+    gc3[2] = geojson.Point(5, 6)
+    gc3.resize(2)
+    assert gc3() == {
+        "type": "GeometryCollection",
+        "geometries": [
+            {"type": "Point", "coordinates": [1.0, 2.0, 0.0]},
+            {"type": "Point", "coordinates": [3.0, 4.0, 0.0]},
+        ],
+    }
+    gc3.resize(4)
+    assert gc3() == {
+        "type": "GeometryCollection",
+        "geometries": [
+            {"type": "Point", "coordinates": [1.0, 2.0, 0.0]},
+            {"type": "Point", "coordinates": [3.0, 4.0, 0.0]},
+            None,
+            None,
+        ],
+    }
+
 
 def test_geojson_geometry():
     g1 = geojson.Geometry()
