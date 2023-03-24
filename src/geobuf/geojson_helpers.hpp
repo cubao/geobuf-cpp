@@ -52,15 +52,24 @@ inline Eigen::Map<RowVectors> as_row_vectors(mapbox::geojson::linear_ring &geom)
 inline Eigen::Map<RowVectors>
 as_row_vectors(mapbox::geojson::multi_line_string &geom)
 {
+    if (geom.empty()) {
+        return Eigen::Map<RowVectors>((double *)0, 0, 3);
+    }
     return as_row_vectors(geom[0]);
 }
 inline Eigen::Map<RowVectors> as_row_vectors(mapbox::geojson::polygon &geom)
 {
+    if (geom.empty() || geom.front().empty()) {
+        return Eigen::Map<RowVectors>((double *)0, 0, 3);
+    }
     return as_row_vectors(&geom[0][0].x, geom[0].size());
 }
 inline Eigen::Map<RowVectors>
 as_row_vectors(mapbox::geojson::multi_polygon &geom)
 {
+    if (geom.empty()) {
+        return Eigen::Map<RowVectors>((double *)0, 0, 3);
+    }
     auto &shell = geom[0];
     return as_row_vectors(shell);
 }
@@ -117,18 +126,27 @@ as_row_vectors(const mapbox::geojson::linear_ring &geom)
 inline Eigen::Map<const RowVectors>
 as_row_vectors(const mapbox::geojson::multi_line_string &geom)
 {
+    if (geom.empty()) {
+        return Eigen::Map<const RowVectors>((const double *)0, 0, 3);
+    }
     auto &ls = geom[0];
     return Eigen::Map<const RowVectors>(&ls[0].x, ls.size(), 3);
 }
 inline Eigen::Map<const RowVectors>
 as_row_vectors(const mapbox::geojson::polygon &geom)
 {
+    if (geom.empty() || geom.front().empty()) {
+        return Eigen::Map<const RowVectors>((const double *)0, 0, 3);
+    }
     auto &shell = geom[0];
     return Eigen::Map<const RowVectors>(&shell[0].x, shell.size(), 3);
 }
 inline Eigen::Map<const RowVectors>
 as_row_vectors(const mapbox::geojson::multi_polygon &geom)
 {
+    if (geom.empty()) {
+        return Eigen::Map<const RowVectors>((const double *)0, 0, 3);
+    }
     auto &poly = geom[0];
     return as_row_vectors(poly);
 }

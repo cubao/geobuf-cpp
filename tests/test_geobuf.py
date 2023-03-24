@@ -753,6 +753,8 @@ def test_geojson_geometry():
     assert g1() is None
     assert g1.is_empty()
     assert g1.type() == "None"
+    assert g1.as_numpy().shape == (0, 3)
+
     g2 = geojson.Geometry(geojson.Point())
     assert g2.type() == "Point"
     assert not g2.is_empty()
@@ -868,7 +870,10 @@ def test_geojson_geometry():
     ]
     g6.clear()
     assert len(g6) == 0
-    # g6.as_numpy()
+    assert g6.as_numpy().shape == (0, 3)
+
+    g7 = geojson.Geometry(geojson.MultiPolygon([[1, 2, 3], [4, 5, 6]]))
+    assert np.array(g7()["coordinates"]).shape == (1, 1, 2, 3)
 
     gc = geojson.Geometry(geojson.GeometryCollection())
     assert gc.type() == "GeometryCollection"
