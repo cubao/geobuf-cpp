@@ -735,10 +735,28 @@ def test_geobuf_from_geojson():
 
 
 def test_geojson_feature():
-    feature = geojson.Feature()
+    feature = sample_geojson()
+    feature = geojson.Feature(feature)
+    assert feature.as_numpy().shape == (4, 3)
+    geom = feature.geometry()
+    assert geom.type()
+    orig = geom.to_numpy()
+    llas = geom.as_numpy()
+    feature.as_numpy()[:] = 1.0
+    assert np.all(llas == 1.0)
+    geom.from_numpy(orig)
+
     props = feature.properties()
     assert not isinstance(props, dict)
     assert isinstance(props, geojson.value.object_type)
+    assert set(props.keys()) == {"list", "double", "int", "string"}
+    list(props["list"].as_array())
+    keys = list(props.keys())
+    values = list(props.values())
+    for i, (k, v) in enumerate(props.items()):
+        assert keys[i] == k
+        assert values[i] == v
+        assert isinstance(v, geojson.value)
 
 
 def pytest_main(dir: str, *, test_file: str = None):
