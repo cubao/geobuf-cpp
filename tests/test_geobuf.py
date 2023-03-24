@@ -796,6 +796,7 @@ def test_geojson_geometry():
     assert len(g2.custom_properties()) == 0
     g2.custom_properties()["key"] = "value"
     assert len(g2.custom_properties()) == 1
+    assert geojson.Geometry(g2()) == geojson.Geometry(g2.to_rapidjson()) == g2
 
     g3 = geojson.Geometry(geojson.MultiPoint([[1, 2, 3]]))
     assert len(g3) == 1  # size of point
@@ -807,6 +808,7 @@ def test_geojson_geometry():
         assert isinstance(pt, geojson.Point)
         for x in pt:
             assert isinstance(x, float) and 0 <= x <= 7
+    assert geojson.Geometry(g3()) == geojson.Geometry(g3.to_rapidjson()) == g3
 
     g4 = geojson.Geometry(geojson.LineString([[1, 2, 3], [4, 5, 6]]))
     assert g4() == {
@@ -827,6 +829,7 @@ def test_geojson_geometry():
         "coordinates": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 0.0]],
     }
     assert g4() == expected
+    assert geojson.Geometry(g4()) == geojson.Geometry(g4.to_rapidjson()) == g4
 
     g5 = geojson.Geometry(geojson.MultiLineString([[1, 2, 3], [4, 5, 6]]))
     g5.push_back([[10, 20, 30], [40, 50, 60]])
@@ -845,6 +848,7 @@ def test_geojson_geometry():
             [[10.0, 20.0, 30.0], [40.0, 50.0, 60.0], [70.0, 80.0, 90.0]],
         ],
     }
+    assert geojson.Geometry(g5()) == geojson.Geometry(g5.to_rapidjson()) == g5
 
     g5 = geojson.Geometry(geojson.MultiLineString())
     # g5.push_back([70, 80, 90]), don't do this, will segment fault
@@ -868,12 +872,14 @@ def test_geojson_geometry():
             [2.0, 2.0, 0.0],
         ],
     ]
+    assert geojson.Geometry(g6()) == geojson.Geometry(g6.to_rapidjson()) == g6
     g6.clear()
     assert len(g6) == 0
     assert g6.as_numpy().shape == (0, 3)
 
     g7 = geojson.Geometry(geojson.MultiPolygon([[1, 2, 3], [4, 5, 6]]))
     assert np.array(g7()["coordinates"]).shape == (1, 1, 2, 3)
+    assert geojson.Geometry(g7()) == geojson.Geometry(g7.to_rapidjson()) == g7
 
     gc = geojson.Geometry(geojson.GeometryCollection())
     assert gc.type() == "GeometryCollection"

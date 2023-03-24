@@ -123,6 +123,15 @@ void bind_geojson(py::module &geojson)
         .def(py::init([](const mapbox::geojson::geometry &g) { return g; }))
         .def(py::init(
             [](const mapbox::geojson::geometry_collection &g) { return g; }))
+        .def(py::init(
+            [](const RapidjsonValue &g) {
+                return mapbox::geojson::convert<mapbox::geojson::geometry>(g);
+            }))
+        .def(py::init(
+            [](const py::dict &g) {
+                auto json = to_rapidjson(g);
+                return mapbox::geojson::convert<mapbox::geojson::geometry>(json);
+            }))
         // check geometry type
         is_geometry_type(empty)               //
         is_geometry_type(point)               //
@@ -1317,6 +1326,9 @@ void bind_geojson(py::module &geojson)
         .def(py::init<>())
         .def(py::init(
             [](const mapbox::geojson::feature &other) { return other; }))
+        .def(py::init([](const RapidjsonValue &feature) {
+            return mapbox::geojson::convert<mapbox::geojson::feature>(feature);
+        }))
         .def(py::init([](const py::dict &feature) {
             auto json = to_rapidjson(feature);
             return mapbox::geojson::convert<mapbox::geojson::feature>(json);
