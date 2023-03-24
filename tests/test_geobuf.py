@@ -977,6 +977,13 @@ def test_geojson_value():
     assert geojson.value(42).to_rapidjson().dumps() == "42"
 
 
+def test_geojson_feature_id():
+    feature = sample_geojson()
+    feature["id"] = 5
+    feature = geojson.Feature(feature)
+    print()
+
+
 def test_geojson_feature():
     feature = sample_geojson()
     feature = geojson.Feature(feature)

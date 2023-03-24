@@ -1256,10 +1256,6 @@ void bind_geojson(py::module &geojson)
         //
         ;
 
-    // mapbox::geojson::feature::id
-    // mapbox::util::variant<mapbox::feature::null_value_t, unsigned long, long,
-    // double, std::string>
-
     py::bind_map<mapbox::geojson::value::object_type>(
         geojson_value, "object_type", py::module_local())
         .def(py::init<>())
@@ -1409,9 +1405,16 @@ void bind_geojson(py::module &geojson)
                 return self;
             },
             rvp::reference_internal)
-        // id
-        .def("id", [](mapbox::geojson::feature &self) { return self.id; })
-        // .def("id", [](mapbox::geojson::feature &self,) { return self.id; })
+        .def("id",
+             [](mapbox::geojson::feature &self) { return to_python(self.id); })
+        .def(
+            "id",
+            [](mapbox::geojson::feature &self,
+               const py::object &value) -> mapbox::geojson::feature & {
+                self.id = to_feature_id(value);
+                return self;
+            },
+            rvp::reference_internal)
         //
         .def(
             "__getitem__",

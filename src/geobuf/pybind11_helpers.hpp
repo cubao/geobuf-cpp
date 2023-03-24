@@ -300,6 +300,37 @@ inline py::object to_python(const mapbox::geojson::geometry_collection &obj)
     return to_python(mapbox::geojson::geometry{obj});
 }
 
+inline py::object to_python(const mapbox::geojson::identifier &id)
+{
+    // null_value_t, uint64_t, int64_t, double, std::string
+    return id.match([](mapbox::feature::null_value_t) { return py::none(); },
+                    [](uint64_t v) { return py::int_(v); },
+                    [](int64_t v) { return py::int_(v); },
+                    [](double v) { return py::float_(v); },
+                    [](const std::string &v) { return py::str(v); },
+                    [](auto &) -> py::object { return py::none(); });
+}
+
+inline mapbox::geojson::identifier to_feature_id(const py::object &obj)
+{
+    if (obj.ptr() == nullptr || obj.is_none()) {
+        return {};
+    }
+    if (py::isinstance<py::int_>(obj)) {
+        auto val = obj.cast<long long>();
+        if (val < 0) {
+            return int64_t(val);
+        } else {
+            return uint64_t(val);
+        }
+    } else if (py::isinstance<py::float_>(obj)) {
+        return obj.cast<double>();
+    } else if (py::isinstance<py::str>(obj)) {
+        return obj.cast<std::string>();
+    }
+    return {};
+}
+
 inline py::object to_python(const mapbox::geojson::feature &f)
 {
     py::dict ret;
