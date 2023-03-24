@@ -736,6 +736,15 @@ def test_geobuf_from_geojson():
     assert len(encoded1) == len(encoded)
 
 
+def test_geojson_value():
+    assert geojson.value().to_rapidjson().dumps() == "null"
+    assert geojson.value([]).to_rapidjson().dumps() == "[]"
+    assert geojson.value({}).to_rapidjson().dumps() == "{}"
+    assert geojson.value("text").to_rapidjson().dumps() == '"text"'
+    assert geojson.value(3.14).to_rapidjson().dumps() == "3.14"
+    assert geojson.value(42).to_rapidjson().dumps() == "42"
+
+
 def test_geojson_feature():
     feature = sample_geojson()
     feature = geojson.Feature(feature)
@@ -751,6 +760,10 @@ def test_geojson_feature():
     props = feature.properties()
     assert not isinstance(props, dict)
     assert isinstance(props, geojson.value.object_type)
+    assert (
+        props.to_rapidjson().sort_keys().dumps()
+        == '{"dict":{"key":42,"value":3.14},"double":3.141592653,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"}'  # noqa
+    )
 
     assert set(props.keys()) == {
         "dict",
@@ -816,6 +829,11 @@ def test_geojson_feature():
     with pytest.raises(RuntimeError) as excinfo:
         i.GetUint64()
     assert "in get<T>()" in repr(excinfo)
+
+    props["new"] = 6
+    assert props["new"]() == 6
+    props.from_rapidjson(rapidjson({"key": 6})).to_rapidjson()
+    print()
 
 
 def pytest_main(dir: str, *, test_file: str = None):

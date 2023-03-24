@@ -917,7 +917,7 @@ void bind_geojson(py::module &geojson)
                  },
                  rvp::reference_internal)                         //
             .def(
-                "get",
+                "get", // get by key
                 [](mapbox::geojson::value &self,
                     const std::string &key) -> mapbox::geojson::value * {
                      auto &obj =
@@ -929,7 +929,7 @@ void bind_geojson(py::module &geojson)
                     return &itr->second;
                 },
                 "key"_a, rvp::reference_internal)
-            .def("set",
+            .def("set", // set value
                  [](mapbox::geojson::value &self,
                     const py::object &obj) -> mapbox::geojson::value & {
                      self = to_geojson_value(obj);
@@ -1024,8 +1024,7 @@ void bind_geojson(py::module &geojson)
                 rvp::reference_internal)
             .def("to_rapidjson",
                 [](const mapbox::geojson::value &self) {
-                    // return to_rapidjson(self);
-                    return RapidjsonValue();
+                    return to_rapidjson(self);
                 })
         //
         //
@@ -1062,6 +1061,24 @@ void bind_geojson(py::module &geojson)
                 return self[index]; // why not return obj?
             },
             rvp::reference_internal)
+        .def(
+            "from_rapidjson",
+            [](mapbox::geojson::value::array_type &self,
+               const RapidjsonValue &json)
+                -> mapbox::geojson::value::array_type & {
+                self = mapbox::geojson::convert<mapbox::geojson::value>(json)
+                           .get<mapbox::geojson::value::array_type>();
+                return self;
+            },
+            rvp::reference_internal)
+        .def("to_rapidjson",
+             [](const mapbox::geojson::value::array_type &self) {
+                 return to_rapidjson(self);
+             })
+        .def("__call__",
+             [](const mapbox::geojson::value::array_type &self) {
+                 return to_python(self);
+             })
         //
         ;
 
@@ -1110,6 +1127,24 @@ void bind_geojson(py::module &geojson)
                 return py::make_iterator(self.begin(), self.end());
             },
             py::keep_alive<0, 1>())
+        .def(
+            "from_rapidjson",
+            [](mapbox::geojson::value::object_type &self,
+               const RapidjsonValue &json)
+                -> mapbox::geojson::value::object_type & {
+                self = mapbox::geojson::convert<
+                    mapbox::geojson::value::object_type>(json);
+                return self;
+            },
+            rvp::reference_internal)
+        .def("to_rapidjson",
+             [](const mapbox::geojson::value::object_type &self) {
+                 return to_rapidjson(self);
+             })
+        .def("__call__",
+             [](const mapbox::geojson::value::object_type &self) {
+                 return to_python(self);
+             })
         //
         ;
 
