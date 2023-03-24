@@ -10,6 +10,8 @@
 #include <mapbox/geojson.hpp>
 #include <mapbox/geojson/rapidjson.hpp>
 
+#include <dbg.h>
+
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -303,12 +305,27 @@ inline py::object to_python(const mapbox::geojson::geometry_collection &obj)
 inline py::object to_python(const mapbox::geojson::identifier &id)
 {
     // null_value_t, uint64_t, int64_t, double, std::string
-    return id.match([](mapbox::feature::null_value_t) { return py::none(); },
-                    [](uint64_t v) { return py::int_(v); },
-                    [](int64_t v) { return py::int_(v); },
-                    [](double v) { return py::float_(v); },
-                    [](const std::string &v) { return py::str(v); },
-                    [](auto &) -> py::object { return py::none(); });
+    return id.match([](mapbox::feature::null_value_t v) { return py::none(); },
+                    [](uint64_t v) {
+                        dbg(v);
+                        return py::int_(v);
+                    },
+                    [](int64_t v) {
+                        dbg(v);
+                        return py::int_(v);
+                    },
+                    [](double v) {
+                        dbg(v);
+                        return py::float_(v);
+                    },
+                    [](const std::string &v) {
+                        dbg(v);
+                        return py::str(v);
+                    },
+                    [](const auto &) -> py::object {
+                        dbg(666);
+                        return py::none();
+                    });
 }
 
 inline mapbox::geojson::identifier to_feature_id(const py::object &obj)

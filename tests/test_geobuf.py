@@ -978,9 +978,10 @@ def test_geojson_value():
 
 
 def test_geojson_feature_id():
-    feature = sample_geojson()
-    feature["id"] = 5
-    feature = geojson.Feature(feature)
+    feature = geojson.Feature(sample_geojson())
+    assert feature.id() is None
+    feature = geojson.Feature({**sample_geojson(), "id": 5})
+    assert feature.id() == 5
     print()
 
 
