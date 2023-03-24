@@ -980,9 +980,16 @@ def test_geojson_value():
 def test_geojson_feature_id():
     feature = geojson.Feature(sample_geojson())
     assert feature.id() is None
-    feature = geojson.Feature({**sample_geojson(), "id": 5})
-    assert feature.id() == 5
-    print()
+    assert feature.id(5).id() == 5
+    assert feature.id(None).id() is None
+    for fid in [42, -42, 3.14, "id can be string or number"]:
+        feature = geojson.Feature({**sample_geojson(), "id": fid})
+        assert feature.id() == fid
+
+    # invalid id in json
+    with pytest.raises(RuntimeError) as excinfo:
+        geojson.Feature({**sample_geojson(), "id": None})
+    assert "Feature id must be a string or number" in repr(excinfo)
 
 
 def test_geojson_feature():
