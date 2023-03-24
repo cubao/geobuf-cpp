@@ -276,7 +276,7 @@ inline py::object to_python(const mapbox::geojson::geometry &obj)
         [&](const mapbox::geojson::geometry_collection &g) {
             py::list geometries;
             for (auto &gg : g) {
-                geometries.append(to_python(mapbox::geojson::geometry(gg)));
+                geometries.append(to_python(gg));
             }
             ret["geometries"] = geometries;
         },
@@ -293,6 +293,11 @@ inline py::object to_python(const mapbox::geojson::geometry &obj)
         }
     }
     return ret;
+}
+
+inline py::object to_python(const mapbox::geojson::geometry_collection &obj)
+{
+    return to_python(mapbox::geojson::geometry{obj});
 }
 
 inline py::object to_python(const mapbox::geojson::feature &f)

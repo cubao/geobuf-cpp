@@ -843,7 +843,46 @@ void bind_geojson(py::module &geojson)
     py::class_<mapbox::geojson::geometry_collection,
                mapbox::geojson::geometry_collection::container_type>(
         geojson, "GeometryCollection", py::module_local()) //
-        .def(py::init<>());
+        .def(py::init<>())
+        //
+        .def(py::pickle(
+            [](const mapbox::geojson::geometry_collection &self) {
+                return to_python(mapbox::geojson::geometry{self});
+            },
+            [](py::object o) -> mapbox::geojson::geometry_collection {
+                auto json = to_rapidjson(o);
+                return mapbox::geojson::convert<mapbox::geojson::geometry>(json)
+                    .get<mapbox::geojson::geometry_collection>();
+            }))
+        .def_property_readonly(
+            "__geo_interface__",
+            [](const mapbox::geojson::geometry_collection &self) -> py::object {
+                return to_python(mapbox::geojson::geometry(self));
+            })
+        .def(
+            "from_rapidjson",
+            [](mapbox::geojson::geometry_collection &self,
+               const RapidjsonValue &json)
+                -> mapbox::geojson::geometry_collection & {
+                self = mapbox::geojson::convert<mapbox::geojson::geometry>(json)
+                           .get<mapbox::geojson::geometry_collection>();
+                return self;
+            },
+            rvp::reference_internal)
+        .def("to_rapidjson",
+             [](const mapbox::geojson::geometry_collection &self) {
+                 RapidjsonAllocator allocator;
+                 auto json = mapbox::geojson::convert(
+                     mapbox::geojson::geometry{self}, allocator);
+                 return json;
+             })
+        .def("__call__",
+             [](const mapbox::geojson::geometry_collection &self) {
+                 return to_python(self);
+             })
+        .def(py::self == py::self) //
+        .def(py::self != py::self) //
+        ;
 
     auto geojson_value =
         py::class_<mapbox::geojson::value>(geojson, "value", py::module_local())

@@ -338,7 +338,8 @@ def test_geojson_multi_point():
     assert np.all(g1.as_numpy() == [[1, 2, 3], [4, 5, 6]])
     assert g1() == [[1, 2, 3], [4, 5, 6]]
 
-    # g2 = geojson.MultiPoint([g1[0], g1[1]])
+    g2 = geojson.MultiPoint([g1[0], g1[1], g1[0], g1[1]])
+    assert g2() == [*g1(), *g1()]
     g3 = geojson.MultiPoint([[1, 2], [3, 4]])
     assert np.all(g3.as_numpy() == [[1, 2, 0], [3, 4, 0]])
 
@@ -628,6 +629,43 @@ def test_geojson_multi_polygon():
 
     g1.clear()
     assert len(g1) == 0
+
+
+def test_geojson_geometry_collection():
+    gc = geojson.GeometryCollection()
+    assert gc() == {"type": "GeometryCollection", "geometries": []}
+    assert gc.to_rapidjson()() == {"type": "GeometryCollection", "geometries": []}
+    assert len(gc) == 0
+
+    with pytest.raises(TypeError) as excinfo:
+        gc.append(geojson.Point(1, 2))  # won't work
+    assert "geojson.Geometry" in repr(excinfo)
+    gc.append(geojson.Geometry(geojson.Point(1, 2)))  # okay
+    gc.append(geojson.Geometry(geojson.MultiPoint([[3, 4], [5, 6]])))
+    gc.append(geojson.Geometry(geojson.LineString([[7, 8], [9, 10]])))
+    assert gc() == {
+        "type": "GeometryCollection",
+        "geometries": [
+            {
+                "type": "Point",
+                "coordinates": [1.0, 2.0, 0.0],
+            },
+            {
+                "type": "MultiPoint",
+                "coordinates": [
+                    [3.0, 4.0, 0.0],
+                    [5.0, 6.0, 0.0],
+                ],
+            },
+            {
+                "type": "LineString",
+                "coordinates": [
+                    [7.0, 8.0, 0.0],
+                    [9.0, 10.0, 0.0],
+                ],
+            },
+        ],
+    }
 
 
 def test_geojson_geometry():
