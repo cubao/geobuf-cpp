@@ -30,8 +30,10 @@ def sample_geojson():
         "properties": {
             "string": "string",
             "int": 42,
+            "int2": -101,
             "double": 3.141592653,
             "list": ["a", "list", "is", "a", "list"],
+            "dict": {"key": 42, "value": 3.14},
         },
         "geometry": {
             "coordinates": [
@@ -749,14 +751,71 @@ def test_geojson_feature():
     props = feature.properties()
     assert not isinstance(props, dict)
     assert isinstance(props, geojson.value.object_type)
-    assert set(props.keys()) == {"list", "double", "int", "string"}
-    list(props["list"].as_array())
+
+    assert set(props.keys()) == {
+        "dict",
+        "double",
+        "int",
+        "int2",
+        "list",
+        "string",
+    }
     keys = list(props.keys())
     values = list(props.values())
     for i, (k, v) in enumerate(props.items()):
         assert keys[i] == k
         assert values[i] == v
         assert isinstance(v, geojson.value)
+
+    assert props["list"].is_array()
+    for x in list(props["list"].as_array()):
+        assert isinstance(x, geojson.value)
+        assert type(x) == geojson.value
+    with pytest.raises(RuntimeError) as excinfo:
+        props["list"].as_object()
+    assert "in get<T>()" in repr(excinfo)
+    assert len(props["list"]) == 5
+    assert props["list"]() == ["a", "list", "is", "a", "list"]
+
+    assert props["dict"].is_object()
+    for k, v in props["dict"].as_object().items():
+        assert isinstance(k, str)
+        assert isinstance(v, geojson.value)
+        assert type(x) == geojson.value
+    with pytest.raises(RuntimeError) as excinfo:
+        props["dict"].as_array()
+    assert "in get<T>()" in repr(excinfo)
+    assert props["dict"]() == {"key": 42, "value": 3.14}
+    assert list(props["dict"].keys()) in [
+        # order no guarantee (rapidjson has order, value(unordered_map) not)
+        ["key", "value"],
+        ["value", "key"],
+    ]
+
+    d = props["double"]
+    assert d.GetType() == "double"
+    assert d.Get() == d()
+    assert isinstance(d(), float)
+    with pytest.raises(RuntimeError) as excinfo:
+        d.get("key")
+    assert "in get<T>()" in repr(excinfo)
+    assert d.set([1, 2, 3])() == [1, 2, 3]
+
+    i = props["int"]
+    assert i.GetType() == "uint64_t"
+    assert i.GetUint64() == 42
+    assert isinstance(i.GetUint64(), int)
+    with pytest.raises(RuntimeError) as excinfo:
+        i.GetInt64()
+    assert "in get<T>()" in repr(excinfo)
+
+    i = props["int2"]
+    assert i.GetType() == "int64_t"
+    assert i.GetInt64() == -101
+    assert isinstance(i.GetInt64(), int)
+    with pytest.raises(RuntimeError) as excinfo:
+        i.GetUint64()
+    assert "in get<T>()" in repr(excinfo)
 
 
 def pytest_main(dir: str, *, test_file: str = None):
