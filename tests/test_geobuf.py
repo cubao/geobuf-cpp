@@ -776,6 +776,16 @@ def test_geojson_geometry():
         g2["type"] = "type,geometry,properties are reserved"
     assert len(g2) == 3  # size of x,y,z
     assert len(g2.custom_properties()) == 2
+    for k in g2:
+        assert k in ["key", "my_key"]
+    for v in g2.values():
+        assert isinstance(v, geojson.value)
+    for k, v in g2.items():
+        assert k in ["key", "my_key"]
+        assert isinstance(v, geojson.value)
+    for x in g2.as_point():
+        assert x == 0.0
+
     assert (
         g2.to_rapidjson().sort_keys().dumps()
         == '{"coordinates":[0.0,0.0,0.0],"key":"wrapped in custom_properties","my_key":"my_value","type":"Point"}'  # noqa
@@ -791,6 +801,10 @@ def test_geojson_geometry():
     g3.push_back(geojson.Point(6, 7))
     assert np.all(g3.as_numpy() == [[1, 2, 3], [4, 5, 0], [6, 7, 0]])
     assert len(g3) == 3
+    for pt in g3.as_multi_point():
+        assert isinstance(pt, geojson.Point)
+        for x in pt:
+            assert isinstance(x, float) and 0 <= x <= 7
 
     g4 = geojson.Geometry(geojson.LineString([[1, 2, 3], [4, 5, 6]]))
     assert g4() == {
@@ -832,6 +846,29 @@ def test_geojson_geometry():
 
     g5 = geojson.Geometry(geojson.MultiLineString())
     # g5.push_back([70, 80, 90]), don't do this, will segment fault
+    # TODO, raise Exception for push_back
+
+    g6 = geojson.Geometry(geojson.Polygon([[1, 2, 3], [4, 5, 6]]))
+    assert np.array(g6()["coordinates"]).shape == (1, 2, 3)
+    g6.push_back(np.ones((4, 3)))
+    assert g6()["coordinates"] == [
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+    ]
+    g6.push_back([2, 2])
+    assert g6()["coordinates"] == [
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        [
+            [1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0],
+            [2.0, 2.0, 0.0],
+        ],
+    ]
+    g6.clear()
+    assert len(g6) == 0
+    # g6.as_numpy()
 
     gc = geojson.Geometry(geojson.GeometryCollection())
     assert gc.type() == "GeometryCollection"
