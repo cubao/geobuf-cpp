@@ -845,6 +845,8 @@ void bind_geojson(py::module &geojson)
         geojson, "GeometryCollection", py::module_local()) //
         .def(py::init<>())
         .def(py::init(
+            [](const mapbox::geojson::geometry_collection &g) { return g; }))
+        .def(py::init(
                  [](int N) { return mapbox::geojson::geometry_collection(N); }),
              "N"_a)
         .def(
@@ -874,6 +876,41 @@ void bind_geojson(py::module &geojson)
         SETITEM_FOR_TYPE(multi_polygon)       //
         SETITEM_FOR_TYPE(geometry_collection) //
 #undef SETITEM_FOR_TYPE
+        .def(
+            "clear",
+            [](mapbox::geojson::geometry_collection &self)
+                -> mapbox::geojson::geometry_collection & {
+                self.clear();
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "pop_back",
+            [](mapbox::geojson::geometry_collection &self)
+                -> mapbox::geojson::geometry_collection & {
+                self.pop_back();
+                return self;
+            },
+            rvp::reference_internal)
+#define PUSH_BACK_FOR_TYPE(geom_type)                                          \
+    .def(                                                                      \
+        "push_back",                                                           \
+        [](mapbox::geojson::geometry_collection &self,                         \
+           const mapbox::geojson::geom_type &g) {                              \
+            self.push_back(g);                                                 \
+            return self;                                                       \
+        },                                                                     \
+        rvp::reference_internal)
+        //
+        PUSH_BACK_FOR_TYPE(geometry)            //
+        PUSH_BACK_FOR_TYPE(point)               //
+        PUSH_BACK_FOR_TYPE(multi_point)         //
+        PUSH_BACK_FOR_TYPE(line_string)         //
+        PUSH_BACK_FOR_TYPE(multi_line_string)   //
+        PUSH_BACK_FOR_TYPE(polygon)             //
+        PUSH_BACK_FOR_TYPE(multi_polygon)       //
+        PUSH_BACK_FOR_TYPE(geometry_collection) //
+#undef PUSH_BACK_FOR_TYPE
         .def(py::pickle(
             [](const mapbox::geojson::geometry_collection &self) {
                 return to_python(mapbox::geojson::geometry{self});

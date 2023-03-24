@@ -643,6 +643,27 @@ def test_geojson_geometry_collection():
     with pytest.raises(TypeError) as excinfo:
         gc.append(geojson.Point(1, 2))  # won't work
     assert "geojson.Geometry" in repr(excinfo)
+    # you can use push_back, it has more overrides
+    gc2 = geojson.GeometryCollection()
+    gc2.push_back(geojson.Point(1, 2))
+    assert gc2() == {
+        "type": "GeometryCollection",
+        "geometries": [{"type": "Point", "coordinates": [1.0, 2.0, 0.0]}],
+    }
+    gc2.push_back(geojson.Point(1, 2)).push_back(
+        geojson.MultiPoint()
+    ).push_back(  # noqa
+        geojson.LineString()
+    )  # noqa
+    gc2.push_back(geojson.MultiLineString()).push_back(
+        geojson.Polygon()
+    ).push_back(  # noqa
+        geojson.MultiPolygon()
+    )  # noqa
+    gc2.push_back(geojson.GeometryCollection())  # nesting
+    # value semantic, push back a current copy, weird but working
+    gc2.push_back(geojson.GeometryCollection(gc2))
+    # or append Geometry (vector::value_type)
     gc.append(geojson.Geometry(geojson.Point(1, 2)))  # okay
     gc.append(geojson.Geometry(geojson.MultiPoint([[3, 4], [5, 6]])))
     gc.append(geojson.Geometry(geojson.LineString([[7, 8], [9, 10]])))
