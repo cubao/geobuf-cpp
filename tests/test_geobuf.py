@@ -356,9 +356,10 @@ def test_geojson_multi_point():
         if idx == 1:
             assert pt() == [7, 8, 9]
     g1.append(geojson.Point())
-    assert len(g1) == 2  # append not working, for now
+    assert len(g1) == 3  # append works now
     g1.push_back(geojson.Point())
-    assert len(g1) == 3  # push_back works now
+    assert len(g1) == 4  # push_back works now
+    g1.pop_back()
     g1.pop_back()
     assert len(g1) == 2
 
@@ -418,9 +419,8 @@ def test_geojson_line_string():
     assert len(g1) == 0
     assert g1 == g1.clear()
 
-    # TODO, fix append
-    g1.append(geojson.Point(1, 2))  # don't use append for now
-    assert len(g1) == 0
+    g1.append(geojson.Point(1, 2))
+    assert len(g1) == 1
 
 
 def test_geojson_multi_line_string():
@@ -735,11 +735,10 @@ def test_geobuf_from_geojson():
 
 
 def test_geojson_feature():
-    return
     feature = geojson.Feature()
     props = feature.properties()
     assert not isinstance(props, dict)
-    assert isinstance(props, int)
+    assert isinstance(props, geojson.value.object_type)
 
 
 def pytest_main(dir: str, *, test_file: str = None):
