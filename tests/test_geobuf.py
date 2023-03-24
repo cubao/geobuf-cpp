@@ -1097,9 +1097,13 @@ def test_geojson_feature():
         4.0,
         0.0,
     ]
-    # assert feature()
-    # assert feature.to_rapidjson()
-    # assert feature.from_rapidjson({})
+    assert (
+        feature.to_rapidjson().dumps()
+        == '{"type":"Feature","geometry":{"type":"Point","coordinates":[3.0,4.0,0.0]},"properties":{"key":8},"my_key":"my_value"}'  # noqa
+    )
+    f2 = geojson.Feature().from_rapidjson(feature.to_rapidjson())
+    assert f2 == feature
+    assert f2() == feature()
 
 
 def pytest_main(dir: str, *, test_file: str = None):

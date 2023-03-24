@@ -1476,6 +1476,28 @@ void bind_geojson(py::module &geojson)
              [](const mapbox::geojson::feature &self) {
                  return to_python(self);
              })
+        .def(
+            "from_rapidjson",
+            [](mapbox::geojson::feature &self,
+               const RapidjsonValue &json) -> mapbox::geojson::feature & {
+                self = mapbox::geojson::convert<mapbox::geojson::feature>(json);
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "from_rapidjson",
+            [](mapbox::geojson::feature &self,
+               const py::object &feature) -> mapbox::geojson::feature & {
+                self = mapbox::geojson::convert<mapbox::geojson::feature>(
+                    to_rapidjson(feature));
+                return self;
+            },
+            rvp::reference_internal)
+        .def("to_rapidjson",
+             [](const mapbox::geojson::feature &self) {
+                 RapidjsonAllocator allocator;
+                 return mapbox::geojson::convert(self, allocator);
+             })
         //
         ;
 
