@@ -178,6 +178,26 @@ inline int __len__(const RapidjsonValue &self)
     }
     return 0;
 }
+
+inline RapidjsonValue to_rapidjson(const mapbox::geojson::value &json,
+                                   RapidjsonAllocator &allocator)
+{
+    // return mapbox::geojson::value::visit(json,
+    //                                      mapbox::geojson::to_value{allocator});
+    return RapidjsonValue();
+}
+
+inline RapidjsonValue to_rapidjson(const mapbox::geojson::value &json)
+{
+    RapidjsonAllocator allocator;
+    return to_rapidjson(json, allocator);
+}
+
+// inline mapbox::geojson::value to_geojson_value(const RapidjsonValue &json)
+// {
+//     return mapbox::geojson::convert<mapbox::geojson::value>(json);
+// }
+
 } // namespace cubao
 
 #endif

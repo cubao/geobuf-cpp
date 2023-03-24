@@ -29,7 +29,7 @@ using RapidjsonAllocator = mapbox::geojson::rapidjson_allocator;
 using RapidjsonDocument = mapbox::geojson::rapidjson_document;
 using geojson_value = mapbox::geojson::value;
 
-inline RapidjsonValue py_int_to_rapidjson(const py::handle &obj)
+inline RapidjsonValue __py_int_to_rapidjson(const py::handle &obj)
 {
     try {
         auto num = obj.cast<int64_t>();
@@ -60,7 +60,7 @@ inline RapidjsonValue to_rapidjson(const py::handle &obj,
         return RapidjsonValue(obj.cast<bool>());
     }
     if (py::isinstance<py::int_>(obj)) {
-        return py_int_to_rapidjson(obj);
+        return __py_int_to_rapidjson(obj);
     }
     if (py::isinstance<py::float_>(obj)) {
         return RapidjsonValue(obj.cast<double>());

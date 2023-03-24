@@ -1015,6 +1015,18 @@ void bind_geojson(py::module &geojson)
                  [](const mapbox::geojson::value &self) -> bool {
                     return __bool__(self);
                  })
+            .def(
+                "from_rapidjson",
+                [](mapbox::geojson::value &self, const RapidjsonValue &json) -> mapbox::geojson::value & {
+                    self = mapbox::geojson::convert<mapbox::geojson::value>(json);
+                    return self;
+                },
+                rvp::reference_internal)
+            .def("to_rapidjson",
+                [](const mapbox::geojson::value &self) {
+                    // return to_rapidjson(self);
+                    return RapidjsonValue();
+                })
         //
         //
         ;
