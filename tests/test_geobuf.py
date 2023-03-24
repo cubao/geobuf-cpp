@@ -789,6 +789,7 @@ def test_geojson_feature():
     assert "in get<T>()" in repr(excinfo)
     assert len(props["list"]) == 5
     assert props["list"]() == ["a", "list", "is", "a", "list"]
+    assert props["list"].as_array()() == ["a", "list", "is", "a", "list"]
 
     assert props["dict"].is_object()
     for k, v in props["dict"].as_object().items():
@@ -799,6 +800,7 @@ def test_geojson_feature():
         props["dict"].as_array()
     assert "in get<T>()" in repr(excinfo)
     assert props["dict"]() == {"key": 42, "value": 3.14}
+    assert props["dict"].as_object()() == {"key": 42, "value": 3.14}
     assert list(props["dict"].keys()) in [
         # order no guarantee (rapidjson has order, value(unordered_map) not)
         ["key", "value"],
@@ -833,7 +835,27 @@ def test_geojson_feature():
     props["new"] = 6
     assert props["new"]() == 6
     props.from_rapidjson(rapidjson({"key": 6})).to_rapidjson()
-    print()
+    assert props() == {"key": 6}
+    assert feature.properties()() == {"key": 6}
+    assert feature.properties({"key": 7}).properties()() == {"key": 7}
+    assert feature.properties(rapidjson({"key": 8})).properties()() == {
+        "key": 8,
+    }
+    assert feature.geometry(geojson.Point(1, 2)).geometry()() == {
+        "type": "Point",
+        "coordinates": [1.0, 2.0, 0.0],
+    }
+    assert feature.geometry(geojson.Point(3, 4)).geometry().as_point()() == [
+        3.0,
+        4.0,
+        0.0,
+    ]
+    # assert feature()
+    # assert feature.to_rapidjson()
+    # assert feature.from_rapidjson({})
+
+    # geojson.GeometryCollection()().to_rapidjson()
+    # geojson.GeometryCollection().to_rapidjson()
 
 
 def pytest_main(dir: str, *, test_file: str = None):
