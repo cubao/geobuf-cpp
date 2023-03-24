@@ -676,11 +676,13 @@ def test_geojson_geometry_collection():
     del gc[0]
     assert len(gc) == 2
 
-    with pytest.raises(TypeError) as excinfo:
-        gc[0] = geojson.Point()
-    assert "incompatible" in repr(excinfo)
-    assert "__setitem__" in repr(excinfo)
-    gc[0] = geojson.Geometry(geojson.Point())
+    gc[0] = geojson.Geometry(geojson.Point())  # works
+    gc[0] = geojson.Point()  # also works
+    gc[0] = geojson.MultiPoint()
+    gc[0] = geojson.LineString()
+    gc[0] = geojson.MultiLineString()
+    gc[0] = geojson.Polygon()
+    gc[0] = geojson.MultiPolygon()
 
     gc_init = deepcopy(gc)
     assert gc_init == gc
@@ -688,6 +690,9 @@ def test_geojson_geometry_collection():
     assert gc_init != gc
     gc.append(gc_init[-1])
     assert gc_init == gc
+
+    for g in gc:
+        isinstance(g, geojson.Geometry)
 
 
 def test_geojson_geometry():
@@ -913,9 +918,6 @@ def test_geojson_feature():
     # assert feature()
     # assert feature.to_rapidjson()
     # assert feature.from_rapidjson({})
-
-    # geojson.GeometryCollection()().to_rapidjson()
-    # geojson.GeometryCollection().to_rapidjson()
 
 
 def pytest_main(dir: str, *, test_file: str = None):

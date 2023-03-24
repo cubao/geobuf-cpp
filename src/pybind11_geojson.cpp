@@ -844,7 +844,27 @@ void bind_geojson(py::module &geojson)
                mapbox::geojson::geometry_collection::container_type>(
         geojson, "GeometryCollection", py::module_local()) //
         .def(py::init<>())
+    // .def(py::init<int>(), "N"_a)
+    // .def("resize", &mapbox::geojson::geometry_collection::resize)
+#define SETITEM_FOR_TYPE(geom_type)                                            \
+    .def(                                                                      \
+        "__setitem__",                                                         \
+        [](mapbox::geojson::geometry_collection &self, int index,              \
+           const mapbox::geojson::geom_type &g) {                              \
+            self[index >= 0 ? index : index + (int)self.size()] = g;           \
+            return self;                                                       \
+        },                                                                     \
+        rvp::reference_internal)
         //
+        SETITEM_FOR_TYPE(geometry)            //
+        SETITEM_FOR_TYPE(point)               //
+        SETITEM_FOR_TYPE(multi_point)         //
+        SETITEM_FOR_TYPE(line_string)         //
+        SETITEM_FOR_TYPE(multi_line_string)   //
+        SETITEM_FOR_TYPE(polygon)             //
+        SETITEM_FOR_TYPE(multi_polygon)       //
+        SETITEM_FOR_TYPE(geometry_collection) //
+#undef SETITEM_FOR_TYPE
         .def(py::pickle(
             [](const mapbox::geojson::geometry_collection &self) {
                 return to_python(mapbox::geojson::geometry{self});
