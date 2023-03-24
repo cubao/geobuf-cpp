@@ -294,6 +294,24 @@ inline void geometry_push_back(mapbox::geojson::geometry &self,
 }
 
 inline void geometry_push_back(mapbox::geojson::geometry &self,
+                               const Eigen::Ref<const MatrixXdRowMajor> &points)
+{
+    self.match(
+        [&](mapbox::geojson::multi_line_string &g) {
+            g.push_back({});
+            eigen2geom(points, g.back());
+        },
+        [&](mapbox::geojson::polygon &g) {
+            g.push_back({});
+            eigen2geom(points, g.back());
+        },
+        [&](auto &g) {
+            std::cerr << "geometry_push_back not handled for this type: "
+                      << geometry_type(g) << std::endl;
+        });
+}
+
+inline void geometry_push_back(mapbox::geojson::geometry &self,
                                const mapbox::geojson::geometry &geom)
 {
     self.match(

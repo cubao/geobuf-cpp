@@ -121,6 +121,8 @@ void bind_geojson(py::module &geojson)
         .def(py::init(
             [](const mapbox::geojson::geometry_collection &g) { return g; }))
         .def(py::init([](const mapbox::geojson::geometry &g) { return g; }))
+        .def(py::init(
+            [](const mapbox::geojson::geometry_collection &g) { return g; }))
         // check geometry type
         is_geometry_type(empty)               //
         is_geometry_type(point)               //
@@ -183,6 +185,15 @@ void bind_geojson(py::module &geojson)
             [](mapbox::geojson::geometry &self,
                const Eigen::VectorXd &point) -> mapbox::geojson::geometry & {
                 geometry_push_back(self, point);
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "push_back",
+            [](mapbox::geojson::geometry &self,
+               const Eigen::Ref<const MatrixXdRowMajor> &points)
+                -> mapbox::geojson::geometry & {
+                geometry_push_back(self, points);
                 return self;
             },
             rvp::reference_internal)

@@ -751,9 +751,12 @@ def test_geojson_geometry_collection():
 def test_geojson_geometry():
     g1 = geojson.Geometry()
     assert g1() is None
+    assert g1.is_empty()
     assert g1.type() == "None"
     g2 = geojson.Geometry(geojson.Point())
     assert g2.type() == "Point"
+    assert not g2.is_empty()
+    assert g2.is_point()
     assert g2() == {"type": "Point", "coordinates": [0.0, 0.0, 0.0]}
     g2["my_key"] = "my_value"
     assert g2()["my_key"] == "my_value"
@@ -763,9 +766,19 @@ def test_geojson_geometry():
         "my_key": "my_value",
     }
 
-    # g2['type'] = 'my_value' # TODO, should raise
+    g2["key"] = "wrapped in custom_properties"
+    with pytest.raises(KeyError):
+        g2["type"] = "type,geometry,properties are reserved"
+    assert len(g2) == 3  # size of x,y,z
+    # assert len(g2.custom_properties()) == 1
 
     g3 = geojson.Geometry(geojson.MultiPoint([[1, 2, 3]]))
+    assert len(g3) == 1  # size of point
+    g3.push_back([4, 5])
+    g3.push_back(geojson.Point(6, 7))
+    assert np.all(g3.as_numpy() == [[1, 2, 3], [4, 5, 0], [6, 7, 0]])
+    assert len(g3) == 3
+
     g4 = geojson.Geometry(geojson.LineString([[1, 2, 3], [4, 5, 6]]))
     gc = geojson.Geometry(geojson.GeometryCollection())
     assert gc.type() == "GeometryCollection"
