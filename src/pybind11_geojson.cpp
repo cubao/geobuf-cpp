@@ -255,6 +255,55 @@ void bind_geojson(py::module &geojson)
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(
                     json);
             }))
+        // custom_properties
+        BIND_PY_FLUENT_ATTRIBUTE(mapbox::geojson::geometry,  //
+                                 PropertyMap,               //
+                                 custom_properties)         //
+        .def("__getitem__",
+                [](mapbox::geojson::geometry &self,
+                const std::string &key) -> mapbox::geojson::value & {
+                    return self.custom_properties.at(key);
+                },
+                rvp::reference_internal)                         //
+        .def(
+            "get",
+            [](mapbox::geojson::geometry &self,
+                const std::string &key) -> mapbox::geojson::value * {
+                    auto &obj = self.custom_properties;
+                auto itr = obj.find(key);
+                if (itr == obj.end()) {
+                    return nullptr;
+                }
+                return &itr->second;
+            },
+            "key"_a, rvp::reference_internal)
+        .def("__setitem__",
+                [](mapbox::geojson::geometry &self, const std::string &key, const py::object &value) {
+                    auto &obj = self.custom_properties;
+                    obj.emplace(key, to_geojson_value(value));
+                    return value;
+                })
+            .def("keys",
+                 [](mapbox::geojson::geometry &self) {
+                     return py::make_key_iterator(self.custom_properties);
+                 }, py::keep_alive<0, 1>())
+            .def("values",
+                 [](mapbox::geojson::geometry &self) {
+                     return py::make_value_iterator(self.custom_properties);
+                 }, py::keep_alive<0, 1>())
+            .def("items",
+                 [](mapbox::geojson::geometry &self) {
+                     return py::make_iterator(self.custom_properties);
+                 },
+                 py::keep_alive<0, 1>())
+
+        .def(
+            "__iter__",
+            [](mapbox::geojson::geometry &self) {
+                return py::make_key_iterator(self.custom_properties);
+            },
+            py::keep_alive<0, 1>())
+
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::geometry &self) -> py::object {

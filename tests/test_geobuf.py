@@ -758,8 +758,13 @@ def test_geojson_geometry():
     assert not g2.is_empty()
     assert g2.is_point()
     assert g2() == {"type": "Point", "coordinates": [0.0, 0.0, 0.0]}
+    assert len(g2.custom_properties()) == 0
     g2["my_key"] = "my_value"
+    assert len(g2.custom_properties()) == 1
     assert g2()["my_key"] == "my_value"
+    with pytest.raises(IndexError):  # why not KeyError?
+        g2["missing_key"]
+    g2.get("missing_key")  # okay to be none
     assert g2() == {
         "type": "Point",
         "coordinates": [0.0, 0.0, 0.0],
@@ -770,7 +775,15 @@ def test_geojson_geometry():
     with pytest.raises(KeyError):
         g2["type"] = "type,geometry,properties are reserved"
     assert len(g2) == 3  # size of x,y,z
-    # assert len(g2.custom_properties()) == 1
+    assert len(g2.custom_properties()) == 2
+    assert (
+        g2.to_rapidjson().sort_keys().dumps()
+        == '{"coordinates":[0.0,0.0,0.0],"key":"wrapped in custom_properties","my_key":"my_value","type":"Point"}'  # noqa
+    )
+    g2.custom_properties().clear()
+    assert len(g2.custom_properties()) == 0
+    g2.custom_properties()["key"] = "value"
+    assert len(g2.custom_properties()) == 1
 
     g3 = geojson.Geometry(geojson.MultiPoint([[1, 2, 3]]))
     assert len(g3) == 1  # size of point
@@ -780,6 +793,46 @@ def test_geojson_geometry():
     assert len(g3) == 3
 
     g4 = geojson.Geometry(geojson.LineString([[1, 2, 3], [4, 5, 6]]))
+    assert g4() == {
+        "type": "LineString",
+        "coordinates": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+    }
+    g4.push_back([7, 8])
+    expected = {
+        "type": "LineString",
+        "coordinates": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 0.0]],
+    }
+    assert g4() == expected
+    g4.push_back(
+        [[1, 2, 3], [4, 5, 6]]
+    )  # not for LineString, you can only push Nx3 to MultiLineString, Polygon
+    expected = {
+        "type": "LineString",
+        "coordinates": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 0.0]],
+    }
+    assert g4() == expected
+
+    g5 = geojson.Geometry(geojson.MultiLineString([[1, 2, 3], [4, 5, 6]]))
+    g5.push_back([[10, 20, 30], [40, 50, 60]])
+    assert g5() == {
+        "type": "MultiLineString",
+        "coordinates": [
+            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+            [[10.0, 20.0, 30.0], [40.0, 50.0, 60.0]],
+        ],
+    }
+    g5.push_back([70, 80, 90, 100])  # only x, y, z, push to last LineString
+    assert g5() == {
+        "type": "MultiLineString",
+        "coordinates": [
+            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+            [[10.0, 20.0, 30.0], [40.0, 50.0, 60.0], [70.0, 80.0, 90.0]],
+        ],
+    }
+
+    g5 = geojson.Geometry(geojson.MultiLineString())
+    # g5.push_back([70, 80, 90]), don't do this, will segment fault
+
     gc = geojson.Geometry(geojson.GeometryCollection())
     assert gc.type() == "GeometryCollection"
     gc.push_back(g3)
