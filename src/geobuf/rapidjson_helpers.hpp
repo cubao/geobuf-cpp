@@ -1,7 +1,9 @@
 #ifndef CUBAO_RAPIDJSON_HELPERS_HPP
 #define CUBAO_RAPIDJSON_HELPERS_HPP
 
+#include <mapbox/geojson.hpp>
 #include <mapbox/geojson/rapidjson.hpp>
+#include <mapbox/geojson/value.hpp>
 
 #include "rapidjson/error/en.h"
 #include "rapidjson/filereadstream.h"
@@ -179,12 +181,84 @@ inline int __len__(const RapidjsonValue &self)
     return 0;
 }
 
+struct to_value
+{
+    RapidjsonAllocator &allocator;
+
+    RapidjsonValue operator()(mapbox::geojson::null_value_t)
+    {
+        RapidjsonValue result;
+        result.SetNull();
+        return result;
+    }
+
+    RapidjsonValue operator()(bool t)
+    {
+        RapidjsonValue result;
+        result.SetBool(t);
+        return result;
+    }
+
+    RapidjsonValue operator()(int64_t t)
+    {
+        RapidjsonValue result;
+        result.SetInt64(t);
+        return result;
+    }
+
+    RapidjsonValue operator()(uint64_t t)
+    {
+        RapidjsonValue result;
+        result.SetUint64(t);
+        return result;
+    }
+
+    RapidjsonValue operator()(double t)
+    {
+        RapidjsonValue result;
+        result.SetDouble(t);
+        return result;
+    }
+
+    RapidjsonValue operator()(const std::string &t)
+    {
+        RapidjsonValue result;
+        result.SetString(t.data(), rapidjson::SizeType(t.size()), allocator);
+        return result;
+    }
+
+    RapidjsonValue operator()(const std::vector<mapbox::geojson::value> &array)
+    {
+        RapidjsonValue result;
+        result.SetArray();
+        for (const auto &item : array) {
+            result.PushBack(mapbox::geojson::value::visit(item, *this),
+                            allocator);
+        }
+        return result;
+    }
+
+    RapidjsonValue operator()(
+        const std::unordered_map<std::string, mapbox::geojson::value> &map)
+    {
+        RapidjsonValue result;
+        result.SetObject();
+        for (const auto &property : map) {
+            result.AddMember(
+                RapidjsonValue(property.first.data(),
+                               rapidjson::SizeType(property.first.size()),
+                               allocator),
+                mapbox::geojson::value::visit(property.second, *this),
+                allocator);
+        }
+        return result;
+    }
+};
+
 inline RapidjsonValue to_rapidjson(const mapbox::geojson::value &json,
                                    RapidjsonAllocator &allocator)
 {
-    // return mapbox::geojson::value::visit(json,
-    //                                      mapbox::geojson::to_value{allocator});
-    return RapidjsonValue();
+    return mapbox::geojson::value::visit(json, cubao::to_value{allocator});
 }
 
 inline RapidjsonValue to_rapidjson(const mapbox::geojson::value &json)
