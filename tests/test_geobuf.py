@@ -634,7 +634,10 @@ def test_geojson_multi_polygon():
 def test_geojson_geometry_collection():
     gc = geojson.GeometryCollection()
     assert gc() == {"type": "GeometryCollection", "geometries": []}
-    assert gc.to_rapidjson()() == {"type": "GeometryCollection", "geometries": []}
+    assert gc.to_rapidjson()() == {
+        "type": "GeometryCollection",
+        "geometries": [],
+    }
     assert len(gc) == 0
 
     with pytest.raises(TypeError) as excinfo:
@@ -666,6 +669,25 @@ def test_geojson_geometry_collection():
             },
         ],
     }
+    assert len(gc) == 3
+    assert isinstance(gc[0], geojson.Geometry)
+    assert gc[2] == gc[-1]
+
+    del gc[0]
+    assert len(gc) == 2
+
+    with pytest.raises(TypeError) as excinfo:
+        gc[0] = geojson.Point()
+    assert "incompatible" in repr(excinfo)
+    assert "__setitem__" in repr(excinfo)
+    gc[0] = geojson.Geometry(geojson.Point())
+
+    gc_init = deepcopy(gc)
+    assert gc_init == gc
+    del gc[-1]
+    assert gc_init != gc
+    gc.append(gc_init[-1])
+    assert gc_init == gc
 
 
 def test_geojson_geometry():
