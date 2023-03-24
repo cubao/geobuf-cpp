@@ -13,6 +13,16 @@
 #include <fstream>
 #include <iostream>
 
+// https://pybind11.readthedocs.io/en/stable/advanced/cast/stl.html?highlight=stl#making-opaque-types
+PYBIND11_MAKE_OPAQUE(mapbox::geojson::geometry_collection::container_type);
+PYBIND11_MAKE_OPAQUE(mapbox::geojson::multi_line_string::container_type);
+PYBIND11_MAKE_OPAQUE(mapbox::geojson::multi_point::container_type);
+PYBIND11_MAKE_OPAQUE(mapbox::geojson::multi_polygon::container_type);
+PYBIND11_MAKE_OPAQUE(mapbox::geojson::polygon::container_type);
+PYBIND11_MAKE_OPAQUE(mapbox::geojson::value::array_type);
+PYBIND11_MAKE_OPAQUE(mapbox::geojson::value::object_type);
+PYBIND11_MAKE_OPAQUE(std::vector<mapbox::geojson::feature>);
+
 namespace cubao
 {
 namespace py = pybind11;
@@ -49,9 +59,6 @@ void bind_geojson(py::module &geojson)
         //
         ;
 
-    // TODO
-    // py::class_<mapbox::geojson::multi_point::container_type>(geojson,
-    // "coordinates")
     py::bind_vector<mapbox::geojson::multi_point::container_type>(geojson,
                                                                   "coordinates")
         .def(
@@ -656,7 +663,6 @@ void bind_geojson(py::module &geojson)
         //
         ;
 
-    // fix bind_vector
     py::bind_vector<mapbox::geojson::multi_line_string::container_type>(
         geojson, "LineStringList", py::module_local());
 
@@ -675,7 +681,6 @@ void bind_geojson(py::module &geojson)
         //
         ;
 
-    // fix bind_vector
     py::bind_vector<mapbox::geojson::polygon::container_type>(
         geojson, "LinearRingList", py::module_local());
     py::class_<mapbox::geojson::polygon,
