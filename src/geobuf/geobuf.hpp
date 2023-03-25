@@ -6,6 +6,9 @@
 #include <protozero/pbf_builder.hpp>
 #include <protozero/pbf_reader.hpp>
 
+#include <map>
+#include <unordered_map>
+
 #define MAPBOX_GEOBUF_DEFAULT_PRECISION 6
 #define MAPBOX_GEOBUF_DEFAULT_DIM 2
 
@@ -98,6 +101,11 @@ struct Encoder
     std::string encode(const std::string &geojson);
     std::string encode(const RapidjsonValue &json);
     bool encode(const std::string &input_path, const std::string &output_path);
+
+    std::map<std::string, std::uint32_t> __keys() const
+    {
+        return std::map<std::string, std::uint32_t>(keys.begin(), keys.end());
+    }
 
   private:
     void analyze(const mapbox::geojson::geojson &geojson);

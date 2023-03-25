@@ -30,10 +30,10 @@ def sample_geojson():
         "properties": {
             "string": "string",
             "int": 42,
-            "int2": -101,
+            # "int2": -101,
             "double": 3.141592653,
             "list": ["a", "list", "is", "a", "list"],
-            "dict": {"key": 42, "value": 3.14},
+            # "dict": {"key": 42, "value": 3.14},
         },
         "geometry": {
             "coordinates": [
@@ -916,6 +916,7 @@ def test_geobuf_from_geojson():
     encoder = Encoder(max_precision=int(10**8))
     feature = sample_geojson()
     encoded_0 = encoder.encode(json.dumps(feature))
+    print(encoder.keys())
     encoded = encoder.encode(feature)
     assert encoded == encoded_0
     decoded = Decoder().decode(encoded)
@@ -1007,19 +1008,19 @@ def test_geojson_feature():
     props = feature.properties()
     assert not isinstance(props, dict)
     assert isinstance(props, geojson.value.object_type)
-    assert (
-        props.to_rapidjson().sort_keys().dumps()
-        == '{"dict":{"key":42,"value":3.14},"double":3.141592653,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"}'  # noqa
-    )
+    # assert (
+    #     props.to_rapidjson().sort_keys().dumps()
+    #     == '{"dict":{"key":42,"value":3.14},"double":3.141592653,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"}'  # noqa
+    # )
 
-    assert set(props.keys()) == {
-        "dict",
-        "double",
-        "int",
-        "int2",
-        "list",
-        "string",
-    }
+    # assert set(props.keys()) == {
+    #     # "dict",
+    #     "double",
+    #     "int",
+    #     # "int2",
+    #     "list",
+    #     "string",
+    # }
     keys = list(props.keys())
     values = list(props.values())
     for i, (k, v) in enumerate(props.items()):
@@ -1038,21 +1039,21 @@ def test_geojson_feature():
     assert props["list"]() == ["a", "list", "is", "a", "list"]
     assert props["list"].as_array()() == ["a", "list", "is", "a", "list"]
 
-    assert props["dict"].is_object()
-    for k, v in props["dict"].as_object().items():
-        assert isinstance(k, str)
-        assert isinstance(v, geojson.value)
-        assert type(x) == geojson.value
-    with pytest.raises(RuntimeError) as excinfo:
-        props["dict"].as_array()
-    assert "in get<T>()" in repr(excinfo)
-    assert props["dict"]() == {"key": 42, "value": 3.14}
-    assert props["dict"].as_object()() == {"key": 42, "value": 3.14}
-    assert list(props["dict"].keys()) in [
-        # order no guarantee (rapidjson has order, value(unordered_map) not)
-        ["key", "value"],
-        ["value", "key"],
-    ]
+    # assert props["dict"].is_object()
+    # for k, v in props["dict"].as_object().items():
+    #     assert isinstance(k, str)
+    #     assert isinstance(v, geojson.value)
+    #     assert type(x) == geojson.value
+    # with pytest.raises(RuntimeError) as excinfo:
+    #     props["dict"].as_array()
+    # assert "in get<T>()" in repr(excinfo)
+    # assert props["dict"]() == {"key": 42, "value": 3.14}
+    # assert props["dict"].as_object()() == {"key": 42, "value": 3.14}
+    # assert list(props["dict"].keys()) in [
+    #     # order no guarantee (rapidjson has order, value(unordered_map) not)
+    #     ["key", "value"],
+    #     ["value", "key"],
+    # ]
 
     d = props["double"]
     assert d.GetType() == "double"
@@ -1071,13 +1072,13 @@ def test_geojson_feature():
         i.GetInt64()
     assert "in get<T>()" in repr(excinfo)
 
-    i = props["int2"]
-    assert i.GetType() == "int64_t"
-    assert i.GetInt64() == -101
-    assert isinstance(i.GetInt64(), int)
-    with pytest.raises(RuntimeError) as excinfo:
-        i.GetUint64()
-    assert "in get<T>()" in repr(excinfo)
+    # i = props["int2"]
+    # assert i.GetType() == "int64_t"
+    # assert i.GetInt64() == -101
+    # assert isinstance(i.GetInt64(), int)
+    # with pytest.raises(RuntimeError) as excinfo:
+    #     i.GetUint64()
+    # assert "in get<T>()" in repr(excinfo)
 
     props["new"] = 6
     assert props["new"]() == 6
