@@ -17,6 +17,9 @@
 #include <protozero/pbf_builder.hpp>
 #include <protozero/pbf_reader.hpp>
 
+// https://github.com/mapbox/geobuf/blob/master/encode.js
+// https://github.com/mapbox/geobuf/blob/master/decode.js
+
 #ifdef NDEBUG
 #define dbg(x) x
 #else
@@ -251,6 +254,7 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
             protozero::pbf_writer pbf_g{pbf, 6};
             writeGeometry(geometry, pbf_g);
         });
+    // keys.clear(); // we leave it there for debugging purpose
     return data;
 }
 
