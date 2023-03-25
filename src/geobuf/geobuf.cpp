@@ -646,6 +646,7 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
                 fc.custom_properties,                                  //
                 std::vector<uint32_t>(indexes.begin(), indexes.end()), //
                 keys, values);
+            values.clear();
         } else {
             pbf.skip();
         }
@@ -662,7 +663,7 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
             protozero::pbf_reader pbf_g = pbf.get_message();
             f.geometry = readGeometry(pbf_g);
         } else if (tag == 11) {
-            f.id = pbf.get_string();
+            f.id = pbf.get_string(); // TODO, restore to mapbox::geojson id
         } else if (tag == 12) {
             f.id = pbf.get_int64();
         } else if (tag == 13) {
@@ -677,6 +678,7 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
                 f.properties,                                          //
                 std::vector<uint32_t>(indexes.begin(), indexes.end()), //
                 keys, values);
+            values.clear();
         } else if (tag == 15) {
             auto indexes = pbf.get_packed_uint32();
             if (indexes.size() % 2 != 0) {
@@ -686,6 +688,7 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
                 f.custom_properties,                                   //
                 std::vector<uint32_t>(indexes.begin(), indexes.end()), //
                 keys, values);
+            values.clear();
         } else {
             pbf.skip();
         }
@@ -866,6 +869,7 @@ mapbox::geojson::geometry Decoder::readGeometry(Pbf &pbf)
                 g.custom_properties,                                   //
                 std::vector<uint32_t>(indexes.begin(), indexes.end()), //
                 keys, values);
+            values.clear();
         } else {
             pbf.skip();
         }
