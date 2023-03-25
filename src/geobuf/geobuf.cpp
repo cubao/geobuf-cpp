@@ -357,10 +357,7 @@ void Encoder::analyzePoint(const mapbox::geojson::point &point)
 }
 void Encoder::saveKey(const std::string &key)
 {
-    if (keys.find(key) != keys.end()) {
-        return;
-    }
-    keys[key] = keys.size();
+    keys.try_emplace(key, keys.size());
 }
 
 void Encoder::saveKey(const mapbox::feature::property_map &props)
@@ -389,6 +386,11 @@ void Encoder::writeFeature(const mapbox::geojson::feature &feature, Pbf &pbf)
         writeGeometry(feature.geometry, pbf_geom);
     }
     if (!feature.id.is<mapbox::geojson::null_value_t>()) {
+        // https://github.com/mapbox/geobuf/blob/daad5e039f842f4d4f24ed7d59f31586563b71b8/geobuf.proto#L18-L21
+        // oneof id_type {
+        //     string id = 11;
+        //     sint64 int_id = 12;
+        // }
         feature.id.match([&](int64_t id) { pbf.add_int64(12, id); },
                          [&](const std::string &id) { pbf.add_string(11, id); },
                          [&](const auto &) {
@@ -460,6 +462,16 @@ void Encoder::writeProps(const mapbox::feature::property_map &props,
 
 void Encoder::writeValue(const mapbox::feature::value &value, Encoder::Pbf &pbf)
 {
+    // message Value {
+    //     oneof value_type {
+    //         string string_value = 1;
+    //         double double_value = 2;
+    //         uint64 pos_int_value = 3;
+    //         uint64 neg_int_value = 4;
+    //         bool bool_value = 5;
+    //         string json_value = 6;
+    //     }
+    // }
     value.match([&](bool val) { pbf.add_bool(5, val); },
                 [&](uint64_t val) { pbf.add_uint64(3, val); },
                 [&](int64_t val) { pbf.add_uint64(4, -val); },
