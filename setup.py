@@ -127,7 +127,7 @@ class CMakeBuild(build_ext):
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
     name="pybind11_geobuf",
-    version="0.0.5",
+    version="0.0.6",
     author="tzx",
     author_email="dvorak4tzx@gmail.com",
     url="https://geobuf-cpp.readthedocs.io",

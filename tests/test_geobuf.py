@@ -30,8 +30,10 @@ def sample_geojson():
         "properties": {
             "string": "string",
             "int": 42,
+            # "int2": -101,
             "double": 3.141592653,
             "list": ["a", "list", "is", "a", "list"],
+            # "dict": {"key": 42, "value": 3.14},
         },
         "geometry": {
             "coordinates": [
@@ -336,7 +338,8 @@ def test_geojson_multi_point():
     assert np.all(g1.as_numpy() == [[1, 2, 3], [4, 5, 6]])
     assert g1() == [[1, 2, 3], [4, 5, 6]]
 
-    # g2 = geojson.MultiPoint([g1[0], g1[1]])
+    g2 = geojson.MultiPoint([g1[0], g1[1], g1[0], g1[1]])
+    assert g2() == [*g1(), *g1()]
     g3 = geojson.MultiPoint([[1, 2], [3, 4]])
     assert np.all(g3.as_numpy() == [[1, 2, 0], [3, 4, 0]])
 
@@ -628,25 +631,256 @@ def test_geojson_multi_polygon():
     assert len(g1) == 0
 
 
+def test_geojson_geometry_collection():
+    gc = geojson.GeometryCollection()
+    assert gc() == {"type": "GeometryCollection", "geometries": []}
+    assert gc.to_rapidjson()() == {
+        "type": "GeometryCollection",
+        "geometries": [],
+    }
+    assert len(gc) == 0
+
+    with pytest.raises(TypeError) as excinfo:
+        gc.append(geojson.Point(1, 2))  # won't work
+    assert "geojson.Geometry" in repr(excinfo)
+    # you can use push_back, it has more overrides
+    gc2 = geojson.GeometryCollection()
+    gc2.push_back(geojson.Point(1, 2))
+    assert gc2() == {
+        "type": "GeometryCollection",
+        "geometries": [{"type": "Point", "coordinates": [1.0, 2.0, 0.0]}],
+    }
+    gc2.push_back(geojson.Point(1, 2)).push_back(
+        geojson.MultiPoint()
+    ).push_back(  # noqa
+        geojson.LineString()
+    )  # noqa
+    gc2.push_back(geojson.MultiLineString()).push_back(
+        geojson.Polygon()
+    ).push_back(  # noqa
+        geojson.MultiPolygon()
+    )  # noqa
+    gc2.push_back(geojson.GeometryCollection())  # nesting
+    # value semantic, push back a current copy, weird but working
+    gc2.push_back(geojson.GeometryCollection(gc2))
+    # or append Geometry (vector::value_type)
+    gc.append(geojson.Geometry(geojson.Point(1, 2)))  # okay
+    gc.append(geojson.Geometry(geojson.MultiPoint([[3, 4], [5, 6]])))
+    gc.append(geojson.Geometry(geojson.LineString([[7, 8], [9, 10]])))
+    assert gc() == {
+        "type": "GeometryCollection",
+        "geometries": [
+            {
+                "type": "Point",
+                "coordinates": [1.0, 2.0, 0.0],
+            },
+            {
+                "type": "MultiPoint",
+                "coordinates": [
+                    [3.0, 4.0, 0.0],
+                    [5.0, 6.0, 0.0],
+                ],
+            },
+            {
+                "type": "LineString",
+                "coordinates": [
+                    [7.0, 8.0, 0.0],
+                    [9.0, 10.0, 0.0],
+                ],
+            },
+        ],
+    }
+    assert len(gc) == 3
+    assert isinstance(gc[0], geojson.Geometry)
+    assert gc[2] == gc[-1]
+
+    del gc[0]
+    assert len(gc) == 2
+
+    gc[0] = geojson.Geometry(geojson.Point())  # works
+    gc[0] = geojson.Point()  # also works
+    gc[0] = geojson.MultiPoint()
+    gc[0] = geojson.LineString()
+    gc[0] = geojson.MultiLineString()
+    gc[0] = geojson.Polygon()
+    gc[0] = geojson.MultiPolygon()
+
+    gc_init = deepcopy(gc)
+    assert gc_init == gc
+    del gc[-1]
+    assert gc_init != gc
+    gc.append(gc_init[-1])
+    assert gc_init == gc
+
+    for g in gc:
+        isinstance(g, geojson.Geometry)
+
+    gc3 = geojson.GeometryCollection(3)
+    assert len(gc3) == 3
+    assert gc3() == {
+        "type": "GeometryCollection",
+        "geometries": [
+            None,
+            None,
+            None,
+        ],
+    }
+    gc3[0] = geojson.Point(1, 2)
+    gc3[1] = geojson.Point(3, 4)
+    gc3[2] = geojson.Point(5, 6)
+    gc3.resize(2)
+    assert gc3() == {
+        "type": "GeometryCollection",
+        "geometries": [
+            {"type": "Point", "coordinates": [1.0, 2.0, 0.0]},
+            {"type": "Point", "coordinates": [3.0, 4.0, 0.0]},
+        ],
+    }
+    gc3.resize(4)
+    assert gc3() == {
+        "type": "GeometryCollection",
+        "geometries": [
+            {"type": "Point", "coordinates": [1.0, 2.0, 0.0]},
+            {"type": "Point", "coordinates": [3.0, 4.0, 0.0]},
+            None,
+            None,
+        ],
+    }
+
+
 def test_geojson_geometry():
     g1 = geojson.Geometry()
     assert g1() is None
+    assert g1.is_empty()
     assert g1.type() == "None"
+    assert g1.as_numpy().shape == (0, 3)
+
     g2 = geojson.Geometry(geojson.Point())
     assert g2.type() == "Point"
+    assert not g2.is_empty()
+    assert g2.is_point()
     assert g2() == {"type": "Point", "coordinates": [0.0, 0.0, 0.0]}
+    assert len(g2.custom_properties()) == 0
     g2["my_key"] = "my_value"
+    assert len(g2.custom_properties()) == 1
     assert g2()["my_key"] == "my_value"
+    with pytest.raises(IndexError):  # why not KeyError?
+        g2["missing_key"]
+    g2.get("missing_key")  # okay to be none
     assert g2() == {
         "type": "Point",
         "coordinates": [0.0, 0.0, 0.0],
         "my_key": "my_value",
     }
 
-    # g2['type'] = 'my_value' # TODO, should raise
+    g2["key"] = "wrapped in custom_properties"
+    with pytest.raises(KeyError):
+        g2["type"] = "type,geometry,properties are reserved"
+    assert len(g2) == 3  # size of x,y,z
+    assert len(g2.custom_properties()) == 2
+    for k in g2:
+        assert k in ["key", "my_key"]
+    for v in g2.values():
+        assert isinstance(v, geojson.value)
+    for k, v in g2.items():
+        assert k in ["key", "my_key"]
+        assert isinstance(v, geojson.value)
+    for x in g2.as_point():
+        assert x == 0.0
+
+    assert (
+        g2.to_rapidjson().sort_keys().dumps()
+        == '{"coordinates":[0.0,0.0,0.0],"key":"wrapped in custom_properties","my_key":"my_value","type":"Point"}'  # noqa
+    )
+    g2.custom_properties().clear()
+    assert len(g2.custom_properties()) == 0
+    g2.custom_properties()["key"] = "value"
+    assert len(g2.custom_properties()) == 1
+    assert geojson.Geometry(g2()) == geojson.Geometry(g2.to_rapidjson()) == g2
 
     g3 = geojson.Geometry(geojson.MultiPoint([[1, 2, 3]]))
+    assert len(g3) == 1  # size of point
+    g3.push_back([4, 5])
+    g3.push_back(geojson.Point(6, 7))
+    assert np.all(g3.as_numpy() == [[1, 2, 3], [4, 5, 0], [6, 7, 0]])
+    assert len(g3) == 3
+    for pt in g3.as_multi_point():
+        assert isinstance(pt, geojson.Point)
+        for x in pt:
+            assert isinstance(x, float) and 0 <= x <= 7
+    assert geojson.Geometry(g3()) == geojson.Geometry(g3.to_rapidjson()) == g3
+
     g4 = geojson.Geometry(geojson.LineString([[1, 2, 3], [4, 5, 6]]))
+    assert g4() == {
+        "type": "LineString",
+        "coordinates": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+    }
+    g4.push_back([7, 8])
+    expected = {
+        "type": "LineString",
+        "coordinates": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 0.0]],
+    }
+    assert g4() == expected
+    g4.push_back(
+        [[1, 2, 3], [4, 5, 6]]
+    )  # not for LineString, you can only push Nx3 to MultiLineString, Polygon
+    expected = {
+        "type": "LineString",
+        "coordinates": [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 0.0]],
+    }
+    assert g4() == expected
+    assert geojson.Geometry(g4()) == geojson.Geometry(g4.to_rapidjson()) == g4
+
+    g5 = geojson.Geometry(geojson.MultiLineString([[1, 2, 3], [4, 5, 6]]))
+    g5.push_back([[10, 20, 30], [40, 50, 60]])
+    assert g5() == {
+        "type": "MultiLineString",
+        "coordinates": [
+            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+            [[10.0, 20.0, 30.0], [40.0, 50.0, 60.0]],
+        ],
+    }
+    g5.push_back([70, 80, 90, 100])  # only x, y, z, push to last LineString
+    assert g5() == {
+        "type": "MultiLineString",
+        "coordinates": [
+            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+            [[10.0, 20.0, 30.0], [40.0, 50.0, 60.0], [70.0, 80.0, 90.0]],
+        ],
+    }
+    assert geojson.Geometry(g5()) == geojson.Geometry(g5.to_rapidjson()) == g5
+
+    g5 = geojson.Geometry(geojson.MultiLineString())
+    # g5.push_back([70, 80, 90]), don't do this, will segment fault
+    # TODO, raise Exception for push_back
+
+    g6 = geojson.Geometry(geojson.Polygon([[1, 2, 3], [4, 5, 6]]))
+    assert np.array(g6()["coordinates"]).shape == (1, 2, 3)
+    g6.push_back(np.ones((4, 3)))
+    assert g6()["coordinates"] == [
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+    ]
+    g6.push_back([2, 2])
+    assert g6()["coordinates"] == [
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        [
+            [1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0],
+            [2.0, 2.0, 0.0],
+        ],
+    ]
+    assert geojson.Geometry(g6()) == geojson.Geometry(g6.to_rapidjson()) == g6
+    g6.clear()
+    assert len(g6) == 0
+    assert g6.as_numpy().shape == (0, 3)
+
+    g7 = geojson.Geometry(geojson.MultiPolygon([[1, 2, 3], [4, 5, 6]]))
+    assert np.array(g7()["coordinates"]).shape == (1, 1, 2, 3)
+    assert geojson.Geometry(g7()) == geojson.Geometry(g7.to_rapidjson()) == g7
+
     gc = geojson.Geometry(geojson.GeometryCollection())
     assert gc.type() == "GeometryCollection"
     gc.push_back(g3)
@@ -682,6 +916,7 @@ def test_geobuf_from_geojson():
     encoder = Encoder(max_precision=int(10**8))
     feature = sample_geojson()
     encoded_0 = encoder.encode(json.dumps(feature))
+    print(encoder.keys())
     encoded = encoder.encode(feature)
     assert encoded == encoded_0
     decoded = Decoder().decode(encoded)
@@ -734,11 +969,142 @@ def test_geobuf_from_geojson():
     assert len(encoded1) == len(encoded)
 
 
+def test_geojson_value():
+    assert geojson.value().to_rapidjson().dumps() == "null"
+    assert geojson.value([]).to_rapidjson().dumps() == "[]"
+    assert geojson.value({}).to_rapidjson().dumps() == "{}"
+    assert geojson.value("text").to_rapidjson().dumps() == '"text"'
+    assert geojson.value(3.14).to_rapidjson().dumps() == "3.14"
+    assert geojson.value(42).to_rapidjson().dumps() == "42"
+
+
+def test_geojson_feature_id():
+    feature = geojson.Feature(sample_geojson())
+    assert feature.id() is None
+    assert feature.id(5).id() == 5
+    assert feature.id(None).id() is None
+    for fid in [42, -42, 3.14, "id can be string or number"]:
+        feature = geojson.Feature({**sample_geojson(), "id": fid})
+        assert feature.id() == fid
+
+    # invalid id in json
+    with pytest.raises(RuntimeError) as excinfo:
+        geojson.Feature({**sample_geojson(), "id": None})
+    assert "Feature id must be a string or number" in repr(excinfo)
+
+
 def test_geojson_feature():
-    feature = geojson.Feature()
+    feature = sample_geojson()
+    feature = geojson.Feature(feature)
+    assert feature.as_numpy().shape == (4, 3)
+    geom = feature.geometry()
+    assert geom.type()
+    orig = geom.to_numpy()
+    llas = geom.as_numpy()
+    feature.as_numpy()[:] = 1.0
+    assert np.all(llas == 1.0)
+    geom.from_numpy(orig)
+
     props = feature.properties()
     assert not isinstance(props, dict)
     assert isinstance(props, geojson.value.object_type)
+    # assert (
+    #     props.to_rapidjson().sort_keys().dumps()
+    #     == '{"dict":{"key":42,"value":3.14},"double":3.141592653,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"}'  # noqa
+    # )
+
+    # assert set(props.keys()) == {
+    #     # "dict",
+    #     "double",
+    #     "int",
+    #     # "int2",
+    #     "list",
+    #     "string",
+    # }
+    keys = list(props.keys())
+    values = list(props.values())
+    for i, (k, v) in enumerate(props.items()):
+        assert keys[i] == k
+        assert values[i] == v
+        assert isinstance(v, geojson.value)
+
+    assert props["list"].is_array()
+    for x in list(props["list"].as_array()):
+        assert isinstance(x, geojson.value)
+        assert type(x) == geojson.value
+    with pytest.raises(RuntimeError) as excinfo:
+        props["list"].as_object()
+    assert "in get<T>()" in repr(excinfo)
+    assert len(props["list"]) == 5
+    assert props["list"]() == ["a", "list", "is", "a", "list"]
+    assert props["list"].as_array()() == ["a", "list", "is", "a", "list"]
+
+    # assert props["dict"].is_object()
+    # for k, v in props["dict"].as_object().items():
+    #     assert isinstance(k, str)
+    #     assert isinstance(v, geojson.value)
+    #     assert type(x) == geojson.value
+    # with pytest.raises(RuntimeError) as excinfo:
+    #     props["dict"].as_array()
+    # assert "in get<T>()" in repr(excinfo)
+    # assert props["dict"]() == {"key": 42, "value": 3.14}
+    # assert props["dict"].as_object()() == {"key": 42, "value": 3.14}
+    # assert list(props["dict"].keys()) in [
+    #     # order no guarantee (rapidjson has order, value(unordered_map) not)
+    #     ["key", "value"],
+    #     ["value", "key"],
+    # ]
+
+    d = props["double"]
+    assert d.GetType() == "double"
+    assert d.Get() == d()
+    assert isinstance(d(), float)
+    with pytest.raises(RuntimeError) as excinfo:
+        d.get("key")
+    assert "in get<T>()" in repr(excinfo)
+    assert d.set([1, 2, 3])() == [1, 2, 3]
+
+    i = props["int"]
+    assert i.GetType() == "uint64_t"
+    assert i.GetUint64() == 42
+    assert isinstance(i.GetUint64(), int)
+    with pytest.raises(RuntimeError) as excinfo:
+        i.GetInt64()
+    assert "in get<T>()" in repr(excinfo)
+
+    # i = props["int2"]
+    # assert i.GetType() == "int64_t"
+    # assert i.GetInt64() == -101
+    # assert isinstance(i.GetInt64(), int)
+    # with pytest.raises(RuntimeError) as excinfo:
+    #     i.GetUint64()
+    # assert "in get<T>()" in repr(excinfo)
+
+    props["new"] = 6
+    assert props["new"]() == 6
+    props.from_rapidjson(rapidjson({"key": 6})).to_rapidjson()
+    assert props() == {"key": 6}
+    assert feature.properties()() == {"key": 6}
+    assert feature.properties({"key": 7}).properties()() == {"key": 7}
+    assert feature.properties(rapidjson({"key": 8})).properties()() == {
+        "key": 8,
+    }
+    assert feature.geometry(geojson.Point(1, 2)).geometry()() == {
+        "type": "Point",
+        "coordinates": [1.0, 2.0, 0.0],
+    }
+    assert feature.geometry(geojson.Point(3, 4)).geometry().as_point()() == [
+        3.0,
+        4.0,
+        0.0,
+    ]
+    assert (
+        feature.to_rapidjson().dumps()
+        == '{"type":"Feature","geometry":{"type":"Point","coordinates":[3.0,4.0,0.0]},"properties":{"key":8},"my_key":"my_value"}'  # noqa
+    )
+    f2 = geojson.Feature().from_rapidjson(feature.to_rapidjson())
+    assert f2 == feature
+    assert f2() == feature()
 
 
 def pytest_main(dir: str, *, test_file: str = None):

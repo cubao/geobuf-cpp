@@ -29,7 +29,7 @@ using RapidjsonAllocator = mapbox::geojson::rapidjson_allocator;
 using RapidjsonDocument = mapbox::geojson::rapidjson_document;
 using geojson_value = mapbox::geojson::value;
 
-inline RapidjsonValue py_int_to_rapidjson(const py::handle &obj)
+inline RapidjsonValue __py_int_to_rapidjson(const py::handle &obj)
 {
     try {
         auto num = obj.cast<int64_t>();
@@ -60,7 +60,7 @@ inline RapidjsonValue to_rapidjson(const py::handle &obj,
         return RapidjsonValue(obj.cast<bool>());
     }
     if (py::isinstance<py::int_>(obj)) {
-        return py_int_to_rapidjson(obj);
+        return __py_int_to_rapidjson(obj);
     }
     if (py::isinstance<py::float_>(obj)) {
         return RapidjsonValue(obj.cast<double>());
@@ -276,7 +276,7 @@ inline py::object to_python(const mapbox::geojson::geometry &obj)
         [&](const mapbox::geojson::geometry_collection &g) {
             py::list geometries;
             for (auto &gg : g) {
-                geometries.append(to_python(mapbox::geojson::geometry(gg)));
+                geometries.append(to_python(gg));
             }
             ret["geometries"] = geometries;
         },
@@ -293,6 +293,44 @@ inline py::object to_python(const mapbox::geojson::geometry &obj)
         }
     }
     return ret;
+}
+
+inline py::object to_python(const mapbox::geojson::geometry_collection &obj)
+{
+    return to_python(mapbox::geojson::geometry{obj});
+}
+
+inline py::object to_python(const mapbox::geojson::identifier &id)
+{
+    py::object ret = py::none();
+    // null_value_t, uint64_t, int64_t, double, std::string
+    id.match([&](mapbox::feature::null_value_t v) {},
+             [&](uint64_t v) { ret = py::int_(v); },
+             [&](int64_t v) { ret = py::int_(v); },
+             [&](double v) { ret = py::float_(v); },
+             [&](const std::string &v) { ret = py::str(v); },
+             [&](const auto &) -> void {});
+    return ret;
+}
+
+inline mapbox::geojson::identifier to_feature_id(const py::object &obj)
+{
+    if (obj.ptr() == nullptr || obj.is_none()) {
+        return {};
+    }
+    if (py::isinstance<py::int_>(obj)) {
+        auto val = obj.cast<long long>();
+        if (val < 0) {
+            return int64_t(val);
+        } else {
+            return uint64_t(val);
+        }
+    } else if (py::isinstance<py::float_>(obj)) {
+        return obj.cast<double>();
+    } else if (py::isinstance<py::str>(obj)) {
+        return obj.cast<std::string>();
+    }
+    return {};
 }
 
 inline py::object to_python(const mapbox::geojson::feature &f)

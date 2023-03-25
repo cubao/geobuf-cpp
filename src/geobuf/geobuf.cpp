@@ -251,7 +251,6 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
             protozero::pbf_writer pbf_g{pbf, 6};
             writeGeometry(geometry, pbf_g);
         });
-    keys.clear();
     return data;
 }
 
@@ -361,7 +360,7 @@ void Encoder::saveKey(const std::string &key)
     if (keys.find(key) != keys.end()) {
         return;
     }
-    keys.emplace(key, keys.size());
+    keys[key] = keys.size();
 }
 
 void Encoder::saveKey(const mapbox::feature::property_map &props)
@@ -606,7 +605,7 @@ void unpack_properties(mapbox::geojson::prop_map &properties,
     for (auto it = indexes.begin(); it != indexes.end();) {
         auto &key = keys[*it++];
         auto &value = values[*it++];
-        properties.emplace(key, value);
+        properties[key] = value;
     }
 }
 

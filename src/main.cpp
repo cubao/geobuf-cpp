@@ -141,6 +141,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
              py::overload_cast<const std::string &, const std::string &>(
                  &Encoder::encode),
              py::kw_only(), "geojson"_a, "geobuf"_a)
+        .def("keys", &Encoder::__keys)
         //
         ;
 
