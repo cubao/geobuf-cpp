@@ -114,6 +114,12 @@ cli_test:
 	python3 -m pybind11_geobuf normalize_json data/sample1.json build/sample1.normalized.json
 	python3 -m pybind11_geobuf normalize_json data/sample1.json build/sample1.normalized.precision2.json --precision=2
 
+cli_test2:
+	python3 -m pybind11_geobuf round_trip data/sample2.json -o build/test/pybind --json2pb_use_python=False --pb2json_use_python=False
+	python3 -m pybind11_geobuf round_trip data/sample2.json -o build/test/python --json2pb_use_python=True --pb2json_use_python=True
+	python3 -m pybind11_geobuf round_trip data/sample2.json -o build/test/cxx_py --json2pb_use_python=False --pb2json_use_python=True
+	python3 -m pybind11_geobuf round_trip data/sample2.json -o build/test/py_cxx --json2pb_use_python=True --pb2json_use_python=False
+
 # conda create -y -n py36 python=3.6
 # conda create -y -n py37 python=3.7
 # conda create -y -n py38 python=3.8
