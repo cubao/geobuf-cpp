@@ -132,6 +132,71 @@ def pbf_decode(path: str, output_path: str = None, *, indent: str = ""):
         print(decoded)
 
 
+def system(cmd: str):
+    print(f"$ {cmd}")
+    assert 0 == os.system(cmd), f"failed at {cmd}"
+
+
+def remove(path):
+    if not os.path.isfile(path):
+        return
+    os.remove(path)
+
+
+@logger.catch(reraise=True)
+def round_trip(
+    path: str,
+    output_dir: str = None,
+    *,
+    precision: int = 6,
+    json2pb_use_python: bool = False,
+    pb2json_use_python: bool = False,
+):
+    """
+    _0.json
+    _1.pbf
+    _2.pbf.txt
+    _3.json
+    """
+    assert path.endswith((".json", ".geojson")) and os.path.isfile(path)
+    path = os.path.abspath(path)
+    output_dir = os.path.abspath(output_dir or os.path.dirname(path))
+    os.makedirs(output_dir, exist_ok=True)
+    filename = os.path.basename(path)
+
+    data = rapidjson().load(path).sort_keys()
+    opath = f"{output_dir}/{filename}_0.json"
+    remove(opath)
+    assert data.dump(opath, indent=True)
+    logger.info(f"wrote to {opath}")
+
+    ipath = opath
+    opath = f"{output_dir}/{filename}_1.pbf"
+    remove(opath)
+    if json2pb_use_python:
+        cmd = f"geobuf encode --precision={precision} --with-z < {ipath} > {opath}"  # noqa
+        system(cmd)
+    else:
+        json2geobuf(ipath, opath, precision=precision)
+    logger.info(f"wrote to {opath}")
+
+    ipath = opath
+    opath = f"{ipath}.txt"
+    remove(opath)
+    pbf_decode(ipath, opath)
+    logger.info(f"wrote to {opath}")
+
+    opath = f"{output_dir}/{filename}_3.json"
+    remove(opath)
+    if pb2json_use_python:
+        cmd = f"geobuf decode < {ipath} > {opath}"
+        system(cmd)
+        normalize_json(opath, opath)
+    else:
+        geobuf2json(ipath, opath, indent=True, sort_keys=True)
+    logger.info(f"wrote to {opath}")
+
+
 if __name__ == "__main__":
     import fire
 
@@ -143,5 +208,6 @@ if __name__ == "__main__":
             "normalize_geobuf": normalize_geobuf,
             "normalize_json": normalize_json,
             "pbf_decode": pbf_decode,
+            "round_trip": round_trip,
         }
     )

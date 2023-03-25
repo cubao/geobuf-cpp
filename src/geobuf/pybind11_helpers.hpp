@@ -338,14 +338,18 @@ inline py::object to_python(const mapbox::geojson::feature &f)
     py::dict ret;
     ret["type"] = "Feature";
     ret["geometry"] = to_python(f.geometry);
+    if (!f.id.is<mapbox::feature::null_value_t>()) {
+        ret["id"] = to_python(f.id);
+    }
     ret["properties"] = to_python(f.properties);
     if (!f.custom_properties.empty()) {
         for (auto &p : f.custom_properties) {
             const auto &k = p.first;
-            if (k == "type" || k == "geometry" || k == "properties") {
+            if (k == "type" || k == "id" || k == "geometry" ||
+                k == "properties") {
                 continue;
             }
-            ret[py::str(p.first)] = to_python(p.second);
+            ret[py::str(k)] = to_python(p.second);
         }
     }
     return ret;

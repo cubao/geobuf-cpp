@@ -17,6 +17,9 @@
 #include <protozero/pbf_builder.hpp>
 #include <protozero/pbf_reader.hpp>
 
+// https://github.com/mapbox/geobuf/blob/master/encode.js
+// https://github.com/mapbox/geobuf/blob/master/decode.js
+
 #ifdef NDEBUG
 #define dbg(x) x
 #else
@@ -251,6 +254,7 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
             protozero::pbf_writer pbf_g{pbf, 6};
             writeGeometry(geometry, pbf_g);
         });
+    // keys.clear(); // we leave it there for debugging purpose
     return data;
 }
 
@@ -357,10 +361,7 @@ void Encoder::analyzePoint(const mapbox::geojson::point &point)
 }
 void Encoder::saveKey(const std::string &key)
 {
-    if (keys.find(key) != keys.end()) {
-        return;
-    }
-    keys[key] = keys.size();
+    keys.try_emplace(key, keys.size());
 }
 
 void Encoder::saveKey(const mapbox::feature::property_map &props)
@@ -389,6 +390,11 @@ void Encoder::writeFeature(const mapbox::geojson::feature &feature, Pbf &pbf)
         writeGeometry(feature.geometry, pbf_geom);
     }
     if (!feature.id.is<mapbox::geojson::null_value_t>()) {
+        // https://github.com/mapbox/geobuf/blob/daad5e039f842f4d4f24ed7d59f31586563b71b8/geobuf.proto#L18-L21
+        // oneof id_type {
+        //     string id = 11;
+        //     sint64 int_id = 12;
+        // }
         feature.id.match([&](int64_t id) { pbf.add_int64(12, id); },
                          [&](const std::string &id) { pbf.add_string(11, id); },
                          [&](const auto &) {
@@ -460,6 +466,16 @@ void Encoder::writeProps(const mapbox::feature::property_map &props,
 
 void Encoder::writeValue(const mapbox::feature::value &value, Encoder::Pbf &pbf)
 {
+    // message Value {
+    //     oneof value_type {
+    //         string string_value = 1;
+    //         double double_value = 2;
+    //         uint64 pos_int_value = 3;
+    //         uint64 neg_int_value = 4;
+    //         bool bool_value = 5;
+    //         string json_value = 6;
+    //     }
+    // }
     value.match([&](bool val) { pbf.add_bool(5, val); },
                 [&](uint64_t val) { pbf.add_uint64(3, val); },
                 [&](int64_t val) { pbf.add_uint64(4, -val); },
@@ -630,6 +646,7 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
                 fc.custom_properties,                                  //
                 std::vector<uint32_t>(indexes.begin(), indexes.end()), //
                 keys, values);
+            values.clear();
         } else {
             pbf.skip();
         }
@@ -646,7 +663,7 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
             protozero::pbf_reader pbf_g = pbf.get_message();
             f.geometry = readGeometry(pbf_g);
         } else if (tag == 11) {
-            f.id = pbf.get_string();
+            f.id = pbf.get_string(); // TODO, restore to mapbox::geojson id
         } else if (tag == 12) {
             f.id = pbf.get_int64();
         } else if (tag == 13) {
@@ -661,6 +678,7 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
                 f.properties,                                          //
                 std::vector<uint32_t>(indexes.begin(), indexes.end()), //
                 keys, values);
+            values.clear();
         } else if (tag == 15) {
             auto indexes = pbf.get_packed_uint32();
             if (indexes.size() % 2 != 0) {
@@ -670,6 +688,7 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
                 f.custom_properties,                                   //
                 std::vector<uint32_t>(indexes.begin(), indexes.end()), //
                 keys, values);
+            values.clear();
         } else {
             pbf.skip();
         }
@@ -850,6 +869,7 @@ mapbox::geojson::geometry Decoder::readGeometry(Pbf &pbf)
                 g.custom_properties,                                   //
                 std::vector<uint32_t>(indexes.begin(), indexes.end()), //
                 keys, values);
+            values.clear();
         } else {
             pbf.skip();
         }
