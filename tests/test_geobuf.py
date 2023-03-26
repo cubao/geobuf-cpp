@@ -477,6 +477,10 @@ def test_geojson_line_string():
         ]
     )
 
+    g = geojson.LineString([[1, 2, 3], [1, 2, 3], [4, 5, 6]])
+    assert len(g) == 3
+    assert len(g.deduplicate_xyz()) == 2
+
 
 def test_geojson_multi_line_string():
     g1 = geojson.MultiLineString()

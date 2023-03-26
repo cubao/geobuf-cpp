@@ -608,6 +608,14 @@ void bind_geojson(py::module &geojson)
         BIND_FOR_VECTOR_POINT_TYPE(line_string) //
         .def(py::self == py::self)              //
         .def(py::self != py::self)              //
+        .def(
+            "deduplicate_xyz",
+            [](mapbox::geojson::line_string &self)
+                -> mapbox::geojson::line_string & {
+                deduplicate_xyz(self);
+                return self;
+            },
+            rvp::reference_internal)
         //
         ;
 

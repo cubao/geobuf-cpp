@@ -514,25 +514,81 @@ inline void round_coords(T &xyz, int lon = 8, int lat = 8, int alt = 3)
     round_coords(xyz, scale_up);
 }
 
-template <
-    typename T,
-    std::enable_if_t<std::is_same<T, mapbox::geojson::point>::value, int> = 0>
-inline void deduplicate_xyz(std::vector<T> &geom)
+inline bool deduplicate_xyz(std::vector<mapbox::geojson::point> &geom)
 {
-    geom.erase(
-        std::remove_if(geom.begin(), geom.end(),
-                       [](const auto &prev, const auto &curr) { return prev == curr; }),
-        geom.end());
+    auto itr = std::unique(
+        geom.begin(), geom.end(),
+        [](const auto &prev, const auto &curr) { return prev == curr; });
+    if (itr == geom.end()) {
+        return false;
+    }
+    geom.erase(itr, geom.end());
+    return true;
+}
+inline bool deduplicate_xyz(mapbox::geojson::multi_point &geom)
+{
+    return deduplicate_xyz((std::vector<mapbox::geojson::point> &)geom);
+}
+inline bool deduplicate_xyz(mapbox::geojson::line_string &geom)
+{
+    return deduplicate_xyz((std::vector<mapbox::geojson::point> &)geom);
+}
+inline bool deduplicate_xyz(mapbox::geojson::multi_line_string &geom)
+{
+    bool removed = false;
+    for (auto &g : geom) {
+        removed |= deduplicate_xyz(g);
+    }
+    return removed;
+}
+inline bool deduplicate_xyz(mapbox::geojson::linear_ring &geom)
+{
+    return deduplicate_xyz((std::vector<mapbox::geojson::point> &)geom);
+}
+inline bool deduplicate_xyz(mapbox::geojson::polygon &geom)
+{
+    bool removed = false;
+    for (auto &g : geom) {
+        removed |= deduplicate_xyz(g);
+    }
+    return removed;
+}
+inline bool deduplicate_xyz(mapbox::geojson::multi_polygon &geom)
+{
+    bool removed = false;
+    for (auto &g : geom) {
+        removed |= deduplicate_xyz(g);
+    }
+    return removed;
 }
 
-template <
-    typename T,
-    std::enable_if_t<!std::is_same<T, mapbox::geojson::point>::value, int> = 0>
-inline void deduplicate_xyz(std::vector<T> &geom)
+inline bool deduplicate_xyz(mapbox::geojson::geometry &geom)
 {
+    return geom.match(
+        [&](mapbox::geojson::multi_point &g) { return deduplicate_xyz(g); },
+        [&](mapbox::geojson::line_string &g) { return deduplicate_xyz(g); },
+        [&](mapbox::geojson::linear_ring &g) { return deduplicate_xyz(g); },
+        [&](mapbox::geojson::multi_line_string &g) {
+            return deduplicate_xyz(g);
+        },
+        [&](mapbox::geojson::polygon &g) { return deduplicate_xyz(g); },
+        [&](mapbox::geojson::multi_polygon &g) { return deduplicate_xyz(g); },
+        [&](mapbox::geojson::geometry_collection &gc) {
+            bool removed = false;
+            for (auto &g : gc) {
+                removed |= deduplicate_xyz(g);
+            }
+            return removed;
+        },
+        [](auto &) -> bool { return false; });
+}
+inline bool deduplicate_xyz(mapbox::geojson::geometry_collection &geom)
+{
+    bool removed = false;
     for (auto &g : geom) {
-        deduplicate_xyz(g);
+        removed |= deduplicate_xyz(g);
     }
+    return removed;
 }
 
 } // namespace cubao
