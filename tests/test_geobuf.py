@@ -1357,6 +1357,10 @@ def test_geojson_load_dump():
     assert fc_.is_feature_collection()
     assert fc_.as_feature_collection() == fc
 
+    with pytest.raises(RuntimeError) as excinfo:
+        geojson.GeoJSON().load("no_such_file")
+    assert "can't open for reading: no_such_file" in repr(excinfo)
+
 
 def pytest_main(dir: str, *, test_file: str = None):
 
