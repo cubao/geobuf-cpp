@@ -300,9 +300,18 @@ def test_geojson_point():
     g1.round(lon=5, lat=7, alt=2)
     assert np.all([123.45679, 45.6789012, 7.89] == g1.as_numpy())
 
-    # coords = [-123.4567890123456, -45.6789012345, -7.89123456]
-    # g1 = geojson.Point(*coords)
-    # g1.round(lon=5, lat=7, alt=2)
+    coords = [0.5, -0.5]
+    g1 = geojson.Point(*coords)
+    g1.round(lon=0, lat=0, alt=0)
+    # https://en.cppreference.com/w/cpp/numeric/math/round
+    # rounding halfway cases away from zero
+    assert np.all(g1.as_numpy() == [1, -1, 0])
+    # Note that, in JS, Math.round(-0.5) => -0.0
+
+    coords = [123, 456]
+    g1 = geojson.Point(*coords)
+    g1.round(lon=-1, lat=-1)  # normally you don't do it
+    assert np.all(g1.as_numpy() == [120, 460, 0])
 
 
 def test_geojson_point2():

@@ -440,7 +440,16 @@ inline int __len__(mapbox::geojson::geometry &self)
 
 inline double round_coords(double value, double scale)
 {
-    // https://github.com/Tencent/rapidjson/issues/362
+    // rounding is hard, we just use the most simple implementation
+    // see
+    // -    https://github.com/Tencent/rapidjson/issues/362
+    // -    https://en.cppreference.com/w/cpp/numeric/math/round
+    //      rounding halfway cases away from zero
+    // -
+    // https://stackoverflow.com/questions/485525/round-for-float-in-c/24348037#24348037
+    // also note that, javascript Math.round differs from C++ round
+    // e.g. std::round(-0.5) => -1.0
+    //      Math.round(-0.5) => -0.0
     return std::round(value * scale) / scale;
 }
 
@@ -492,70 +501,13 @@ inline void round_coords(mapbox::geojson::geometry &g, const Eigen::Vector3d &s)
         [](auto &) {});
 }
 
-inline double round_coords(double value, double scale_up, double scale_down)
-{
-    return std::round(value * scale_up) * scale_down;
-}
-
-inline void round_coords(mapbox::geojson::point &xyz,
-                         const Eigen::Vector3d &scale_up,
-                         const Eigen::Vector3d &scale_down)
-{
-    xyz.x = round_coords(xyz.x, scale_up[0], scale_down[0]);
-    xyz.y = round_coords(xyz.y, scale_up[1], scale_down[1]);
-    xyz.z = round_coords(xyz.z, scale_up[2], scale_down[2]);
-}
-
-inline void round_coords(std::vector<mapbox::geojson::point> &coords,
-                         const Eigen::Vector3d &scale_up,
-                         const Eigen::Vector3d &scale_down)
-{
-    for (auto &pt : coords) {
-        round_coords(pt, scale_up, scale_down);
-    }
-}
-
-inline void round_coords(mapbox::geojson::geometry &g,
-                         const Eigen::Vector3d &su, const Eigen::Vector3d &sd)
-{
-    return g.match(
-        [&](mapbox::geojson::point &g) { return round_coords(g, su, sd); },
-        [&](mapbox::geojson::multi_point &g) { round_coords(g, su, sd); },
-        [&](mapbox::geojson::line_string &g) { round_coords(g, su, sd); },
-        [&](mapbox::geojson::linear_ring &g) { round_coords(g, su, sd); },
-        [&](mapbox::geojson::multi_line_string &gg) {
-            for (auto &g : gg) {
-                round_coords(g, su, sd);
-            }
-        },
-        [&](mapbox::geojson::polygon &gg) {
-            for (auto &g : gg) {
-                round_coords(g, su, sd);
-            }
-        },
-        [&](mapbox::geojson::multi_polygon &ggg) {
-            for (auto &gg : ggg) {
-                for (auto &g : gg) {
-                    round_coords(g, su, sd);
-                }
-            }
-        },
-        [&](mapbox::geojson::geometry_collection &gc) {
-            for (auto &g : gc) {
-                round_coords(g, su, sd);
-            }
-        },
-        [](auto &) {});
-}
-
 template <typename T>
 inline void round_coords(T &xyz, int lon = 8, int lat = 8, int alt = 3)
 {
     Eigen::Vector3d scale_up(std::pow(10, lon), //
                              std::pow(10, lat), //
                              std::pow(10, alt));
-    Eigen::Vector3d scale_down = 1.0 / scale_up.array();
-    round_coords(xyz, scale_up, scale_down);
+    round_coords(xyz, scale_up);
 }
 
 } // namespace cubao
