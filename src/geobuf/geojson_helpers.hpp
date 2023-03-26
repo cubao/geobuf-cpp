@@ -438,6 +438,49 @@ inline int __len__(mapbox::geojson::geometry &self)
         [](auto &) -> int { return 0; });
 }
 
+inline double round_coords(double value, double scale)
+{
+    return std::round(value * scale) / scale;
+}
+
+inline double round_coords(double value, double scale_up, double scale_down)
+{
+    return std::round(value * scale_up) * scale_down;
+}
+
+inline void round_coords(mapbox::geojson::point &xyz,
+                         const Eigen::Vector3d &scale_up,
+                         const Eigen::Vector3d &scale_down)
+{
+    xyz.x = round_coords(xyz.x, scale_up[0], scale_down[0]);
+    xyz.y = round_coords(xyz.y, scale_up[1], scale_down[1]);
+    xyz.z = round_coords(xyz.z, scale_up[2], scale_down[2]);
+}
+
+template <typename T>
+inline void round_coords(T &coords, const Eigen::Vector3d &scale)
+{
+    for (auto &g : coords) {
+        round_coords(g, scale);
+    }
+}
+
+template <>
+inline void round_coords(mapbox::geojson::point &xyz,
+                         const Eigen::Vector3d &scale)
+{
+    // xyz.x = round_coords(xyz.x, scale[0]);
+    // xyz.y = round_coords(xyz.y, scale[1]);
+    // xyz.z = round_coords(xyz.z, scale[2]);
+}
+
+template <typename T>
+inline void round_coords(T &xyz, int lon = 8, int lat = 8, int alt = 3)
+{
+    return round_coords(
+        xyz, {std::pow(10, lon), std::pow(10, lat), std::pow(10, alt)});
+}
+
 } // namespace cubao
 
 #endif
