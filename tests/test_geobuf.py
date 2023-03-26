@@ -312,6 +312,7 @@ def test_geojson_point():
     g1 = geojson.Point(*coords)
     g1.round(lon=-1, lat=-1)  # normally you don't do it
     assert np.all(g1.as_numpy() == [120, 460, 0])
+    assert not g1.deduplicate_xyz()
 
 
 def test_geojson_point2():
@@ -427,6 +428,16 @@ def test_geojson_multi_point():
         ]
     )
 
+    g = geojson.MultiPoint([[1, 2], [1, 2]])
+    assert len(g) == 2
+    assert g.deduplicate_xyz()
+    assert not g.deduplicate_xyz()
+    assert len(g) == 1
+    g = geojson.MultiPoint([[1, 2], [3, 4], [1, 2]])
+    assert len(g) == 3
+    assert not g.deduplicate_xyz()
+    assert len(g) == 3
+
 
 def test_geojson_line_string():
     g1 = geojson.LineString()
@@ -479,7 +490,9 @@ def test_geojson_line_string():
 
     g = geojson.LineString([[1, 2, 3], [1, 2, 3], [4, 5, 6]])
     assert len(g) == 3
-    assert len(g.deduplicate_xyz()) == 2
+    assert g.deduplicate_xyz()
+    assert not g.deduplicate_xyz()
+    assert len(g) == 2
 
 
 def test_geojson_multi_line_string():
@@ -585,6 +598,15 @@ def test_geojson_multi_line_string():
         ]
     )
 
+    g = geojson.MultiLineString([[1, 2, 3], [1, 2, 3], [4, 5, 6]])
+    assert g.deduplicate_xyz()
+    assert not g.deduplicate_xyz()
+    g.push_back([[1, 2, 3], [1, 2, 3], [4, 5, 6]])
+    assert g.deduplicate_xyz()
+    assert not g.deduplicate_xyz()
+    g.push_back(g[0])
+    assert not g.deduplicate_xyz()
+
 
 def test_geojson_polygon():
     g1 = geojson.Polygon()
@@ -677,6 +699,10 @@ def test_geojson_polygon():
             ],
         ]
     )
+
+    assert not g.deduplicate_xyz()
+    g.round(lon=0, lat=0, alt=-1)
+    assert g.deduplicate_xyz()
 
 
 def test_geojson_multi_polygon():

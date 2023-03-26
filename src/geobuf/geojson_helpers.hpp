@@ -525,6 +525,14 @@ inline bool deduplicate_xyz(std::vector<mapbox::geojson::point> &geom)
     geom.erase(itr, geom.end());
     return true;
 }
+inline bool deduplicate_xyz(mapbox::geojson::empty &geom)
+{
+    return false; // dummy
+}
+inline bool deduplicate_xyz(mapbox::geojson::point &geom)
+{
+    return false; // dummy
+}
 inline bool deduplicate_xyz(mapbox::geojson::multi_point &geom)
 {
     return deduplicate_xyz((std::vector<mapbox::geojson::point> &)geom);
@@ -589,6 +597,29 @@ inline bool deduplicate_xyz(mapbox::geojson::geometry_collection &geom)
         removed |= deduplicate_xyz(g);
     }
     return removed;
+}
+
+inline bool deduplicate_xyz(mapbox::geojson::feature &f)
+{
+    return deduplicate_xyz(f.geometry);
+}
+inline bool deduplicate_xyz(mapbox::geojson::feature_collection &fc)
+{
+    bool removed = false;
+    for (auto &f : fc) {
+        removed |= deduplicate_xyz(f);
+    }
+    return removed;
+}
+inline bool deduplicate_xyz(mapbox::geojson::geojson &geojson)
+{
+    return geojson.match(
+        [](mapbox::geojson::geometry &g) { return deduplicate_xyz(g); },
+        [](mapbox::geojson::feature &f) { return deduplicate_xyz(f); },
+        [](mapbox::geojson::feature_collection &fc) {
+            return deduplicate_xyz(fc);
+        },
+        [](auto &) { return false; });
 }
 
 } // namespace cubao
