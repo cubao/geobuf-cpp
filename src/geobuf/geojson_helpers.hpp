@@ -10,6 +10,7 @@
 #include <Eigen/Core>
 #include <iostream>
 #include <mapbox/geojson.hpp>
+#include <type_traits>
 
 static_assert(sizeof(mapbox::geojson::point) == sizeof(Eigen::Vector3d),
               "mapbox::geojson::point should be double*3 (xyz instead of xy)");
@@ -511,6 +512,27 @@ inline void round_coords(T &xyz, int lon = 8, int lat = 8, int alt = 3)
                              std::pow(10, lat), //
                              std::pow(10, alt));
     round_coords(xyz, scale_up);
+}
+
+template <
+    typename T,
+    std::enable_if_t<std::is_same<T, mapbox::geojson::point>::value, int> = 0>
+inline void deduplicate_xyz(std::vector<T> &geom)
+{
+    geom.erase(
+        std::remove_if(geom.begin(), geom.end(),
+                       [](const auto &prev, const auto &curr) { return prev == curr; }),
+        geom.end());
+}
+
+template <
+    typename T,
+    std::enable_if_t<!std::is_same<T, mapbox::geojson::point>::value, int> = 0>
+inline void deduplicate_xyz(std::vector<T> &geom)
+{
+    for (auto &g : geom) {
+        deduplicate_xyz(g);
+    }
 }
 
 } // namespace cubao
