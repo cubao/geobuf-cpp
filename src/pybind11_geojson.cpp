@@ -270,7 +270,22 @@ void bind_geojson(py::module &geojson)
             [](mapbox::geojson::geometry &self,
                const mapbox::geojson::geometry &geom)
                 -> mapbox::geojson::geometry & {
-                geometry_push_back(self, geom);
+                if (self.is<mapbox::geojson::multi_polygon>() && geom.is<mapbox::geojson::polygon>()) {
+                    self.get<mapbox::geojson::multi_polygon>().push_back(geom.get<mapbox::geojson::polygon>());
+                } else {
+                    geometry_push_back(self, geom);
+                }
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "push_back",
+            [](mapbox::geojson::geometry &self,
+               const mapbox::geojson::polygon &geom)
+                -> mapbox::geojson::geometry & {
+                    if (self.is<mapbox::geojson::multi_polygon>()) {
+                        self.get<mapbox::geojson::multi_polygon>().push_back(geom);
+                    }
                 return self;
             },
             rvp::reference_internal)

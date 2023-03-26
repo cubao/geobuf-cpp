@@ -1056,6 +1056,13 @@ def test_geojson_geometry():
     g7 = geojson.Geometry(geojson.MultiPolygon([[1, 2, 3], [4, 5, 6]]))
     assert np.array(g7()["coordinates"]).shape == (1, 1, 2, 3)
     assert geojson.Geometry(g7()) == geojson.Geometry(g7.to_rapidjson()) == g7
+    assert len(g7) == 1
+    g7.as_multi_polygon().push_back(geojson.Polygon([[1, 2, 3], [4, 5, 6]]))
+    assert len(g7) == 2
+    g7.push_back(geojson.Polygon([[1, 2, 3], [4, 5, 6]]))
+    assert len(g7) == 3
+    g7.push_back(geojson.Geometry(geojson.Polygon([[1, 2, 3], [4, 5, 6]])))
+    assert len(g7) == 4
 
     gc = geojson.Geometry(geojson.GeometryCollection())
     assert gc.type() == "GeometryCollection"
