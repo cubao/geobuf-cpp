@@ -1055,6 +1055,45 @@ def test_geojson_geometry():
 
     assert gc4.__geo_interface__ == gc()
 
+    coords = np.array(sample_geojson()["geometry"]["coordinates"])
+    g1 = geojson.Point(coords[0])
+    g2 = geojson.MultiPoint(coords)
+    g3 = geojson.LineString(coords)
+    g4 = geojson.MultiLineString(coords).push_back(coords)
+    g5 = geojson.Polygon(coords).push_back(coords)
+    g6 = geojson.MultiPolygon(coords).push_back(coords)
+    gc = (
+        geojson.GeometryCollection()
+        .push_back(g1)
+        .push_back(g2)
+        .push_back(g3)
+        .push_back(g4)
+        .push_back(g5)
+        .push_back(g6)
+    )
+    assert len(gc) == 6
+    assert gc()["type"] == "GeometryCollection"
+
+    gg = geojson.Geometry(gc)
+    assert gg() == gc()
+    gc.round()
+    assert gg() != gc()
+    gg.round()
+    assert gg() == gc()
+
+    def check_round3(v, n):
+        if isinstance(v, float):
+            assert v == round(v, n)
+        elif isinstance(v, list):
+            for e in v:
+                check_round3(e, n)
+        elif isinstance(v, dict):
+            for e in v.values():
+                check_round3(e, n)
+
+    check_round3(gc.round(lon=5, lat=5, alt=5)(), 5)
+    check_round3(gc.round(lon=3, lat=3, alt=3)(), 3)
+
 
 def test_geobuf_from_geojson():
     encoder = Encoder(max_precision=int(10**8))
