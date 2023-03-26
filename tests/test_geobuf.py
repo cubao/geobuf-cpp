@@ -1024,6 +1024,7 @@ def test_geojson_geometry():
         ],
     }
     assert geojson.Geometry(g5()) == geojson.Geometry(g5.to_rapidjson()) == g5
+    assert g5() == g5.push_back(g4)()  # push_back geometry silent ignore
 
     g5 = geojson.Geometry(geojson.MultiLineString())
     # g5.push_back([70, 80, 90]), don't do this, will segment fault
@@ -1059,7 +1060,7 @@ def test_geojson_geometry():
     gc = geojson.Geometry(geojson.GeometryCollection())
     assert gc.type() == "GeometryCollection"
     gc.push_back(g3)
-    gc.push_back(g4)
+    assert gc() != gc.push_back(g4)()  # push_back geometry okay
     assert gc() == {"type": gc.type(), "geometries": [g3(), g4()]}
     assert len(gc) == 2
 
