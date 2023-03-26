@@ -19,6 +19,8 @@ from pybind11_geobuf import (  # noqa
     str2json2str,
 )
 
+__pwd = os.path.abspath(os.path.dirname(__file__))
+
 
 def test_version():
     print(pybind11_geobuf.__version__)
@@ -169,7 +171,6 @@ def test_rapidjson_obj():
     obj["other_bytes"] = b"bytes"
     assert obj.dumps() == '{"bytes":"cmF3IGJ5dGVz","other_bytes":"Ynl0ZXM="}'
 
-    __pwd = os.path.abspath(os.path.dirname(__file__))
     basename = "rapidjson.png"
     path = f"{__pwd}/../data/{basename}"
     with open(path, "rb") as f:
@@ -1320,6 +1321,25 @@ def test_geojson_feature():
     f2 = geojson.Feature().from_rapidjson(feature.to_rapidjson())
     assert f2 == feature
     assert f2() == feature()
+
+
+def test_geojson_load_dump():
+    dirname = os.path.abspath(f"{__pwd}/../data")
+    path1 = os.path.join(dirname, "geometry.json")
+    path2 = os.path.join(dirname, "feature.json")
+    path3 = os.path.join(dirname, "feature_collection.json")
+    json1 = rapidjson().load(path1)
+    json2 = rapidjson().load(path2)
+    json3 = rapidjson().load(path3)
+    g = geojson.Geometry().from_rapidjson(json1)
+    assert g.is_line_string()
+    assert g.to_rapidjson() == json1
+    f = geojson.Feature().from_rapidjson(json2)
+    assert f.geometry() == g
+    assert f.to_rapidjson() == json2
+    fc = geojson.FeatureCollection().from_rapidjson(json3)
+    assert len(fc) == 1 and fc[0] == f
+    assert fc.to_rapidjson() == json3
 
 
 def pytest_main(dir: str, *, test_file: str = None):

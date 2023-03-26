@@ -1574,12 +1574,47 @@ void bind_geojson(py::module &geojson)
     py::class_<mapbox::geojson::feature_collection,
                std::vector<mapbox::geojson::feature>>(
         geojson, "FeatureCollection", py::module_local())
+        .def(py::init<>())
+        .def(py::init(
+            [](const mapbox::geojson::feature_collection &g) { return g; }))
+        .def(py::init([](int N) {
+                 mapbox::geojson::feature_collection fc;
+                 fc.resize(N);
+                 return fc;
+             }),
+             "N"_a)
+        .def(
+            "resize",
+            [](mapbox::geojson::feature_collection &self,
+               int N) -> mapbox::geojson::feature_collection & {
+                self.resize(N);
+                return self;
+            },
+            rvp::reference_internal)
         //
         .def("__call__",
              [](const mapbox::geojson::feature_collection &self) {
                  return to_python(self);
              }) //
         GEOMETRY_DEDUPLICATE_XYZ(feature_collection)
+        //
+        .def(
+            "from_rapidjson",
+            [](mapbox::geojson::feature_collection &self,
+               const RapidjsonValue &json)
+                -> mapbox::geojson::feature_collection & {
+                self =
+                    std::move(mapbox::geojson::convert(json)
+                                  .get<mapbox::geojson::feature_collection>());
+                return self;
+            },
+            rvp::reference_internal)
+        .def("to_rapidjson",
+             [](const mapbox::geojson::feature_collection &self) {
+                 RapidjsonAllocator allocator;
+                 auto json = mapbox::geojson::convert(self, allocator);
+                 return json;
+             })
         //
         ;
 }
