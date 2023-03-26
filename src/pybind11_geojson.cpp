@@ -445,6 +445,15 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal)
         .def("__call__",
              [](const mapbox::geojson::point &self) { return to_python(self); })
+        .def(
+            "round",
+            [](mapbox::geojson::point &self, int lon, int lat,
+               int alt) -> mapbox::geojson::point & {
+                round_coords(self, lon, lat, alt);
+                return self;
+            },
+            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
+            rvp::reference_internal)
         //
         ;
 

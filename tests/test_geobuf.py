@@ -291,6 +291,19 @@ def test_geojson_point():
         "coordinates": [3.0, 7.0, 2.0],
     }
 
+    # round
+    coords = [123.4567890123456, 45.6789012345, 7.89123456]
+    g1 = geojson.Point(*coords)
+    assert np.all(coords == g1.as_numpy())
+    # 8, 8, 3
+    assert np.all([123.45678901, 45.67890123, 7.891] == g1.round().as_numpy())
+    g1.round(lon=5, lat=7, alt=2)
+    assert np.all([123.45679, 45.6789012, 7.89] == g1.as_numpy())
+
+    # coords = [-123.4567890123456, -45.6789012345, -7.89123456]
+    # g1 = geojson.Point(*coords)
+    # g1.round(lon=5, lat=7, alt=2)
+
 
 def test_geojson_point2():
     pt = geojson.Point()
