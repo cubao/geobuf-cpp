@@ -415,6 +415,18 @@ def test_geojson_multi_point():
     assert len(g1) == 0
     assert g1.clear() == g1
 
+    coords = np.array(sample_geojson()["geometry"]["coordinates"])
+    g = geojson.MultiPoint(coords)
+    assert np.all(
+        g.round().as_numpy()
+        == [
+            [120.4031748, 31.41696608, 1.111],
+            [120.28451901, 31.30578267, 2.22],
+            [120.35592249, 31.21781896, 3.333],
+            [120.67093787, 31.29950227, 4.4],
+        ]
+    )
+
 
 def test_geojson_line_string():
     g1 = geojson.LineString()
@@ -452,6 +464,18 @@ def test_geojson_line_string():
 
     g1.append(geojson.Point(1, 2))
     assert len(g1) == 1
+
+    coords = np.array(sample_geojson()["geometry"]["coordinates"])
+    g = geojson.LineString(coords)
+    assert np.all(
+        g.round().as_numpy()
+        == [
+            [120.4031748, 31.41696608, 1.111],
+            [120.28451901, 31.30578267, 2.22],
+            [120.35592249, 31.21781896, 3.333],
+            [120.67093787, 31.29950227, 4.4],
+        ]
+    )
 
 
 def test_geojson_multi_line_string():
@@ -511,6 +535,52 @@ def test_geojson_multi_line_string():
     g1.clear()
     assert len(g1) == 0
 
+    coords = np.array(sample_geojson()["geometry"]["coordinates"])
+    g = geojson.MultiLineString(coords)
+    assert np.array(g()).shape == (1, 4, 3)
+    assert np.all(
+        g.round().as_numpy()
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ]
+        ]
+    )
+    g.push_back(coords)
+    assert np.array(g()).shape == (2, 4, 3)
+    assert np.all(
+        np.array(g())
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+            coords,
+        ]
+    )
+    assert np.all(
+        np.array(g.round()())
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+        ]
+    )
+
 
 def test_geojson_polygon():
     g1 = geojson.Polygon()
@@ -557,6 +627,52 @@ def test_geojson_polygon():
     g1.clear()
     assert len(g1) == 0
     assert g1.clear() == g1
+
+    coords = np.array(sample_geojson()["geometry"]["coordinates"])
+    g = geojson.Polygon(coords)
+    assert np.array(g()).shape == (1, 4, 3)
+    assert np.all(
+        g.round().as_numpy()
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ]
+        ]
+    )
+    g.push_back(coords)
+    assert np.array(g()).shape == (2, 4, 3)
+    assert np.all(
+        np.array(g())
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+            coords,
+        ]
+    )
+    assert np.all(
+        np.array(g.round()())
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+        ]
+    )
 
 
 def test_geojson_multi_polygon():
