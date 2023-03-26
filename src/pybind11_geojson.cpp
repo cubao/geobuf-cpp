@@ -51,6 +51,13 @@ void bind_geojson(py::module &geojson)
         return deduplicate_xyz(self);                                          \
     })
 
+#define copy_deepcopy_clone(Type)                                              \
+    .def("__copy__", [](const Type &self, py::dict) -> Type { return self; })  \
+        .def(                                                                  \
+            "__deepcopy__",                                                    \
+            [](const Type &self, py::dict) -> Type { return self; }, "memo"_a) \
+        .def("clone", [](const Type &self) -> Type { return self; })
+
     py::class_<mapbox::geojson::geojson>(geojson, "GeoJSON", py::module_local())
         is_geojson_type(geometry)           //
         is_geojson_type(feature)            //
@@ -66,8 +73,28 @@ void bind_geojson(py::module &geojson)
             .def(py::init([](const mapbox::geojson::feature &g) { return g; }))
             .def(py::init([](const mapbox::geojson::feature_collection &g) {
                 return g;
-            }))                           //
-        GEOMETRY_DEDUPLICATE_XYZ(geojson) //
+            })) //
+            .def(
+                "round",
+                [](mapbox::geojson::geojson &self, int lon, int lat,
+                   int alt) -> mapbox::geojson::geojson & {
+                    self.match(
+                        [&](mapbox::geojson::geometry &g) {
+                            round_coords(g, lon, lat, alt);
+                        },
+                        [&](mapbox::geojson::feature &f) {
+                            round_coords(f.geometry, lon, lat, alt);
+                        },
+                        [&](mapbox::geojson::feature_collection &fc) {
+                            for (auto &f : fc) {
+                                round_coords(f.geometry, lon, lat, alt);
+                            }
+                        },
+                        [](auto &) {});
+                    return self;
+                },
+                py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
+                rvp::reference_internal) GEOMETRY_DEDUPLICATE_XYZ(geojson) //
             .def(
                 "from_rapidjson",
                 [](mapbox::geojson::geojson &self,
@@ -104,6 +131,7 @@ void bind_geojson(py::module &geojson)
                 "path"_a, py::kw_only(), //
                 "indent"_a = false,      //
                 "sort_keys"_a = false)
+                copy_deepcopy_clone(mapbox::geojson::geojson)
         //
         ;
 
@@ -156,13 +184,6 @@ void bind_geojson(py::module &geojson)
             return self.get<mapbox::geojson::geom_type>();                     \
         },                                                                     \
         rvp::reference_internal)
-
-#define copy_deepcopy_clone(Type)                                              \
-    .def("__copy__", [](const Type &self, py::dict) -> Type { return self; })  \
-        .def(                                                                  \
-            "__deepcopy__",                                                    \
-            [](const Type &self, py::dict) -> Type { return self; }, "memo"_a) \
-        .def("clone", [](const Type &self) -> Type { return self; })
 
     using GeometryBase = mapbox::geometry::geometry_base<double, std::vector>;
     py::class_<GeometryBase>(geojson, "GeometryBase", py::module_local());
@@ -1649,6 +1670,17 @@ void bind_geojson(py::module &geojson)
             },
             "path"_a, py::kw_only(), "indent"_a = false, "sort_keys"_a = false)
         //
+        copy_deepcopy_clone(mapbox::geojson::feature)
+        //
+        .def(
+            "round",
+            [](mapbox::geojson::feature &self, int lon, int lat,
+               int alt) -> mapbox::geojson::feature & {
+                round_coords(self.geometry, lon, lat, alt);
+                return self;
+            },
+            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
+            rvp::reference_internal) //
         GEOMETRY_DEDUPLICATE_XYZ(feature)
         //
         ;
@@ -1684,7 +1716,19 @@ void bind_geojson(py::module &geojson)
              [](const mapbox::geojson::feature_collection &self) {
                  return to_python(self);
              }) //
-        GEOMETRY_DEDUPLICATE_XYZ(feature_collection)
+        .def(
+            "round",
+            [](mapbox::geojson::feature_collection &self, int lon, int lat,
+               int alt) -> mapbox::geojson::feature_collection & {
+                for (auto &f : self) {
+                    round_coords(f.geometry, lon, lat, alt);
+                }
+                return self;
+            },
+            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
+            rvp::reference_internal)
+            GEOMETRY_DEDUPLICATE_XYZ(feature_collection)
+        // round
         //
         .def(
             "from_rapidjson",
@@ -1727,6 +1771,9 @@ void bind_geojson(py::module &geojson)
             },
             "path"_a, py::kw_only(), "indent"_a = false, "sort_keys"_a = false)
         //
+        copy_deepcopy_clone(mapbox::geojson::feature_collection)
+        //
+
         ;
 }
 } // namespace cubao

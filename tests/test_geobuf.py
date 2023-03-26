@@ -1349,6 +1349,20 @@ def test_geojson_load_dump():
     assert len(fc) == 1 and fc[0] == f
     assert fc.to_rapidjson() == json3
 
+    for gg in [g, f, fc]:
+        g0 = gg
+        gg = gg.clone()
+        assert len(gg.to_rapidjson().dumps()) > len(
+            gg.round().to_rapidjson().dumps()
+        )  # noqa
+        assert len(gg.to_rapidjson().dumps()) == len(
+            gg.round().to_rapidjson().dumps()
+        )  # noqa
+        assert len(gg.to_rapidjson().dumps()) > len(
+            gg.round(lon=5, lat=5).to_rapidjson().dumps()
+        )
+        assert len(g0.to_rapidjson().dumps()) > len(gg.to_rapidjson().dumps())
+
     assert geojson.Geometry().load(path1) == g
     assert geojson.Feature().load(path2) == f
     assert geojson.FeatureCollection().load(path3) == fc
