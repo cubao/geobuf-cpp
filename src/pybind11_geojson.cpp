@@ -61,7 +61,49 @@ void bind_geojson(py::module &geojson)
                                             //
             .def(py::self == py::self)      //
             .def(py::self != py::self)      //
-        GEOMETRY_DEDUPLICATE_XYZ(geojson)   //
+            .def(py::init<>())
+            .def(py::init([](const mapbox::geojson::geometry &g) { return g; }))
+            .def(py::init([](const mapbox::geojson::feature &g) { return g; }))
+            .def(py::init([](const mapbox::geojson::feature_collection &g) {
+                return g;
+            }))                           //
+        GEOMETRY_DEDUPLICATE_XYZ(geojson) //
+            .def(
+                "from_rapidjson",
+                [](mapbox::geojson::geojson &self,
+                   const RapidjsonValue &json) -> mapbox::geojson::geojson & {
+                    self = mapbox::geojson::convert(json);
+                    return self;
+                },
+                rvp::reference_internal)
+            .def("to_rapidjson",
+                 [](const mapbox::geojson::geojson &self) {
+                     RapidjsonAllocator allocator;
+                     auto json = mapbox::geojson::convert(self, allocator);
+                     return json;
+                 })
+            //
+            .def(
+                "load",
+                [](mapbox::geojson::geojson &self,
+                   const std::string &path) -> mapbox::geojson::geojson & {
+                    auto json = load_json(path);
+                    self = mapbox::geojson::convert(json);
+                    return self;
+                },
+                rvp::reference_internal)
+            .def(
+                "dump",
+                [](const mapbox::geojson::geojson &self,
+                   const std::string &path, bool indent, bool sort_keys) {
+                    RapidjsonAllocator allocator;
+                    auto json = mapbox::geojson::convert(self, allocator);
+                    sort_keys_inplace(json);
+                    return dump_json(path, json, indent);
+                },
+                "path"_a, py::kw_only(), //
+                "indent"_a = false,      //
+                "sort_keys"_a = false)
         //
         ;
 
@@ -351,7 +393,7 @@ void bind_geojson(py::module &geojson)
                  auto json = mapbox::geojson::convert(self, allocator);
                  return json;
              })
-        .def("load", [](mapbox::geojson::geometry &self, const std::string &path) {
+        .def("load", [](mapbox::geojson::geometry &self, const std::string &path) -> mapbox::geojson::geometry & {
             auto json = load_json(path);
             self =
                 mapbox::geojson::convert<mapbox::geojson::geometry>(json);
@@ -1574,7 +1616,8 @@ void bind_geojson(py::module &geojson)
              })
         .def(
             "load",
-            [](mapbox::geojson::feature &self, const std::string &path) {
+            [](mapbox::geojson::feature &self,
+               const std::string &path) -> mapbox::geojson::feature & {
                 auto json = load_json(path);
                 self = mapbox::geojson::convert<mapbox::geojson::feature>(json);
                 return self;
@@ -1649,7 +1692,8 @@ void bind_geojson(py::module &geojson)
         .def(
             "load",
             [](mapbox::geojson::feature_collection &self,
-               const std::string &path) {
+               const std::string &path)
+                -> mapbox::geojson::feature_collection & {
                 auto json = load_json(path);
                 self =
                     std::move(mapbox::geojson::convert(json)

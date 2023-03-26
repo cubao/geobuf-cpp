@@ -1345,6 +1345,18 @@ def test_geojson_load_dump():
     assert geojson.Feature().load(path2) == f
     assert geojson.FeatureCollection().load(path3) == fc
 
+    g_ = geojson.GeoJSON().load(path1)
+    assert g_.is_geometry()
+    assert g_.as_geometry() == g
+
+    f_ = geojson.GeoJSON().load(path2)
+    assert f_.is_feature()
+    assert f_.as_feature() == f
+
+    fc_ = geojson.GeoJSON().load(path3)
+    assert fc_.is_feature_collection()
+    assert fc_.as_feature_collection() == fc
+
 
 def pytest_main(dir: str, *, test_file: str = None):
 
