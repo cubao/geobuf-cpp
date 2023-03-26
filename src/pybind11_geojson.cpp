@@ -59,6 +59,17 @@ void bind_geojson(py::module &geojson)
         //
         ;
 
+#define GEOMETRY_ROUND_COORDS(geom_type)                                       \
+    .def(                                                                      \
+        "round",                                                               \
+        [](mapbox::geojson::geom_type &self, int lon, int lat,                 \
+           int alt) -> mapbox::geojson::geom_type & {                          \
+            round_coords(self, lon, lat, alt);                                 \
+            return self;                                                       \
+        },                                                                     \
+        py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,                  \
+        rvp::reference_internal)
+
     py::bind_vector<mapbox::geojson::multi_point::container_type>(geojson,
                                                                   "coordinates")
         .def(
@@ -312,7 +323,7 @@ void bind_geojson(py::module &geojson)
                 return py::make_key_iterator(self.custom_properties);
             },
             py::keep_alive<0, 1>())
-
+        GEOMETRY_ROUND_COORDS(geometry)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::geometry &self) -> py::object {
@@ -409,7 +420,8 @@ void bind_geojson(py::module &geojson)
                 auto json = to_rapidjson(o);
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(json)
                     .get<mapbox::geojson::point>();
-            }))
+            })) //
+        GEOMETRY_ROUND_COORDS(point)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::point &self) -> py::object {
@@ -445,15 +457,6 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal)
         .def("__call__",
              [](const mapbox::geojson::point &self) { return to_python(self); })
-        .def(
-            "round",
-            [](mapbox::geojson::point &self, int lon, int lat,
-               int alt) -> mapbox::geojson::point & {
-                round_coords(self, lon, lat, alt);
-                return self;
-            },
-            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
-            rvp::reference_internal)
         //
         ;
 
@@ -566,7 +569,7 @@ void bind_geojson(py::module &geojson)
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(    \
                            json)                                               \
                     .get<mapbox::geojson::geom_type>();                        \
-            }))                                                                \
+            })) GEOMETRY_ROUND_COORDS(geom_type)                               \
         .def_property_readonly(                                                \
             "__geo_interface__",                                               \
             [](const mapbox::geojson::geom_type &self) -> py::object {         \
@@ -724,12 +727,24 @@ void bind_geojson(py::module &geojson)
                 return self;                                                   \
             },                                                                 \
             rvp::reference_internal)                                           \
-        .def("to_rapidjson", [](const mapbox::geojson::geom_type &self) {      \
-            RapidjsonAllocator allocator;                                      \
-            auto json = mapbox::geojson::convert(                              \
-                mapbox::geojson::geometry{self}, allocator);                   \
-            return json;                                                       \
-        })
+        .def("to_rapidjson",                                                   \
+             [](const mapbox::geojson::geom_type &self) {                      \
+                 RapidjsonAllocator allocator;                                 \
+                 auto json = mapbox::geojson::convert(                         \
+                     mapbox::geojson::geometry{self}, allocator);              \
+                 return json;                                                  \
+             })                                                                \
+        .def(                                                                  \
+            "round",                                                           \
+            [](mapbox::geojson::geom_type &self, int lon, int lat,             \
+               int alt) -> mapbox::geojson::geom_type & {                      \
+                for (auto &g : self) {                                         \
+                    round_coords(g, lon, lat, alt);                            \
+                }                                                              \
+                return self;                                                   \
+            },                                                                 \
+            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,              \
+            rvp::reference_internal)
 
     py::class_<mapbox::geojson::linear_ring,
                mapbox::geojson::linear_ring::container_type>(
@@ -890,6 +905,19 @@ void bind_geojson(py::module &geojson)
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(json)
                     .get<mapbox::geojson::multi_polygon>();
             }))
+        .def(
+            "round",
+            [](mapbox::geojson::multi_polygon &self, int lon, int lat,
+               int alt) -> mapbox::geojson::multi_polygon & {
+                for (auto &gg : self) {
+                    for (auto &g : gg) {
+                        round_coords(g, lon, lat, alt);
+                    }
+                }
+                return self;
+            },
+            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
+            rvp::reference_internal)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::multi_polygon &self) -> py::object {
@@ -998,6 +1026,17 @@ void bind_geojson(py::module &geojson)
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(json)
                     .get<mapbox::geojson::geometry_collection>();
             }))
+        .def(
+            "round",
+            [](mapbox::geojson::geometry_collection &self, int lon, int lat,
+               int alt) -> mapbox::geojson::geometry_collection & {
+                for (auto &g : self) {
+                    round_coords(g, lon, lat, alt);
+                }
+                return self;
+            },
+            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
+            rvp::reference_internal)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::geometry_collection &self) -> py::object {
