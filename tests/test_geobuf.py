@@ -1341,6 +1341,10 @@ def test_geojson_load_dump():
     assert len(fc) == 1 and fc[0] == f
     assert fc.to_rapidjson() == json3
 
+    assert geojson.Geometry().load(path1) == g
+    assert geojson.Feature().load(path2) == f
+    assert geojson.FeatureCollection().load(path3) == fc
+
 
 def pytest_main(dir: str, *, test_file: str = None):
 
