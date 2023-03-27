@@ -1345,6 +1345,7 @@ def test_geojson_load_dump():
     f = geojson.Feature().from_rapidjson(json2)
     assert f.geometry() == g
     assert f.to_rapidjson() == json2
+    assert f.id() == 234
     fc = geojson.FeatureCollection().from_rapidjson(json3)
     assert len(fc) == 1 and fc[0] == f
     assert fc.to_rapidjson() == json3
@@ -1382,6 +1383,33 @@ def test_geojson_load_dump():
     with pytest.raises(RuntimeError) as excinfo:
         geojson.GeoJSON().load("no_such_file")
     assert "can't open for reading: no_such_file" in repr(excinfo)
+
+    path1 = os.path.join(dirname, "geometry.pbf")
+    path2 = os.path.join(dirname, "feature.pbf")
+    path3 = os.path.join(dirname, "feature_collection.pbf")
+
+    g_ = geojson.GeoJSON().load(path1)
+    assert g_.is_geometry()
+    assert g.to_rapidjson() != g_.to_rapidjson()
+    assert (
+        g.clone().round(lon=8, lat=8, alt=8).to_rapidjson() == g_.to_rapidjson()  # noqa
+    )
+
+    f_ = geojson.GeoJSON().load(path2)
+    assert f_.is_feature()
+    assert f_.as_feature().id() == 234
+    assert f.to_rapidjson() != f_.to_rapidjson()
+    assert (
+        f.clone().round(lon=8, lat=8, alt=8).to_rapidjson() == f_.to_rapidjson()  # noqa
+    )
+
+    fc_ = geojson.GeoJSON().load(path3)
+    assert fc_.is_feature_collection()
+    assert fc.to_rapidjson() != fc_.to_rapidjson()
+    assert (
+        fc.clone().round(lon=8, lat=8, alt=8).to_rapidjson()
+        == fc_.to_rapidjson()  # noqa
+    )
 
 
 def pytest_main(dir: str, *, test_file: str = None):
