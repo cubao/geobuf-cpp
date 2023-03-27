@@ -10,6 +10,10 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.0.7 (2023-03-26)
+
+*   More bindings, more tests
+
 ## Version 0.0.6 (2023-03-25)
 
 *   More bindings, more tests

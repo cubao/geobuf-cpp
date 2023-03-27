@@ -46,6 +46,18 @@ void bind_geojson(py::module &geojson)
         },                                                                     \
         rvp::reference_internal)
 
+#define GEOMETRY_DEDUPLICATE_XYZ(geom_type)                                    \
+    .def("deduplicate_xyz", [](mapbox::geojson::geom_type &self) {             \
+        return deduplicate_xyz(self);                                          \
+    })
+
+#define copy_deepcopy_clone(Type)                                              \
+    .def("__copy__", [](const Type &self, py::dict) -> Type { return self; })  \
+        .def(                                                                  \
+            "__deepcopy__",                                                    \
+            [](const Type &self, py::dict) -> Type { return self; }, "memo"_a) \
+        .def("clone", [](const Type &self) -> Type { return self; })
+
     py::class_<mapbox::geojson::geojson>(geojson, "GeoJSON", py::module_local())
         is_geojson_type(geometry)           //
         is_geojson_type(feature)            //
@@ -56,8 +68,83 @@ void bind_geojson(py::module &geojson)
                                             //
             .def(py::self == py::self)      //
             .def(py::self != py::self)      //
+            .def(py::init<>())
+            .def(py::init([](const mapbox::geojson::geometry &g) { return g; }))
+            .def(py::init([](const mapbox::geojson::feature &g) { return g; }))
+            .def(py::init([](const mapbox::geojson::feature_collection &g) {
+                return g;
+            })) //
+            .def(
+                "round",
+                [](mapbox::geojson::geojson &self, int lon, int lat,
+                   int alt) -> mapbox::geojson::geojson & {
+                    self.match(
+                        [&](mapbox::geojson::geometry &g) {
+                            round_coords(g, lon, lat, alt);
+                        },
+                        [&](mapbox::geojson::feature &f) {
+                            round_coords(f.geometry, lon, lat, alt);
+                        },
+                        [&](mapbox::geojson::feature_collection &fc) {
+                            for (auto &f : fc) {
+                                round_coords(f.geometry, lon, lat, alt);
+                            }
+                        },
+                        [](auto &) {});
+                    return self;
+                },
+                py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
+                rvp::reference_internal) GEOMETRY_DEDUPLICATE_XYZ(geojson) //
+            .def(
+                "from_rapidjson",
+                [](mapbox::geojson::geojson &self,
+                   const RapidjsonValue &json) -> mapbox::geojson::geojson & {
+                    self = mapbox::geojson::convert(json);
+                    return self;
+                },
+                rvp::reference_internal)
+            .def("to_rapidjson",
+                 [](const mapbox::geojson::geojson &self) {
+                     RapidjsonAllocator allocator;
+                     auto json = mapbox::geojson::convert(self, allocator);
+                     return json;
+                 })
+            //
+            .def(
+                "load",
+                [](mapbox::geojson::geojson &self,
+                   const std::string &path) -> mapbox::geojson::geojson & {
+                    auto json = load_json(path);
+                    self = mapbox::geojson::convert(json);
+                    return self;
+                },
+                rvp::reference_internal)
+            .def(
+                "dump",
+                [](const mapbox::geojson::geojson &self,
+                   const std::string &path, bool indent, bool sort_keys) {
+                    RapidjsonAllocator allocator;
+                    auto json = mapbox::geojson::convert(self, allocator);
+                    sort_keys_inplace(json);
+                    return dump_json(path, json, indent);
+                },
+                "path"_a, py::kw_only(), //
+                "indent"_a = false,      //
+                "sort_keys"_a = false)
+                copy_deepcopy_clone(mapbox::geojson::geojson)
         //
         ;
+
+#define GEOMETRY_ROUND_COORDS(geom_type)                                       \
+    .def(                                                                      \
+        "round",                                                               \
+        [](mapbox::geojson::geom_type &self, int lon, int lat,                 \
+           int alt) -> mapbox::geojson::geom_type & {                          \
+            round_coords(self, lon, lat, alt);                                 \
+            return self;                                                       \
+        },                                                                     \
+        py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,                  \
+        rvp::reference_internal)
 
     py::bind_vector<mapbox::geojson::multi_point::container_type>(geojson,
                                                                   "coordinates")
@@ -97,13 +184,6 @@ void bind_geojson(py::module &geojson)
             return self.get<mapbox::geojson::geom_type>();                     \
         },                                                                     \
         rvp::reference_internal)
-
-#define copy_deepcopy_clone(Type)                                              \
-    .def("__copy__", [](const Type &self, py::dict) -> Type { return self; })  \
-        .def(                                                                  \
-            "__deepcopy__",                                                    \
-            [](const Type &self, py::dict) -> Type { return self; }, "memo"_a) \
-        .def("clone", [](const Type &self) -> Type { return self; })
 
     using GeometryBase = mapbox::geometry::geometry_base<double, std::vector>;
     py::class_<GeometryBase>(geojson, "GeometryBase", py::module_local());
@@ -211,7 +291,22 @@ void bind_geojson(py::module &geojson)
             [](mapbox::geojson::geometry &self,
                const mapbox::geojson::geometry &geom)
                 -> mapbox::geojson::geometry & {
-                geometry_push_back(self, geom);
+                if (self.is<mapbox::geojson::multi_polygon>() && geom.is<mapbox::geojson::polygon>()) {
+                    self.get<mapbox::geojson::multi_polygon>().push_back(geom.get<mapbox::geojson::polygon>());
+                } else {
+                    geometry_push_back(self, geom);
+                }
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "push_back",
+            [](mapbox::geojson::geometry &self,
+               const mapbox::geojson::polygon &geom)
+                -> mapbox::geojson::geometry & {
+                    if (self.is<mapbox::geojson::multi_polygon>()) {
+                        self.get<mapbox::geojson::multi_polygon>().push_back(geom);
+                    }
                 return self;
             },
             rvp::reference_internal)
@@ -312,7 +407,8 @@ void bind_geojson(py::module &geojson)
                 return py::make_key_iterator(self.custom_properties);
             },
             py::keep_alive<0, 1>())
-
+        GEOMETRY_ROUND_COORDS(geometry)
+        GEOMETRY_DEDUPLICATE_XYZ(geometry)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::geometry &self) -> py::object {
@@ -333,6 +429,18 @@ void bind_geojson(py::module &geojson)
                  auto json = mapbox::geojson::convert(self, allocator);
                  return json;
              })
+        .def("load", [](mapbox::geojson::geometry &self, const std::string &path) -> mapbox::geojson::geometry & {
+            auto json = load_json(path);
+            self =
+                mapbox::geojson::convert<mapbox::geojson::geometry>(json);
+            return self;
+        }, rvp::reference_internal)
+        .def("dump", [](const mapbox::geojson::geometry &self, const std::string &path, bool indent, bool sort_keys) {
+            RapidjsonAllocator allocator;
+            auto json = mapbox::geojson::convert(self, allocator);
+            sort_keys_inplace(json);
+            return dump_json(path, json, indent);
+        }, "path"_a, py::kw_only(), "indent"_a = false, "sort_keys"_a = false)
         .def(py::self == py::self) //
         .def(py::self != py::self) //
         .def("__call__",
@@ -409,7 +517,9 @@ void bind_geojson(py::module &geojson)
                 auto json = to_rapidjson(o);
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(json)
                     .get<mapbox::geojson::point>();
-            }))
+            }))                         //
+        GEOMETRY_ROUND_COORDS(point)    //
+        GEOMETRY_DEDUPLICATE_XYZ(point) //
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::point &self) -> py::object {
@@ -557,7 +667,8 @@ void bind_geojson(py::module &geojson)
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(    \
                            json)                                               \
                     .get<mapbox::geojson::geom_type>();                        \
-            }))                                                                \
+            })) GEOMETRY_ROUND_COORDS(geom_type)                               \
+            GEOMETRY_DEDUPLICATE_XYZ(geom_type)                                \
         .def_property_readonly(                                                \
             "__geo_interface__",                                               \
             [](const mapbox::geojson::geom_type &self) -> py::object {         \
@@ -596,6 +707,10 @@ void bind_geojson(py::module &geojson)
         BIND_FOR_VECTOR_POINT_TYPE(line_string) //
         .def(py::self == py::self)              //
         .def(py::self != py::self)              //
+        .def("deduplicate_xyz",
+             [](mapbox::geojson::line_string &self) {
+                 return deduplicate_xyz(self);
+             })
         //
         ;
 
@@ -715,12 +830,24 @@ void bind_geojson(py::module &geojson)
                 return self;                                                   \
             },                                                                 \
             rvp::reference_internal)                                           \
-        .def("to_rapidjson", [](const mapbox::geojson::geom_type &self) {      \
-            RapidjsonAllocator allocator;                                      \
-            auto json = mapbox::geojson::convert(                              \
-                mapbox::geojson::geometry{self}, allocator);                   \
-            return json;                                                       \
-        })
+        .def("to_rapidjson",                                                   \
+             [](const mapbox::geojson::geom_type &self) {                      \
+                 RapidjsonAllocator allocator;                                 \
+                 auto json = mapbox::geojson::convert(                         \
+                     mapbox::geojson::geometry{self}, allocator);              \
+                 return json;                                                  \
+             })                                                                \
+        .def(                                                                  \
+            "round",                                                           \
+            [](mapbox::geojson::geom_type &self, int lon, int lat,             \
+               int alt) -> mapbox::geojson::geom_type & {                      \
+                for (auto &g : self) {                                         \
+                    round_coords(g, lon, lat, alt);                            \
+                }                                                              \
+                return self;                                                   \
+            },                                                                 \
+            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,              \
+            rvp::reference_internal) GEOMETRY_DEDUPLICATE_XYZ(geom_type)
 
     py::class_<mapbox::geojson::linear_ring,
                mapbox::geojson::linear_ring::container_type>(
@@ -881,6 +1008,19 @@ void bind_geojson(py::module &geojson)
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(json)
                     .get<mapbox::geojson::multi_polygon>();
             }))
+        .def(
+            "round",
+            [](mapbox::geojson::multi_polygon &self, int lon, int lat,
+               int alt) -> mapbox::geojson::multi_polygon & {
+                for (auto &gg : self) {
+                    for (auto &g : gg) {
+                        round_coords(g, lon, lat, alt);
+                    }
+                }
+                return self;
+            },
+            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
+            rvp::reference_internal)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::multi_polygon &self) -> py::object {
@@ -989,6 +1129,18 @@ void bind_geojson(py::module &geojson)
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(json)
                     .get<mapbox::geojson::geometry_collection>();
             }))
+        .def(
+            "round",
+            [](mapbox::geojson::geometry_collection &self, int lon, int lat,
+               int alt) -> mapbox::geojson::geometry_collection & {
+                for (auto &g : self) {
+                    round_coords(g, lon, lat, alt);
+                }
+                return self;
+            },
+            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
+            rvp::reference_internal)
+            GEOMETRY_DEDUPLICATE_XYZ(geometry_collection)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::geometry_collection &self) -> py::object {
@@ -1498,6 +1650,38 @@ void bind_geojson(py::module &geojson)
                  RapidjsonAllocator allocator;
                  return mapbox::geojson::convert(self, allocator);
              })
+        .def(
+            "load",
+            [](mapbox::geojson::feature &self,
+               const std::string &path) -> mapbox::geojson::feature & {
+                auto json = load_json(path);
+                self = mapbox::geojson::convert<mapbox::geojson::feature>(json);
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "dump",
+            [](const mapbox::geojson::geometry &self, const std::string &path,
+               bool indent, bool sort_keys) {
+                RapidjsonAllocator allocator;
+                auto json = mapbox::geojson::convert(self, allocator);
+                sort_keys_inplace(json);
+                return dump_json(path, json, indent);
+            },
+            "path"_a, py::kw_only(), "indent"_a = false, "sort_keys"_a = false)
+        //
+        copy_deepcopy_clone(mapbox::geojson::feature)
+        //
+        .def(
+            "round",
+            [](mapbox::geojson::feature &self, int lon, int lat,
+               int alt) -> mapbox::geojson::feature & {
+                round_coords(self.geometry, lon, lat, alt);
+                return self;
+            },
+            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
+            rvp::reference_internal) //
+        GEOMETRY_DEDUPLICATE_XYZ(feature)
         //
         ;
 
@@ -1510,9 +1694,86 @@ void bind_geojson(py::module &geojson)
     py::class_<mapbox::geojson::feature_collection,
                std::vector<mapbox::geojson::feature>>(
         geojson, "FeatureCollection", py::module_local())
+        .def(py::init<>())
+        .def(py::init(
+            [](const mapbox::geojson::feature_collection &g) { return g; }))
+        .def(py::init([](int N) {
+                 mapbox::geojson::feature_collection fc;
+                 fc.resize(N);
+                 return fc;
+             }),
+             "N"_a)
+        .def(
+            "resize",
+            [](mapbox::geojson::feature_collection &self,
+               int N) -> mapbox::geojson::feature_collection & {
+                self.resize(N);
+                return self;
+            },
+            rvp::reference_internal)
         //
-        .def("__call__", [](const mapbox::geojson::feature_collection &self) {
-            return to_python(self);
-        });
+        .def("__call__",
+             [](const mapbox::geojson::feature_collection &self) {
+                 return to_python(self);
+             }) //
+        .def(
+            "round",
+            [](mapbox::geojson::feature_collection &self, int lon, int lat,
+               int alt) -> mapbox::geojson::feature_collection & {
+                for (auto &f : self) {
+                    round_coords(f.geometry, lon, lat, alt);
+                }
+                return self;
+            },
+            py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
+            rvp::reference_internal)
+            GEOMETRY_DEDUPLICATE_XYZ(feature_collection)
+        // round
+        //
+        .def(
+            "from_rapidjson",
+            [](mapbox::geojson::feature_collection &self,
+               const RapidjsonValue &json)
+                -> mapbox::geojson::feature_collection & {
+                self =
+                    std::move(mapbox::geojson::convert(json)
+                                  .get<mapbox::geojson::feature_collection>());
+                return self;
+            },
+            rvp::reference_internal)
+        .def("to_rapidjson",
+             [](const mapbox::geojson::feature_collection &self) {
+                 RapidjsonAllocator allocator;
+                 auto json = mapbox::geojson::convert(self, allocator);
+                 return json;
+             })
+        //
+        .def(
+            "load",
+            [](mapbox::geojson::feature_collection &self,
+               const std::string &path)
+                -> mapbox::geojson::feature_collection & {
+                auto json = load_json(path);
+                self =
+                    std::move(mapbox::geojson::convert(json)
+                                  .get<mapbox::geojson::feature_collection>());
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "dump",
+            [](const mapbox::geojson::geometry &self, const std::string &path,
+               bool indent, bool sort_keys) {
+                RapidjsonAllocator allocator;
+                auto json = mapbox::geojson::convert(self, allocator);
+                sort_keys_inplace(json);
+                return dump_json(path, json, indent);
+            },
+            "path"_a, py::kw_only(), "indent"_a = false, "sort_keys"_a = false)
+        //
+        copy_deepcopy_clone(mapbox::geojson::feature_collection)
+        //
+
+        ;
 }
 } // namespace cubao

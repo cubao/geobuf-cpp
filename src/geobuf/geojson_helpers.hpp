@@ -10,6 +10,7 @@
 #include <Eigen/Core>
 #include <iostream>
 #include <mapbox/geojson.hpp>
+#include <type_traits>
 
 static_assert(sizeof(mapbox::geojson::point) == sizeof(Eigen::Vector3d),
               "mapbox::geojson::point should be double*3 (xyz instead of xy)");
@@ -436,6 +437,189 @@ inline int __len__(mapbox::geojson::geometry &self)
         [](mapbox::geojson::multi_polygon &g) { return g.size(); },
         [](mapbox::geojson::geometry_collection &g) { return g.size(); },
         [](auto &) -> int { return 0; });
+}
+
+inline double round_coords(double value, double scale)
+{
+    // rounding is hard, we just use the most simple implementation
+    // see
+    // -    https://github.com/Tencent/rapidjson/issues/362
+    // -    https://en.cppreference.com/w/cpp/numeric/math/round
+    //      rounding halfway cases away from zero
+    // -
+    // https://stackoverflow.com/questions/485525/round-for-float-in-c/24348037#24348037
+    // also note that, javascript Math.round differs from C++ round
+    // e.g. std::round(-0.5) => -1.0
+    //      Math.round(-0.5) => -0.0
+    return std::round(value * scale) / scale;
+    // TODO, all should use Math.round!!!
+    // Math.round equivalent:
+    //  std::floor(value * scale + 0.5) / scale
+}
+
+inline void round_coords(mapbox::geojson::point &xyz,
+                         const Eigen::Vector3d &scale)
+{
+    xyz.x = round_coords(xyz.x, scale[0]);
+    xyz.y = round_coords(xyz.y, scale[1]);
+    xyz.z = round_coords(xyz.z, scale[2]);
+}
+
+inline void round_coords(std::vector<mapbox::geojson::point> &coords,
+                         const Eigen::Vector3d &scale)
+{
+    for (auto &pt : coords) {
+        round_coords(pt, scale);
+    }
+}
+
+inline void round_coords(mapbox::geojson::geometry &g, const Eigen::Vector3d &s)
+{
+    return g.match(
+        [&](mapbox::geojson::point &g) { return round_coords(g, s); },
+        [&](mapbox::geojson::multi_point &g) { round_coords(g, s); },
+        [&](mapbox::geojson::line_string &g) { round_coords(g, s); },
+        [&](mapbox::geojson::linear_ring &g) { round_coords(g, s); },
+        [&](mapbox::geojson::multi_line_string &gg) {
+            for (auto &g : gg) {
+                round_coords(g, s);
+            }
+        },
+        [&](mapbox::geojson::polygon &gg) {
+            for (auto &g : gg) {
+                round_coords(g, s);
+            }
+        },
+        [&](mapbox::geojson::multi_polygon &ggg) {
+            for (auto &gg : ggg) {
+                for (auto &g : gg) {
+                    round_coords(g, s);
+                }
+            }
+        },
+        [&](mapbox::geojson::geometry_collection &gc) {
+            for (auto &g : gc) {
+                round_coords(g, s);
+            }
+        },
+        [](auto &) {});
+}
+
+template <typename T>
+inline void round_coords(T &xyz, int lon = 8, int lat = 8, int alt = 3)
+{
+    Eigen::Vector3d scale_up(std::pow(10, lon), //
+                             std::pow(10, lat), //
+                             std::pow(10, alt));
+    round_coords(xyz, scale_up);
+}
+
+inline bool deduplicate_xyz(std::vector<mapbox::geojson::point> &geom)
+{
+    auto itr = std::unique(
+        geom.begin(), geom.end(),
+        [](const auto &prev, const auto &curr) { return prev == curr; });
+    if (itr == geom.end()) {
+        return false;
+    }
+    geom.erase(itr, geom.end());
+    return true;
+}
+inline bool deduplicate_xyz(mapbox::geojson::empty &geom)
+{
+    return false; // dummy
+}
+inline bool deduplicate_xyz(mapbox::geojson::point &geom)
+{
+    return false; // dummy
+}
+inline bool deduplicate_xyz(mapbox::geojson::multi_point &geom)
+{
+    return deduplicate_xyz((std::vector<mapbox::geojson::point> &)geom);
+}
+inline bool deduplicate_xyz(mapbox::geojson::line_string &geom)
+{
+    return deduplicate_xyz((std::vector<mapbox::geojson::point> &)geom);
+}
+inline bool deduplicate_xyz(mapbox::geojson::multi_line_string &geom)
+{
+    bool removed = false;
+    for (auto &g : geom) {
+        removed |= deduplicate_xyz(g);
+    }
+    return removed;
+}
+inline bool deduplicate_xyz(mapbox::geojson::linear_ring &geom)
+{
+    return deduplicate_xyz((std::vector<mapbox::geojson::point> &)geom);
+}
+inline bool deduplicate_xyz(mapbox::geojson::polygon &geom)
+{
+    bool removed = false;
+    for (auto &g : geom) {
+        removed |= deduplicate_xyz(g);
+    }
+    return removed;
+}
+inline bool deduplicate_xyz(mapbox::geojson::multi_polygon &geom)
+{
+    bool removed = false;
+    for (auto &g : geom) {
+        removed |= deduplicate_xyz(g);
+    }
+    return removed;
+}
+
+inline bool deduplicate_xyz(mapbox::geojson::geometry &geom)
+{
+    return geom.match(
+        [&](mapbox::geojson::multi_point &g) { return deduplicate_xyz(g); },
+        [&](mapbox::geojson::line_string &g) { return deduplicate_xyz(g); },
+        [&](mapbox::geojson::linear_ring &g) { return deduplicate_xyz(g); },
+        [&](mapbox::geojson::multi_line_string &g) {
+            return deduplicate_xyz(g);
+        },
+        [&](mapbox::geojson::polygon &g) { return deduplicate_xyz(g); },
+        [&](mapbox::geojson::multi_polygon &g) { return deduplicate_xyz(g); },
+        [&](mapbox::geojson::geometry_collection &gc) {
+            bool removed = false;
+            for (auto &g : gc) {
+                removed |= deduplicate_xyz(g);
+            }
+            return removed;
+        },
+        [](auto &) -> bool { return false; });
+}
+inline bool deduplicate_xyz(mapbox::geojson::geometry_collection &geom)
+{
+    bool removed = false;
+    for (auto &g : geom) {
+        removed |= deduplicate_xyz(g);
+    }
+    return removed;
+}
+
+inline bool deduplicate_xyz(mapbox::geojson::feature &f)
+{
+    return deduplicate_xyz(f.geometry);
+}
+inline bool deduplicate_xyz(mapbox::geojson::feature_collection &fc)
+{
+    bool removed = false;
+    for (auto &f : fc) {
+        removed |= deduplicate_xyz(f);
+    }
+    return removed;
+}
+inline bool deduplicate_xyz(mapbox::geojson::geojson &geojson)
+{
+    return geojson.match(
+        [](mapbox::geojson::geometry &g) { return deduplicate_xyz(g); },
+        [](mapbox::geojson::feature &f) { return deduplicate_xyz(f); },
+        [](mapbox::geojson::feature_collection &fc) {
+            return deduplicate_xyz(fc);
+        },
+        [](auto &) { return false; });
 }
 
 } // namespace cubao

@@ -19,6 +19,8 @@ from pybind11_geobuf import (  # noqa
     str2json2str,
 )
 
+__pwd = os.path.abspath(os.path.dirname(__file__))
+
 
 def test_version():
     print(pybind11_geobuf.__version__)
@@ -169,7 +171,6 @@ def test_rapidjson_obj():
     obj["other_bytes"] = b"bytes"
     assert obj.dumps() == '{"bytes":"cmF3IGJ5dGVz","other_bytes":"Ynl0ZXM="}'
 
-    __pwd = os.path.abspath(os.path.dirname(__file__))
     basename = "rapidjson.png"
     path = f"{__pwd}/../data/{basename}"
     with open(path, "rb") as f:
@@ -291,6 +292,29 @@ def test_geojson_point():
         "coordinates": [3.0, 7.0, 2.0],
     }
 
+    # round
+    coords = [123.4567890123456, 45.6789012345, 7.89123456]
+    g1 = geojson.Point(*coords)
+    assert np.all(coords == g1.as_numpy())
+    # 8, 8, 3
+    assert np.all([123.45678901, 45.67890123, 7.891] == g1.round().as_numpy())
+    g1.round(lon=5, lat=7, alt=2)
+    assert np.all([123.45679, 45.6789012, 7.89] == g1.as_numpy())
+
+    coords = [0.5, -0.5]
+    g1 = geojson.Point(*coords)
+    g1.round(lon=0, lat=0, alt=0)
+    # https://en.cppreference.com/w/cpp/numeric/math/round
+    # rounding halfway cases away from zero
+    assert np.all(g1.as_numpy() == [1, -1, 0])
+    # Note that, in JS, Math.round(-0.5) => -0.0
+
+    coords = [123, 456]
+    g1 = geojson.Point(*coords)
+    g1.round(lon=-1, lat=-1)  # normally you don't do it
+    assert np.all(g1.as_numpy() == [120, 460, 0])
+    assert not g1.deduplicate_xyz()
+
 
 def test_geojson_point2():
     pt = geojson.Point()
@@ -393,6 +417,28 @@ def test_geojson_multi_point():
     assert len(g1) == 0
     assert g1.clear() == g1
 
+    coords = np.array(sample_geojson()["geometry"]["coordinates"])
+    g = geojson.MultiPoint(coords)
+    assert np.all(
+        g.round().as_numpy()
+        == [
+            [120.4031748, 31.41696608, 1.111],
+            [120.28451901, 31.30578267, 2.22],
+            [120.35592249, 31.21781896, 3.333],
+            [120.67093787, 31.29950227, 4.4],
+        ]
+    )
+
+    g = geojson.MultiPoint([[1, 2], [1, 2]])
+    assert len(g) == 2
+    assert g.deduplicate_xyz()
+    assert not g.deduplicate_xyz()
+    assert len(g) == 1
+    g = geojson.MultiPoint([[1, 2], [3, 4], [1, 2]])
+    assert len(g) == 3
+    assert not g.deduplicate_xyz()
+    assert len(g) == 3
+
 
 def test_geojson_line_string():
     g1 = geojson.LineString()
@@ -430,6 +476,24 @@ def test_geojson_line_string():
 
     g1.append(geojson.Point(1, 2))
     assert len(g1) == 1
+
+    coords = np.array(sample_geojson()["geometry"]["coordinates"])
+    g = geojson.LineString(coords)
+    assert np.all(
+        g.round().as_numpy()
+        == [
+            [120.4031748, 31.41696608, 1.111],
+            [120.28451901, 31.30578267, 2.22],
+            [120.35592249, 31.21781896, 3.333],
+            [120.67093787, 31.29950227, 4.4],
+        ]
+    )
+
+    g = geojson.LineString([[1, 2, 3], [1, 2, 3], [4, 5, 6]])
+    assert len(g) == 3
+    assert g.deduplicate_xyz()
+    assert not g.deduplicate_xyz()
+    assert len(g) == 2
 
 
 def test_geojson_multi_line_string():
@@ -489,6 +553,61 @@ def test_geojson_multi_line_string():
     g1.clear()
     assert len(g1) == 0
 
+    coords = np.array(sample_geojson()["geometry"]["coordinates"])
+    g = geojson.MultiLineString(coords)
+    assert np.array(g()).shape == (1, 4, 3)
+    assert np.all(
+        g.round().as_numpy()
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ]
+        ]
+    )
+    g.push_back(coords)
+    assert np.array(g()).shape == (2, 4, 3)
+    assert np.all(
+        np.array(g())
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+            coords,
+        ]
+    )
+    assert np.all(
+        np.array(g.round()())
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+        ]
+    )
+
+    g = geojson.MultiLineString([[1, 2, 3], [1, 2, 3], [4, 5, 6]])
+    assert g.deduplicate_xyz()
+    assert not g.deduplicate_xyz()
+    g.push_back([[1, 2, 3], [1, 2, 3], [4, 5, 6]])
+    assert g.deduplicate_xyz()
+    assert not g.deduplicate_xyz()
+    g.push_back(g[0])
+    assert not g.deduplicate_xyz()
+
 
 def test_geojson_polygon():
     g1 = geojson.Polygon()
@@ -535,6 +654,56 @@ def test_geojson_polygon():
     g1.clear()
     assert len(g1) == 0
     assert g1.clear() == g1
+
+    coords = np.array(sample_geojson()["geometry"]["coordinates"])
+    g = geojson.Polygon(coords)
+    assert np.array(g()).shape == (1, 4, 3)
+    assert np.all(
+        g.round().as_numpy()
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ]
+        ]
+    )
+    g.push_back(coords)
+    assert np.array(g()).shape == (2, 4, 3)
+    assert np.all(
+        np.array(g())
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+            coords,
+        ]
+    )
+    assert np.all(
+        np.array(g.round()())
+        == [
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+            [
+                [120.4031748, 31.41696608, 1.111],
+                [120.28451901, 31.30578267, 2.22],
+                [120.35592249, 31.21781896, 3.333],
+                [120.67093787, 31.29950227, 4.4],
+            ],
+        ]
+    )
+
+    assert not g.deduplicate_xyz()
+    g.round(lon=0, lat=0, alt=-1)
+    assert g.deduplicate_xyz()
 
 
 def test_geojson_multi_polygon():
@@ -855,6 +1024,7 @@ def test_geojson_geometry():
         ],
     }
     assert geojson.Geometry(g5()) == geojson.Geometry(g5.to_rapidjson()) == g5
+    assert g5() == g5.push_back(g4)()  # push_back geometry silent ignore
 
     g5 = geojson.Geometry(geojson.MultiLineString())
     # g5.push_back([70, 80, 90]), don't do this, will segment fault
@@ -886,11 +1056,18 @@ def test_geojson_geometry():
     g7 = geojson.Geometry(geojson.MultiPolygon([[1, 2, 3], [4, 5, 6]]))
     assert np.array(g7()["coordinates"]).shape == (1, 1, 2, 3)
     assert geojson.Geometry(g7()) == geojson.Geometry(g7.to_rapidjson()) == g7
+    assert len(g7) == 1
+    g7.as_multi_polygon().push_back(geojson.Polygon([[1, 2, 3], [4, 5, 6]]))
+    assert len(g7) == 2
+    g7.push_back(geojson.Polygon([[1, 2, 3], [4, 5, 6]]))
+    assert len(g7) == 3
+    g7.push_back(geojson.Geometry(geojson.Polygon([[1, 2, 3], [4, 5, 6]])))
+    assert len(g7) == 4
 
     gc = geojson.Geometry(geojson.GeometryCollection())
     assert gc.type() == "GeometryCollection"
     gc.push_back(g3)
-    gc.push_back(g4)
+    assert gc() != gc.push_back(g4)()  # push_back geometry okay
     assert gc() == {"type": gc.type(), "geometries": [g3(), g4()]}
     assert len(gc) == 2
 
@@ -916,6 +1093,45 @@ def test_geojson_geometry():
     assert id(gc4) != id(gc)
 
     assert gc4.__geo_interface__ == gc()
+
+    coords = np.array(sample_geojson()["geometry"]["coordinates"])
+    g1 = geojson.Point(coords[0])
+    g2 = geojson.MultiPoint(coords)
+    g3 = geojson.LineString(coords)
+    g4 = geojson.MultiLineString(coords).push_back(coords)
+    g5 = geojson.Polygon(coords).push_back(coords)
+    g6 = geojson.MultiPolygon(coords).push_back(coords)
+    gc = (
+        geojson.GeometryCollection()
+        .push_back(g1)
+        .push_back(g2)
+        .push_back(g3)
+        .push_back(g4)
+        .push_back(g5)
+        .push_back(g6)
+    )
+    assert len(gc) == 6
+    assert gc()["type"] == "GeometryCollection"
+
+    gg = geojson.Geometry(gc)
+    assert gg() == gc()
+    gc.round()
+    assert gg() != gc()
+    gg.round()
+    assert gg() == gc()
+
+    def check_round3(v, n):
+        if isinstance(v, float):
+            assert v == round(v, n)
+        elif isinstance(v, list):
+            for e in v:
+                check_round3(e, n)
+        elif isinstance(v, dict):
+            for e in v.values():
+                check_round3(e, n)
+
+    check_round3(gc.round(lon=5, lat=5, alt=5)(), 5)
+    check_round3(gc.round(lon=3, lat=3, alt=3)(), 3)
 
 
 def test_geobuf_from_geojson():
@@ -1113,6 +1329,59 @@ def test_geojson_feature():
     f2 = geojson.Feature().from_rapidjson(feature.to_rapidjson())
     assert f2 == feature
     assert f2() == feature()
+
+
+def test_geojson_load_dump():
+    dirname = os.path.abspath(f"{__pwd}/../data")
+    path1 = os.path.join(dirname, "geometry.json")
+    path2 = os.path.join(dirname, "feature.json")
+    path3 = os.path.join(dirname, "feature_collection.json")
+    json1 = rapidjson().load(path1)
+    json2 = rapidjson().load(path2)
+    json3 = rapidjson().load(path3)
+    g = geojson.Geometry().from_rapidjson(json1)
+    assert g.is_line_string()
+    assert g.to_rapidjson() == json1
+    f = geojson.Feature().from_rapidjson(json2)
+    assert f.geometry() == g
+    assert f.to_rapidjson() == json2
+    fc = geojson.FeatureCollection().from_rapidjson(json3)
+    assert len(fc) == 1 and fc[0] == f
+    assert fc.to_rapidjson() == json3
+
+    for gg in [g, f, fc]:
+        g0 = gg
+        gg = gg.clone()
+        assert len(gg.to_rapidjson().dumps()) > len(
+            gg.round().to_rapidjson().dumps()
+        )  # noqa
+        assert len(gg.to_rapidjson().dumps()) == len(
+            gg.round().to_rapidjson().dumps()
+        )  # noqa
+        assert len(gg.to_rapidjson().dumps()) > len(
+            gg.round(lon=5, lat=5).to_rapidjson().dumps()
+        )
+        assert len(g0.to_rapidjson().dumps()) > len(gg.to_rapidjson().dumps())
+
+    assert geojson.Geometry().load(path1) == g
+    assert geojson.Feature().load(path2) == f
+    assert geojson.FeatureCollection().load(path3) == fc
+
+    g_ = geojson.GeoJSON().load(path1)
+    assert g_.is_geometry()
+    assert g_.as_geometry() == g
+
+    f_ = geojson.GeoJSON().load(path2)
+    assert f_.is_feature()
+    assert f_.as_feature() == f
+
+    fc_ = geojson.GeoJSON().load(path3)
+    assert fc_.is_feature_collection()
+    assert fc_.as_feature_collection() == fc
+
+    with pytest.raises(RuntimeError) as excinfo:
+        geojson.GeoJSON().load("no_such_file")
+    assert "can't open for reading: no_such_file" in repr(excinfo)
 
 
 def pytest_main(dir: str, *, test_file: str = None):
