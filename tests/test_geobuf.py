@@ -1433,6 +1433,22 @@ def test_geojson_load_dump():
     assert fc_.dump(path3)
     assert geojson.GeoJSON().load(path3) == fc_
 
+    # to/from_geobuf
+    encoded = g_.to_geobuf()
+    assert encoded == g_.as_geometry().to_geobuf()
+    decoded = geojson.GeoJSON().from_geobuf(encoded)
+    assert decoded == g_
+
+    encoded = f_.to_geobuf()
+    assert encoded == f_.as_feature().to_geobuf()
+    decoded = geojson.GeoJSON().from_geobuf(encoded)
+    assert decoded == f_
+
+    encoded = fc_.to_geobuf()
+    assert encoded == fc_.as_feature_collection().to_geobuf()
+    decoded = geojson.GeoJSON().from_geobuf(encoded)
+    assert decoded == fc_
+
 
 def pytest_main(dir: str, *, test_file: str = None):
 
