@@ -10,6 +10,10 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.0.8 (2023-03-28)
+
+*   Integrate geobuf into geojson!
+
 ## Version 0.0.7 (2023-03-26)
 
 *   More bindings, more tests
