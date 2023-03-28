@@ -10,6 +10,11 @@
 #include "geobuf/pybind11_helpers.hpp"
 #include "geobuf/rapidjson_helpers.hpp"
 
+// #define PYBIND11_GEOJSON_WITH_GEOBUF
+// #if PYBIND11_GEOJSON_WITH_GEOBUF
+// #endif
+#include "geobuf.hpp"
+
 #include <fstream>
 #include <iostream>
 
@@ -30,6 +35,15 @@ using namespace pybind11::literals;
 using rvp = py::return_value_policy;
 
 using PropertyMap = mapbox::geojson::value::object_type;
+
+inline bool endswith(const std::string &text, const std::string &suffix)
+{
+    if (text.length() < suffix.length()) {
+        return false;
+    }
+    return 0 == text.compare(text.length() - suffix.length(), suffix.length(),
+                             suffix);
+}
 
 void bind_geojson(py::module &geojson)
 {
@@ -114,6 +128,11 @@ void bind_geojson(py::module &geojson)
                 "load",
                 [](mapbox::geojson::geojson &self,
                    const std::string &path) -> mapbox::geojson::geojson & {
+                    if (endswith(path, ".pbf")) {
+                        auto bytes = mapbox::geobuf::load_bytes(path);
+                        self = mapbox::geobuf::Decoder().decode(bytes);
+                        return self;
+                    }
                     auto json = load_json(path);
                     self = mapbox::geojson::convert(json);
                     return self;
@@ -132,6 +151,20 @@ void bind_geojson(py::module &geojson)
                 "indent"_a = false,      //
                 "sort_keys"_a = false)
                 copy_deepcopy_clone(mapbox::geojson::geojson)
+            .def("__call__",
+                 [](const mapbox::geojson::geojson &self) {
+                     return self.match(
+                         [&](mapbox::geojson::geometry &g) {
+                             return to_python(g);
+                         },
+                         [&](mapbox::geojson::feature &f) {
+                             return to_python(f);
+                         },
+                         [&](mapbox::geojson::feature_collection &fc) {
+                             return to_python(fc);
+                         },
+                         [](auto &) -> py::object { return py::none(); });
+                 })
         //
         ;
 
@@ -430,6 +463,12 @@ void bind_geojson(py::module &geojson)
                  return json;
              })
         .def("load", [](mapbox::geojson::geometry &self, const std::string &path) -> mapbox::geojson::geometry & {
+            if (endswith(path, ".pbf")) {
+                auto bytes = mapbox::geobuf::load_bytes(path);
+                auto geojson = mapbox::geobuf::Decoder().decode(bytes);
+                self = std::move(geojson.get<mapbox::geojson::geometry>());
+                return self;
+            }
             auto json = load_json(path);
             self =
                 mapbox::geojson::convert<mapbox::geojson::geometry>(json);
@@ -1654,6 +1693,12 @@ void bind_geojson(py::module &geojson)
             "load",
             [](mapbox::geojson::feature &self,
                const std::string &path) -> mapbox::geojson::feature & {
+                if (endswith(path, ".pbf")) {
+                    auto bytes = mapbox::geobuf::load_bytes(path);
+                    auto geojson = mapbox::geobuf::Decoder().decode(bytes);
+                    self = std::move(geojson.get<mapbox::geojson::feature>());
+                    return self;
+                }
                 auto json = load_json(path);
                 self = mapbox::geojson::convert<mapbox::geojson::feature>(json);
                 return self;
@@ -1753,6 +1798,13 @@ void bind_geojson(py::module &geojson)
             [](mapbox::geojson::feature_collection &self,
                const std::string &path)
                 -> mapbox::geojson::feature_collection & {
+                if (endswith(path, ".pbf")) {
+                    auto bytes = mapbox::geobuf::load_bytes(path);
+                    auto geojson = mapbox::geobuf::Decoder().decode(bytes);
+                    self = std::move(
+                        geojson.get<mapbox::geojson::feature_collection>());
+                    return self;
+                }
                 auto json = load_json(path);
                 self =
                     std::move(mapbox::geojson::convert(json)

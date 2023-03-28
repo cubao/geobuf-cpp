@@ -395,11 +395,22 @@ void Encoder::writeFeature(const mapbox::geojson::feature &feature, Pbf &pbf)
         //     string id = 11;
         //     sint64 int_id = 12;
         // }
-        feature.id.match([&](int64_t id) { pbf.add_int64(12, id); },
-                         [&](const std::string &id) { pbf.add_string(11, id); },
-                         [&](const auto &) {
-                             pbf.add_string(11, dump(to_json(feature.id)));
-                         });
+        // using identifier = mapbox::util::variant<null_value_t, uint64_t,
+        // int64_t, double, std::string>;
+        feature.id.match(
+            [&](uint64_t uid) {
+                int id = static_cast<int64_t>(uid);
+                if (id >= 0) {
+                    pbf.add_int64(12, id);
+                } else {
+                    pbf.add_string(11, std::to_string(uid));
+                }
+            },
+            [&](int64_t id) { pbf.add_int64(12, id); },
+            [&](const std::string &id) { pbf.add_string(11, id); },
+            [&](const auto &) {
+                pbf.add_string(11, dump(to_json(feature.id)));
+            });
     }
     if (!feature.properties.empty()) {
         writeProps(feature.properties, pbf, 14);

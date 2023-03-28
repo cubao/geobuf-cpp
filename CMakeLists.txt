@@ -91,5 +91,6 @@ pybind11_add_module(
     src/main.cpp
     src/pybind11_rapidjson.cpp
     src/pybind11_geojson.cpp)
+target_include_directories(_pybind11_geobuf PRIVATE ${HEADER_ROOT})
 target_link_libraries(_pybind11_geobuf PRIVATE ${PROJECT_NAME})
 target_compile_definitions(_pybind11_geobuf PRIVATE VERSION_INFO=${PYBIND11_GEOBUF_VERSION_INFO})
