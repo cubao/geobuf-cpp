@@ -159,20 +159,21 @@ void bind_geojson(py::module &geojson)
                 "path"_a, py::kw_only(), //
                 "indent"_a = false,      //
                 "sort_keys"_a = false,   //
-                "precision"_a = 8) copy_deepcopy_clone(mapbox::geojson::geojson)
+                "precision"_a = 8)       //
+        copy_deepcopy_clone(mapbox::geojson::geojson)
             .def("__call__",
                  [](const mapbox::geojson::geojson &self) {
                      return self.match(
-                         [&](mapbox::geojson::geometry &g) {
+                         [&](const mapbox::geojson::geometry &g) {
                              return to_python(g);
                          },
-                         [&](mapbox::geojson::feature &f) {
+                         [&](const mapbox::geojson::feature &f) {
                              return to_python(f);
                          },
-                         [&](mapbox::geojson::feature_collection &fc) {
+                         [&](const mapbox::geojson::feature_collection &fc) {
                              return to_python(fc);
                          },
-                         [](auto &) -> py::object { return py::none(); });
+                         [](const auto &) -> py::object { return py::none(); });
                  })
         //
         ;

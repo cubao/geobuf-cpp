@@ -1371,6 +1371,7 @@ def test_geojson_load_dump():
     g_ = geojson.GeoJSON().load(path1)
     assert g_.is_geometry()
     assert g_.as_geometry() == g
+    assert g_()["type"] == "LineString"
 
     f_ = geojson.GeoJSON().load(path2)
     assert f_.is_feature()
@@ -1410,6 +1411,27 @@ def test_geojson_load_dump():
         fc.clone().round(lon=8, lat=8, alt=8).to_rapidjson()
         == fc_.to_rapidjson()  # noqa
     )
+
+    build_dir = os.path.abspath(f"{__pwd}/../build")
+    path1 = f"{build_dir}/geometry.json"
+    assert g.dump(path1, indent=True, sort_keys=True)
+    assert geojson.GeoJSON().load(path1).as_geometry() == g
+    path2 = f"{build_dir}/feature.json"
+    assert f.dump(path2, indent=True, sort_keys=True)
+    assert geojson.GeoJSON().load(path2).as_feature() == f
+    path3 = f"{build_dir}/feature_collection.json"
+    assert fc.dump(path3, indent=True, sort_keys=True)
+    assert geojson.GeoJSON().load(path3).as_feature_collection() == fc
+
+    path1 = f"{build_dir}/geometry.pbf"
+    assert g_.dump(path1)
+    assert geojson.GeoJSON().load(path1) == g_
+    path2 = f"{build_dir}/feature.pbf"
+    assert f_.dump(path2)
+    assert geojson.GeoJSON().load(path2) == f_
+    path3 = f"{build_dir}/feature_collection.pbf"
+    assert fc_.dump(path3)
+    assert geojson.GeoJSON().load(path3) == fc_
 
 
 def pytest_main(dir: str, *, test_file: str = None):
