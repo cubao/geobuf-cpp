@@ -155,7 +155,9 @@ struct Decoder
     int precision() const { return std::log10(e); }
     std::vector<std::string> __keys() const { return keys; }
 
-    static std::string normalize(const std::string &pbf_bytes);
+    static std::string normalize(const std::string &pbf_bytes, //
+                                 bool sort_keys = true,        //
+                                 bool strip_z = false);
 
   private:
     mapbox::geojson::feature_collection readFeatureCollection(Pbf &pbf);

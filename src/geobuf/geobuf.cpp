@@ -624,7 +624,9 @@ bool Decoder::decode(const std::string &input_path,
     return dump_json(output_path, json, indent);
 }
 
-std::string Decoder::normalize(const std::string &pbf_bytes)
+std::string Decoder::normalize(const std::string &pbf_bytes, //
+                               bool sort_keys,               //
+                               bool strip_z)
 {
     std::string data;
     auto writer = protozero::pbf_writer{data};
