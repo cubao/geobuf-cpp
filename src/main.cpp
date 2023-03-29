@@ -188,6 +188,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             "geojson"_a,        //
             "indent"_a = false, //
             "sort_keys"_a = false)
+        .def("keys", &Decoder::__keys)
         //
         ;
 
