@@ -150,6 +150,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def(py::init<>())
         //
         .def("precision", &Decoder::precision)
+        .def("dim", &Decoder::__dim)
         .def(
             "decode",
             [](Decoder &self, const std::string &geobuf, bool indent,

@@ -155,6 +155,7 @@ struct Decoder
     bool decode(const std::string &input_path, const std::string &output_path,
                 bool indent = false, bool sort_keys = false);
     int precision() const { return std::log10(e); }
+    int __dim() const { return dim; }
     std::vector<std::string> __keys() const { return keys; }
 
     static std::string normalize(const std::string &pbf_bytes, //
