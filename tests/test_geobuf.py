@@ -1140,7 +1140,9 @@ def test_geobuf_from_geojson():
     print(encoder.keys())
     encoded = encoder.encode(feature)
     assert encoded == encoded_0
-    decoded = Decoder().decode(encoded)
+    decoder = Decoder()
+    decoded = decoder.decode(encoded)
+    assert decoder.dim() == 3
 
     decoded_again = Decoder().decode(
         Encoder(max_precision=int(10**8)).encode(decoded)
@@ -1190,6 +1192,15 @@ def test_geobuf_from_geojson():
 
     encoded1 = encoder.encode(rapidjson(feature))
     assert len(encoded1) == len(encoded)
+
+    decoder = Decoder()
+    decoder.decode(
+        Encoder(
+            max_precision=int(10**8),
+            only_xy=True,
+        ).encode(json.dumps(feature))
+    )
+    assert decoder.dim() == 2
 
 
 def test_geojson_value():
