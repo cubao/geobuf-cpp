@@ -10,6 +10,11 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.0.9 (2023-03-30)
+
+*   Export to geobuf with only xy (no z), `only_xy=False`
+*   Geobuf property keys are sorted now!
+
 ## Version 0.0.8 (2023-03-28)
 
 *   Integrate geobuf into geojson!
