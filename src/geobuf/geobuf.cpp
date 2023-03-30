@@ -349,6 +349,12 @@ void Encoder::analyzePoints(const PointsType &points)
     }
 }
 
+inline double ROUND(double v, double s)
+{
+    return std::floor(v * s + 0.5) / s;
+    // return std::round(v * s) / s;
+}
+
 void Encoder::analyzePoint(const mapbox::geojson::point &point)
 {
     if (!onlyXY) {
@@ -359,7 +365,7 @@ void Encoder::analyzePoint(const mapbox::geojson::point &point)
     }
     const double *ptr = &point.x;
     for (int i = 0; i < dim; ++i) {
-        while (std::round(ptr[i] * e) / e != ptr[i] && e < maxPrecision) {
+        while (ROUND(ptr[i], e) != ptr[i] && e < maxPrecision) {
             e *= 10;
         }
     }
@@ -507,7 +513,7 @@ void Encoder::writePoint(const mapbox::geojson::point &point, Encoder::Pbf &pbf)
     coords.reserve(dim);
     const double *ptr = &point.x;
     for (int i = 0; i < dim; ++i) {
-        coords.push_back(static_cast<int64_t>(std::round(ptr[i] * e)));
+        coords.push_back(static_cast<int64_t>(std::floor(ptr[i] * e + 0.5)));
     }
     pbf.add_packed_sint64(3, coords.begin(), coords.end());
 }
@@ -575,7 +581,8 @@ void Encoder::populateLine(std::vector<int64_t> &coords, //
     for (int i = 0; i < len; ++i) {
         const double *ptr = &line[i].x;
         for (int j = 0; j < dim; ++j) {
-            auto n = static_cast<int64_t>(std::round(ptr[j] * e)) - sum[j];
+            auto n =
+                static_cast<int64_t>(std::floor(ptr[j] * e + 0.5)) - sum[j];
             coords.push_back(n);
             sum[j] += n;
         }

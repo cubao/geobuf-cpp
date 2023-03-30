@@ -451,10 +451,8 @@ inline double round_coords(double value, double scale)
     // also note that, javascript Math.round differs from C++ round
     // e.g. std::round(-0.5) => -1.0
     //      Math.round(-0.5) => -0.0
-    return std::round(value * scale) / scale;
-    // TODO, all should use Math.round!!!
-    // Math.round equivalent:
-    //  std::floor(value * scale + 0.5) / scale
+    return std::floor(value * scale + 0.5) / scale; // like in JS
+    // return std::round(value * scale) / scale;
 }
 
 inline void round_coords(mapbox::geojson::point &xyz,
