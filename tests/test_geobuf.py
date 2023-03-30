@@ -1449,6 +1449,27 @@ def test_geojson_load_dump():
     decoded = geojson.GeoJSON().from_geobuf(encoded)
     assert decoded == fc_
 
+    # onlyXY
+    path1 = os.path.join(dirname, "geometry.json")
+    path2 = os.path.join(dirname, "feature.json")
+    path3 = os.path.join(dirname, "feature_collection.json")
+    for path in [path1, path2, path3]:
+        g = geojson.GeoJSON().load(path)
+        g_xyz = geojson.GeoJSON().from_geobuf(g.to_geobuf())
+        g_xy_ = geojson.GeoJSON().from_geobuf(g.to_geobuf(only_xy=True))
+        if g.is_geometry():
+            llas1 = g_xyz.as_geometry().as_numpy()
+            llas2 = g_xy_.as_geometry().as_numpy()
+        elif g.is_feature():
+            llas1 = g_xyz.as_feature().as_numpy()
+            llas2 = g_xy_.as_feature().as_numpy()
+        else:
+            llas1 = g_xyz.as_feature_collection()[0].as_numpy()
+            llas2 = g_xy_.as_feature_collection()[0].as_numpy()
+        assert np.all(llas1[:, :2] == llas2[:, :2])
+        assert np.fabs(llas1[:, 2]).max() != 0.0
+        assert np.fabs(llas2[:, 2]).max() == 0.0
+
 
 def pytest_main(dir: str, *, test_file: str = None):
 

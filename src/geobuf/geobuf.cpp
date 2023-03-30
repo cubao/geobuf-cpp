@@ -220,6 +220,10 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
     e = 1;
     keys.clear();
     analyze(geojson);
+    if (onlyXY) {
+        dim = 2u;
+    }
+
     {
         auto kk = std::set<std::string>();
         for (auto &pair : keys) {
@@ -347,7 +351,9 @@ void Encoder::analyzePoints(const PointsType &points)
 
 void Encoder::analyzePoint(const mapbox::geojson::point &point)
 {
-    dim = std::max(point.z == 0 ? dimXY : dimXYZ, dim);
+    if (!onlyXY) {
+        dim = std::max(point.z == 0 ? dimXY : dimXYZ, dim);
+    }
     if (e >= maxPrecision) {
         return;
     }

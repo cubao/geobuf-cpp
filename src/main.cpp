@@ -92,9 +92,10 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         "indent"_a = "");
 
     py::class_<Encoder>(m, "Encoder", py::module_local()) //
-        .def(py::init<uint32_t>(),                        //
+        .def(py::init<uint32_t, bool>(),                  //
              py::kw_only(),
-             "max_precision"_a = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION))
+             "max_precision"_a = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION),
+             "only_xy"_a = false)
         //
         .def(
             "encode",

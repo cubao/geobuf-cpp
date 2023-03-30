@@ -80,8 +80,9 @@ struct Encoder
 {
     using Pbf = protozero::pbf_writer;
     Encoder(uint32_t maxPrecision = std::pow(10,
-                                             MAPBOX_GEOBUF_DEFAULT_PRECISION))
-        : maxPrecision(maxPrecision)
+                                             MAPBOX_GEOBUF_DEFAULT_PRECISION),
+            bool onlyXY = false)
+        : maxPrecision(maxPrecision), onlyXY(onlyXY)
     {
     }
     std::string encode(const mapbox::geojson::geojson &geojson);
@@ -138,6 +139,7 @@ struct Encoder
                       bool closed);
 
     const uint32_t maxPrecision;
+    const bool onlyXY;
     uint32_t dim = MAPBOX_GEOBUF_DEFAULT_DIM;
     uint32_t e = 1;
     std::unordered_map<std::string, std::uint32_t> keys;
