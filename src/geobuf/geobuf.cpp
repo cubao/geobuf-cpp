@@ -629,42 +629,6 @@ bool Decoder::decode(const std::string &input_path,
     return dump_json(output_path, json, indent);
 }
 
-std::string Decoder::normalize(const std::string &pbf_bytes, //
-                               bool sort_keys,               //
-                               bool strip_z)
-{
-    std::string data;
-    auto writer = protozero::pbf_writer{data};
-    auto reader = protozero::pbf_reader{pbf_bytes};
-    std::map<std::string, uint32_t> keys;
-    while (reader.next() && reader.tag() == 1) {
-        keys.emplace(reader.get_string(), keys.size());
-    }
-    std::map<uint32_t, uint32_t> idxOld2New;
-    for (auto &pair : keys) {
-        writer.add_string(1, pair.first);
-        idxOld2New.emplace(pair.second, idxOld2New.size());
-    }
-
-    while (reader.next()) {
-        const auto tag = reader.tag();
-        if (tag == 2 || tag == 3) {
-            writer.add_uint32(tag, reader.get_uint32());
-        } else if (tag == 4 || tag == 5 || tag == 6) {
-            protozero::pbf_reader rr = reader.get_message();
-            while (rr.next()) {
-                if (true) {
-                } else {
-                    rr.skip();
-                }
-            }
-        } else {
-            reader.skip();
-        }
-    }
-    return data;
-}
-
 void unpack_properties(mapbox::geojson::prop_map &properties,
                        const std::vector<uint32_t> &indexes,
                        const std::vector<std::string> &keys,
