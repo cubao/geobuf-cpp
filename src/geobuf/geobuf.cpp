@@ -4,6 +4,7 @@
 #include <array>
 #include <mapbox/geojson_impl.hpp>
 #include <mapbox/geojson_value_impl.hpp>
+#include <set>
 
 #include "rapidjson/error/en.h"
 #include "rapidjson/filereadstream.h"
@@ -212,25 +213,27 @@ std::string dump(const mapbox::geojson::geojson &geojson, //
 
 std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
 {
+    std::string data;
+    Encoder::Pbf pbf{data};
+
     dim = MAPBOX_GEOBUF_DEFAULT_DIM;
     e = 1;
     keys.clear();
     analyze(geojson);
-
-    std::vector<std::pair<const std::string *, uint32_t>> keys_vec;
-    keys_vec.reserve(keys.size());
-    for (auto &pair : keys) {
-        keys_vec.emplace_back(&pair.first, pair.second);
+    if (onlyXY) {
+        dim = 2u;
     }
-    std::sort(keys_vec.begin(), keys_vec.end(),
-              [](const auto &kv1, const auto &kv2) {
-                  return kv1.second < kv2.second;
-              });
 
-    std::string data;
-    Encoder::Pbf pbf{data};
-    for (auto &kv : keys_vec) {
-        pbf.add_string(1, *kv.first);
+    {
+        auto kk = std::set<std::string>();
+        for (auto &pair : keys) {
+            kk.insert(pair.first);
+        }
+        int idx = -1;
+        for (auto &k : kk) {
+            pbf.add_string(1, k);
+            keys[k] = ++idx;
+        }
     }
     if (dim != MAPBOX_GEOBUF_DEFAULT_DIM) {
         pbf.add_uint32(2, dim);
@@ -346,15 +349,23 @@ void Encoder::analyzePoints(const PointsType &points)
     }
 }
 
+inline double ROUND(double v, double s)
+{
+    return std::floor(v * s + 0.5) / s;
+    // return std::round(v * s) / s;
+}
+
 void Encoder::analyzePoint(const mapbox::geojson::point &point)
 {
-    dim = std::max(point.z == 0 ? dimXY : dimXYZ, dim);
+    if (!onlyXY) {
+        dim = std::max(point.z == 0 ? dimXY : dimXYZ, dim);
+    }
     if (e >= maxPrecision) {
         return;
     }
     const double *ptr = &point.x;
     for (int i = 0; i < dim; ++i) {
-        while (std::round(ptr[i] * e) / e != ptr[i] && e < maxPrecision) {
+        while (ROUND(ptr[i], e) != ptr[i] && e < maxPrecision) {
             e *= 10;
         }
     }
@@ -502,7 +513,7 @@ void Encoder::writePoint(const mapbox::geojson::point &point, Encoder::Pbf &pbf)
     coords.reserve(dim);
     const double *ptr = &point.x;
     for (int i = 0; i < dim; ++i) {
-        coords.push_back(static_cast<int64_t>(std::round(ptr[i] * e)));
+        coords.push_back(static_cast<int64_t>(std::floor(ptr[i] * e + 0.5)));
     }
     pbf.add_packed_sint64(3, coords.begin(), coords.end());
 }
@@ -570,7 +581,8 @@ void Encoder::populateLine(std::vector<int64_t> &coords, //
     for (int i = 0; i < len; ++i) {
         const double *ptr = &line[i].x;
         for (int j = 0; j < dim; ++j) {
-            auto n = static_cast<int64_t>(std::round(ptr[j] * e)) - sum[j];
+            auto n =
+                static_cast<int64_t>(std::floor(ptr[j] * e + 0.5)) - sum[j];
             coords.push_back(n);
             sum[j] += n;
         }

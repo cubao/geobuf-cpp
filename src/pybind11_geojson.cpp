@@ -134,13 +134,14 @@ void bind_geojson(py::module &geojson)
                 rvp::reference_internal)
             .def(
                 "to_geobuf",
-                [](const mapbox::geojson::geojson &self, int precision) {
-                    auto bytes =
-                        mapbox::geobuf::Encoder(std::pow(10, precision))
-                            .encode(self);
+                [](const mapbox::geojson::geojson &self, int precision,
+                   bool only_xy) {
+                    auto bytes = mapbox::geobuf::Encoder(
+                                     std::pow(10, precision), only_xy)
+                                     .encode(self);
                     return py::bytes(bytes);
                 },
-                py::kw_only(), "precision"_a = 8)
+                py::kw_only(), "precision"_a = 8, "only_xy"_a = false)
             //
             .def(
                 "load",
@@ -162,11 +163,12 @@ void bind_geojson(py::module &geojson)
                    const std::string &path,              //
                    bool indent,                          //
                    bool sort_keys,                       //
-                   int precision) {
+                   int precision,                        //
+                   bool only_xy) {
                     if (endswith(path, ".pbf")) {
-                        auto bytes =
-                            mapbox::geobuf::Encoder(std::pow(10, precision))
-                                .encode(self);
+                        auto bytes = mapbox::geobuf::Encoder(
+                                         std::pow(10, precision), only_xy)
+                                         .encode(self);
                         return mapbox::geobuf::dump_bytes(path, bytes);
                     }
                     RapidjsonAllocator allocator;
@@ -177,7 +179,8 @@ void bind_geojson(py::module &geojson)
                 "path"_a, py::kw_only(), //
                 "indent"_a = false,      //
                 "sort_keys"_a = false,   //
-                "precision"_a = 8)       //
+                "precision"_a = 8,       //
+                "only_xy"_a = false)     //
         copy_deepcopy_clone(mapbox::geojson::geojson)
             .def("__call__",
                  [](const mapbox::geojson::geojson &self) {
@@ -500,12 +503,12 @@ void bind_geojson(py::module &geojson)
             },
             rvp::reference_internal)
         .def("to_geobuf",
-            [](const mapbox::geojson::geometry &self, int precision) {
+            [](const mapbox::geojson::geometry &self, int precision, bool only_xy) {
             auto bytes =
-                mapbox::geobuf::Encoder(std::pow(10, precision))
+                mapbox::geobuf::Encoder(std::pow(10, precision), only_xy)
                     .encode(self);
             return py::bytes(bytes);
-            }, py::kw_only(), "precision"_a = 8)
+            }, py::kw_only(), "precision"_a = 8, "only_xy"_a = false)
         .def("load",
             [](mapbox::geojson::geometry &self, const std::string &path) -> mapbox::geojson::geometry & {
                 if (endswith(path, ".pbf")) {
@@ -524,9 +527,10 @@ void bind_geojson(py::module &geojson)
                 const std::string &path, //
                 bool indent, //
                 bool sort_keys, //
-                int precision) {
+                int precision, //
+                bool only_xy) {
                 if (endswith(path, ".pbf")) {
-                    auto bytes = mapbox::geobuf::Encoder(std::pow(10, precision)).encode(self);
+                    auto bytes = mapbox::geobuf::Encoder(std::pow(10, precision), only_xy).encode(self);
                     return mapbox::geobuf::dump_bytes(path, bytes);
                 }
                 RapidjsonAllocator allocator;
@@ -536,7 +540,8 @@ void bind_geojson(py::module &geojson)
             }, "path"_a, py::kw_only(), //
             "indent"_a = false, //
             "sort_keys"_a = false, //
-            "precision"_a = 8)
+            "precision"_a = 8, //
+            "only_xy"_a = false)
         .def(py::self == py::self) //
         .def(py::self != py::self) //
 
@@ -1758,12 +1763,14 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal)
         .def(
             "to_geobuf",
-            [](const mapbox::geojson::feature &self, int precision) {
-                auto bytes = mapbox::geobuf::Encoder(std::pow(10, precision))
-                                 .encode(self);
+            [](const mapbox::geojson::feature &self, int precision,
+               bool only_xy) {
+                auto bytes =
+                    mapbox::geobuf::Encoder(std::pow(10, precision), only_xy)
+                        .encode(self);
                 return py::bytes(bytes);
             },
-            py::kw_only(), "precision"_a = 8)
+            py::kw_only(), "precision"_a = 8, "only_xy"_a = false)
         .def(
             "load",
             [](mapbox::geojson::feature &self,
@@ -1785,11 +1792,12 @@ void bind_geojson(py::module &geojson)
                const std::string &path,              //
                bool indent,                          //
                bool sort_keys,                       //
-               int precision) {
+               int precision,                        //
+               bool only_xy) {
                 if (endswith(path, ".pbf")) {
-                    auto bytes =
-                        mapbox::geobuf::Encoder(std::pow(10, precision))
-                            .encode(self);
+                    auto bytes = mapbox::geobuf::Encoder(
+                                     std::pow(10, precision), only_xy)
+                                     .encode(self);
                     return mapbox::geobuf::dump_bytes(path, bytes);
                 }
                 RapidjsonAllocator allocator;
@@ -1800,7 +1808,8 @@ void bind_geojson(py::module &geojson)
             "path"_a, py::kw_only(), //
             "indent"_a = false,      //
             "sort_keys"_a = false,   //
-            "precision"_a = 8)
+            "precision"_a = 8,       //
+            "only_xy"_a = false)
         //
         copy_deepcopy_clone(mapbox::geojson::feature)
         //
@@ -1893,12 +1902,14 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal)
         .def(
             "to_geobuf",
-            [](const mapbox::geojson::feature_collection &self, int precision) {
-                auto bytes = mapbox::geobuf::Encoder(std::pow(10, precision))
-                                 .encode(self);
+            [](const mapbox::geojson::feature_collection &self, int precision,
+               bool only_xy) {
+                auto bytes =
+                    mapbox::geobuf::Encoder(std::pow(10, precision), only_xy)
+                        .encode(self);
                 return py::bytes(bytes);
             },
-            py::kw_only(), "precision"_a = 8)
+            py::kw_only(), "precision"_a = 8, "only_xy"_a = false)
         .def(
             "load",
             [](mapbox::geojson::feature_collection &self,
@@ -1924,11 +1935,12 @@ void bind_geojson(py::module &geojson)
                const std::string &path, //
                bool indent,             //
                bool sort_keys,          //
-               int precision) {
+               int precision,           //
+               bool only_xy) {
                 if (endswith(path, ".pbf")) {
-                    auto bytes =
-                        mapbox::geobuf::Encoder(std::pow(10, precision))
-                            .encode(self);
+                    auto bytes = mapbox::geobuf::Encoder(
+                                     std::pow(10, precision), only_xy)
+                                     .encode(self);
                     return mapbox::geobuf::dump_bytes(path, bytes);
                 }
                 RapidjsonAllocator allocator;
@@ -1939,7 +1951,8 @@ void bind_geojson(py::module &geojson)
             "path"_a, py::kw_only(), //
             "indent"_a = false,      //
             "sort_keys"_a = false,   //
-            "precision"_a = 8)
+            "precision"_a = 8,       //
+            "only_xy"_a = false)
         //
         copy_deepcopy_clone(mapbox::geojson::feature_collection)
         //

@@ -305,9 +305,8 @@ def test_geojson_point():
     g1 = geojson.Point(*coords)
     g1.round(lon=0, lat=0, alt=0)
     # https://en.cppreference.com/w/cpp/numeric/math/round
-    # rounding halfway cases away from zero
-    assert np.all(g1.as_numpy() == [1, -1, 0])
-    # Note that, in JS, Math.round(-0.5) => -0.0
+    assert np.all(g1.as_numpy() == [1, 0, 0])
+    # just like in JS/Python, Math.round(-0.5) => -0.0
 
     coords = [123, 456]
     g1 = geojson.Point(*coords)
@@ -1141,7 +1140,9 @@ def test_geobuf_from_geojson():
     print(encoder.keys())
     encoded = encoder.encode(feature)
     assert encoded == encoded_0
-    decoded = Decoder().decode(encoded)
+    decoder = Decoder()
+    decoded = decoder.decode(encoded)
+    assert decoder.dim() == 3
 
     decoded_again = Decoder().decode(
         Encoder(max_precision=int(10**8)).encode(decoded)
@@ -1191,6 +1192,15 @@ def test_geobuf_from_geojson():
 
     encoded1 = encoder.encode(rapidjson(feature))
     assert len(encoded1) == len(encoded)
+
+    decoder = Decoder()
+    decoder.decode(
+        Encoder(
+            max_precision=int(10**8),
+            only_xy=True,
+        ).encode(json.dumps(feature))
+    )
+    assert decoder.dim() == 2
 
 
 def test_geojson_value():
@@ -1448,6 +1458,27 @@ def test_geojson_load_dump():
     assert encoded == fc_.as_feature_collection().to_geobuf()
     decoded = geojson.GeoJSON().from_geobuf(encoded)
     assert decoded == fc_
+
+    # onlyXY
+    path1 = os.path.join(dirname, "geometry.json")
+    path2 = os.path.join(dirname, "feature.json")
+    path3 = os.path.join(dirname, "feature_collection.json")
+    for path in [path1, path2, path3]:
+        g = geojson.GeoJSON().load(path)
+        g_xyz = geojson.GeoJSON().from_geobuf(g.to_geobuf())
+        g_xy_ = geojson.GeoJSON().from_geobuf(g.to_geobuf(only_xy=True))
+        if g.is_geometry():
+            llas1 = g_xyz.as_geometry().as_numpy()
+            llas2 = g_xy_.as_geometry().as_numpy()
+        elif g.is_feature():
+            llas1 = g_xyz.as_feature().as_numpy()
+            llas2 = g_xy_.as_feature().as_numpy()
+        else:
+            llas1 = g_xyz.as_feature_collection()[0].as_numpy()
+            llas2 = g_xy_.as_feature_collection()[0].as_numpy()
+        assert np.all(llas1[:, :2] == llas2[:, :2])
+        assert np.fabs(llas1[:, 2]).max() != 0.0
+        assert np.fabs(llas2[:, 2]).max() == 0.0
 
 
 def pytest_main(dir: str, *, test_file: str = None):

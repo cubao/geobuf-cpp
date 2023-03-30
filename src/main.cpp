@@ -92,9 +92,10 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         "indent"_a = "");
 
     py::class_<Encoder>(m, "Encoder", py::module_local()) //
-        .def(py::init<uint32_t>(),                        //
+        .def(py::init<uint32_t, bool>(),                  //
              py::kw_only(),
-             "max_precision"_a = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION))
+             "max_precision"_a = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION),
+             "only_xy"_a = false)
         //
         .def(
             "encode",
@@ -149,6 +150,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def(py::init<>())
         //
         .def("precision", &Decoder::precision)
+        .def("dim", &Decoder::__dim)
         .def(
             "decode",
             [](Decoder &self, const std::string &geobuf, bool indent,
@@ -188,6 +190,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             "geojson"_a,        //
             "indent"_a = false, //
             "sort_keys"_a = false)
+        .def("keys", &Decoder::__keys)
         //
         ;
 
