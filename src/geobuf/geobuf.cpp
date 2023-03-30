@@ -4,6 +4,7 @@
 #include <array>
 #include <mapbox/geojson_impl.hpp>
 #include <mapbox/geojson_value_impl.hpp>
+#include <set>
 
 #include "rapidjson/error/en.h"
 #include "rapidjson/filereadstream.h"
@@ -212,25 +213,23 @@ std::string dump(const mapbox::geojson::geojson &geojson, //
 
 std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
 {
+    std::string data;
+    Encoder::Pbf pbf{data};
+
     dim = MAPBOX_GEOBUF_DEFAULT_DIM;
     e = 1;
     keys.clear();
     analyze(geojson);
-
-    std::vector<std::pair<const std::string *, uint32_t>> keys_vec;
-    keys_vec.reserve(keys.size());
-    for (auto &pair : keys) {
-        keys_vec.emplace_back(&pair.first, pair.second);
-    }
-    std::sort(keys_vec.begin(), keys_vec.end(),
-              [](const auto &kv1, const auto &kv2) {
-                  return kv1.second < kv2.second;
-              });
-
-    std::string data;
-    Encoder::Pbf pbf{data};
-    for (auto &kv : keys_vec) {
-        pbf.add_string(1, *kv.first);
+    {
+        auto kk = std::set<std::string>();
+        for (auto &pair : keys) {
+            kk.insert(pair.first);
+        }
+        int idx = -1;
+        for (auto &k : kk) {
+            pbf.add_string(1, k);
+            keys[k] = ++idx;
+        }
     }
     if (dim != MAPBOX_GEOBUF_DEFAULT_DIM) {
         pbf.add_uint32(2, dim);
