@@ -67,9 +67,28 @@ def test_geobuf():
     print("encoded pbf bytes")
     print(pbf_decode(encoded))
 
+    with pytest.raises(Exception) as excinfo:
+        Encoder(max_precision=int(10**10))  # uint32_t overflow
+    assert "incompatible constructor arguments" in repr(excinfo)
+
     decoder = Decoder()
     geojson_text = decoder.decode(encoded, indent=True)
     print(geojson_text)
+
+
+def test_geobuf_roundz():
+    f = geojson.Feature().from_rapidjson(sample_geojson())
+    llas0 = geojson.Feature().from_geobuf(f.to_geobuf()).to_numpy()
+
+    llas = geojson.Feature().from_geobuf(f.to_geobuf(precision=3)).to_numpy()
+    assert np.all(np.round(llas, 3) == llas)
+
+    llas = geojson.Feature().from_geobuf(f.to_geobuf(only_xy=True)).to_numpy()
+    assert np.all(llas[:, 2] == np.zeros(len(llas)))
+
+    llas = geojson.Feature().from_geobuf(f.to_geobuf(round_z=3)).to_numpy()
+    assert np.all(np.round(llas0[:, :2], 8) == llas[:, :2])
+    assert np.all(np.round(llas0[:, 2], 3) == llas[:, 2])
 
 
 def test_rapidjson_empty():

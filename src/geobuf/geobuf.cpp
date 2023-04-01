@@ -509,13 +509,14 @@ void Encoder::writeValue(const mapbox::feature::value &value, Encoder::Pbf &pbf)
 
 void Encoder::writePoint(const mapbox::geojson::point &point, Encoder::Pbf &pbf)
 {
-    std::vector<int64_t> coords;
-    coords.reserve(dim);
-    const double *ptr = &point.x;
-    for (int i = 0; i < dim; ++i) {
-        coords.push_back(static_cast<int64_t>(std::floor(ptr[i] * e + 0.5)));
+    std::array<int64_t, 3> coords;
+    coords[0] = static_cast<int64_t>(std::floor(point.x * e + 0.5));
+    coords[1] = static_cast<int64_t>(std::floor(point.y * e + 0.5));
+    if (dim == 3) {
+        double z = zScale ? ROUND(point.z, *zScale) : point.z;
+        coords[2] = static_cast<int64_t>(std::floor(z * e + 0.5));
     }
-    pbf.add_packed_sint64(3, coords.begin(), coords.end());
+    pbf.add_packed_sint64(3, &coords[0], &coords[0] + dim);
 }
 
 void Encoder::writeLine(const PointsType &line, Encoder::Pbf &pbf)
@@ -579,12 +580,18 @@ void Encoder::populateLine(std::vector<int64_t> &coords, //
     int len = line.size() - (closed ? 1 : 0);
     auto sum = std::array<int64_t, 3>{0, 0, 0};
     for (int i = 0; i < len; ++i) {
-        const double *ptr = &line[i].x;
-        for (int j = 0; j < dim; ++j) {
-            auto n =
-                static_cast<int64_t>(std::floor(ptr[j] * e + 0.5)) - sum[j];
+        const auto &pt = line[i];
+        auto n = static_cast<int64_t>(std::floor(pt.x * e + 0.5)) - sum[0];
+        coords.push_back(n);
+        sum[0] += n;
+        n = static_cast<int64_t>(std::floor(pt.y * e + 0.5)) - sum[1];
+        coords.push_back(n);
+        sum[1] += n;
+        if (dim == 3) {
+            double z = zScale ? ROUND(pt.z, *zScale) : pt.z;
+            n = static_cast<int64_t>(std::floor(z * e + 0.5)) - sum[2];
             coords.push_back(n);
-            sum[j] += n;
+            sum[2] += n;
         }
     }
 }
