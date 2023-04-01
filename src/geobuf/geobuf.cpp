@@ -221,7 +221,7 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
     keys.clear();
     analyze(geojson);
     if (onlyXY) {
-        dim = 2u;
+        dim = dimXY;
     }
 
     {
@@ -357,7 +357,7 @@ inline double ROUND(double v, double s)
 
 void Encoder::analyzePoint(const mapbox::geojson::point &point)
 {
-    if (!onlyXY) {
+    if (!onlyXY && dim < dimXYZ) {
         dim = std::max(point.z == 0 ? dimXY : dimXYZ, dim);
     }
     if (e >= maxPrecision) {
