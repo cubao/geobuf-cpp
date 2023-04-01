@@ -275,6 +275,26 @@ def test_rapidjson_sort_dump():
     assert obj6 == obj5
 
 
+def test_rapidjson_round():
+    arr = rapidjson([1.23456, [3.2, 2.345]])
+    assert arr() == [1.23456, [3.2, 2.345]]
+    arr.round()
+    assert arr() == [1.235, [3.2, 2.345]]
+    arr.round(precision=2)
+    assert arr() == [1.24, [3.2, 2.35]]
+
+    obj = rapidjson(sample_geojson())
+    assert obj() == sample_geojson()
+    assert (
+        obj.clone().round(precision=1).dumps(sort_keys=True)
+        == '{"geometry":{"coordinates":[[120.4,31.4,1.1],[120.3,31.3,2.2],[120.4,31.2,3.3],[120.7,31.3,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.1},"double":3.1,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'
+    )
+    assert (
+        obj.clone().round(precision=1, skip_keys=["geometry"]).dumps(sort_keys=True)
+        == '{"geometry":{"coordinates":[[120.40317479950272,31.416966084052177,1.111111],[120.28451900911591,31.30578266928819,2.22],[120.35592249359615,31.21781895672254,3.3333333333333],[120.67093786630113,31.299502266522722,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.1},"double":3.1,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'
+    )
+
+
 def test_geojson_point():
     # as_numpy
     g1 = geojson.Point()

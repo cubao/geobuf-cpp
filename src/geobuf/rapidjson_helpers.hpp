@@ -68,6 +68,36 @@ inline void sort_keys_inplace(RapidjsonValue &json)
     }
 }
 
+inline void round_rapidjson(RapidjsonValue &json, double scale, int depth = 1,
+                            const std::vector<std::string> &skip_keys = {})
+{
+    if (--depth < 0) {
+        return;
+    }
+    if (json.IsArray()) {
+        for (auto &e : json.GetArray()) {
+            round_rapidjson(e, scale, depth, skip_keys);
+        }
+    } else if (json.IsObject()) {
+        auto obj = json.GetObject();
+        for (auto &kv : obj) {
+            if (!skip_keys.empty() &&
+                std::find(skip_keys.begin(), skip_keys.end(),
+                          std::string(kv.name.GetString(),
+                                      kv.name.GetStringLength())) !=
+                    skip_keys.end()) {
+                continue;
+            }
+            round_rapidjson(kv.value, scale, depth, skip_keys);
+        }
+    } else if (json.IsDouble()) {
+        // see round_coords in geojson_helpers
+        json.SetDouble(std::floor(json.GetDouble() * scale + 0.5) / scale);
+    } else if (json.IsFloat()) {
+        json.SetFloat(std::floor(json.GetFloat() * scale + 0.5) / scale);
+    }
+}
+
 inline RapidjsonValue sort_keys(const RapidjsonValue &json)
 {
     RapidjsonAllocator allocator;
