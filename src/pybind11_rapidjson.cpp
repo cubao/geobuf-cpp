@@ -145,6 +145,14 @@ void bind_rapidjson(py::module &m)
                 sort_keys_inplace(self);
                 return self;
             }, rvp::reference_internal)
+            .def("round", [](RapidjsonValue &self, double precision, int depth, //
+                const std::vector<std::string> &skip_keys) -> RapidjsonValue & {
+                    round_rapidjson(self, std::pow(10, precision), depth, skip_keys);
+                return self;
+            }, rvp::reference_internal, py::kw_only(), //
+                "precision"_a = 3, //
+                "depth"_a = 32, //
+                "skip_keys"_a = std::vector<std::string>{})
             .def(
                 "get",
                 [](RapidjsonValue &self,

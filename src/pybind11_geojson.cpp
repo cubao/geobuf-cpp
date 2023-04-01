@@ -134,14 +134,17 @@ void bind_geojson(py::module &geojson)
                 rvp::reference_internal)
             .def(
                 "to_geobuf",
-                [](const mapbox::geojson::geojson &self, int precision,
-                   bool only_xy) {
+                [](const mapbox::geojson::geojson &self, //
+                   int precision, bool only_xy, std::optional<int> round_z) {
                     auto bytes = mapbox::geobuf::Encoder(
-                                     std::pow(10, precision), only_xy)
+                                     std::pow(10, precision), only_xy, round_z)
                                      .encode(self);
                     return py::bytes(bytes);
                 },
-                py::kw_only(), "precision"_a = 8, "only_xy"_a = false)
+                py::kw_only(),       //
+                "precision"_a = 8,   //
+                "only_xy"_a = false, //
+                "round_z"_a = std::nullopt)
             //
             .def(
                 "load",
@@ -503,12 +506,16 @@ void bind_geojson(py::module &geojson)
             },
             rvp::reference_internal)
         .def("to_geobuf",
-            [](const mapbox::geojson::geometry &self, int precision, bool only_xy) {
+            [](const mapbox::geojson::geometry &self, //
+            int precision, bool only_xy, std::optional<int> round_z) {
             auto bytes =
-                mapbox::geobuf::Encoder(std::pow(10, precision), only_xy)
+                mapbox::geobuf::Encoder(std::pow(10, precision), only_xy, round_z)
                     .encode(self);
             return py::bytes(bytes);
-            }, py::kw_only(), "precision"_a = 8, "only_xy"_a = false)
+            }, py::kw_only(), //
+            "precision"_a = 8, //
+            "only_xy"_a = false, //
+            "round_z"_a = std::nullopt)
         .def("load",
             [](mapbox::geojson::geometry &self, const std::string &path) -> mapbox::geojson::geometry & {
                 if (endswith(path, ".pbf")) {
@@ -1763,14 +1770,17 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal)
         .def(
             "to_geobuf",
-            [](const mapbox::geojson::feature &self, int precision,
-               bool only_xy) {
-                auto bytes =
-                    mapbox::geobuf::Encoder(std::pow(10, precision), only_xy)
-                        .encode(self);
+            [](const mapbox::geojson::feature &self, //
+               int precision, bool only_xy, std::optional<int> round_z) {
+                auto bytes = mapbox::geobuf::Encoder(std::pow(10, precision),
+                                                     only_xy, round_z)
+                                 .encode(self);
                 return py::bytes(bytes);
             },
-            py::kw_only(), "precision"_a = 8, "only_xy"_a = false)
+            py::kw_only(),       //
+            "precision"_a = 8,   //
+            "only_xy"_a = false, //
+            "round_z"_a = std::nullopt)
         .def(
             "load",
             [](mapbox::geojson::feature &self,
@@ -1902,14 +1912,17 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal)
         .def(
             "to_geobuf",
-            [](const mapbox::geojson::feature_collection &self, int precision,
-               bool only_xy) {
-                auto bytes =
-                    mapbox::geobuf::Encoder(std::pow(10, precision), only_xy)
-                        .encode(self);
+            [](const mapbox::geojson::feature_collection &self, //
+               int precision, bool only_xy, std::optional<int> round_z) {
+                auto bytes = mapbox::geobuf::Encoder(std::pow(10, precision),
+                                                     only_xy, round_z)
+                                 .encode(self);
                 return py::bytes(bytes);
             },
-            py::kw_only(), "precision"_a = 8, "only_xy"_a = false)
+            py::kw_only(),       //
+            "precision"_a = 8,   //
+            "only_xy"_a = false, //
+            "round_z"_a = std::nullopt)
         .def(
             "load",
             [](mapbox::geojson::feature_collection &self,

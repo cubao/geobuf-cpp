@@ -7,6 +7,7 @@
 #include <protozero/pbf_reader.hpp>
 
 #include <map>
+#include <optional>
 #include <unordered_map>
 
 #define MAPBOX_GEOBUF_DEFAULT_PRECISION 6
@@ -81,8 +82,11 @@ struct Encoder
     using Pbf = protozero::pbf_writer;
     Encoder(uint32_t maxPrecision = std::pow(10,
                                              MAPBOX_GEOBUF_DEFAULT_PRECISION),
-            bool onlyXY = false)
-        : maxPrecision(maxPrecision), onlyXY(onlyXY)
+            bool onlyXY = false, //
+            std::optional<int> roundZ = std::nullopt)
+        : maxPrecision(maxPrecision), onlyXY(onlyXY),
+          zScale(roundZ ? std::make_optional(std::pow(10, *roundZ))
+                        : std::nullopt)
     {
     }
     std::string encode(const mapbox::geojson::geojson &geojson);
@@ -103,6 +107,14 @@ struct Encoder
     std::string encode(const RapidjsonValue &json);
     bool encode(const std::string &input_path, const std::string &output_path);
 
+    auto __maxPrecision() const { return maxPrecision; }
+    auto __onlyXY() const { return onlyXY; }
+    auto __roundZ() const
+    {
+        return zScale ? std::make_optional(std::log10(*zScale)) : std::nullopt;
+    }
+    auto __dim() const { return dim; }
+    auto __e() const { return e; }
     std::map<std::string, std::uint32_t> __keys() const
     {
         return std::map<std::string, std::uint32_t>(keys.begin(), keys.end());
@@ -140,6 +152,7 @@ struct Encoder
 
     const uint32_t maxPrecision;
     const bool onlyXY;
+    const std::optional<double> zScale;
     uint32_t dim = MAPBOX_GEOBUF_DEFAULT_DIM;
     uint32_t e = 1;
     std::unordered_map<std::string, std::uint32_t> keys;

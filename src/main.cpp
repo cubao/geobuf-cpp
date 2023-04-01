@@ -91,12 +91,20 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         py::kw_only(), //
         "indent"_a = "");
 
-    py::class_<Encoder>(m, "Encoder", py::module_local()) //
-        .def(py::init<uint32_t, bool>(),                  //
+    py::class_<Encoder>(m, "Encoder", py::module_local())    //
+        .def(py::init<uint32_t, bool, std::optional<int>>(), //
              py::kw_only(),
-             "max_precision"_a = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION),
-             "only_xy"_a = false)
+             "max_precision"_a = static_cast<uint32_t>(
+                 std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION)),
+             "only_xy"_a = false, //
+             "round_z"_a = std::nullopt)
         //
+        .def("max_precision", &Encoder::__maxPrecision)
+        .def("only_xy", &Encoder::__onlyXY)
+        .def("round_z", &Encoder::__roundZ)
+        .def("dim", &Encoder::__dim)
+        .def("e", &Encoder::__e)
+        .def("keys", &Encoder::__keys)
         .def(
             "encode",
             [](Encoder &self, const mapbox::geojson::geojson &geojson) {

@@ -62,14 +62,42 @@ def test_geobuf():
     print(str2geojson2str(json.dumps(geojson), indent=True, sort_keys=True))
 
     # precision: 6(default), 7, 8(recommand), 9
+    encoder = Encoder()
+    assert encoder.max_precision() == 10**6
+    assert not encoder.only_xy()
+    assert encoder.round_z() is None
+
     encoder = Encoder(max_precision=int(10**8))
+    assert encoder.max_precision() == 10**8
     encoded = encoder.encode(geojson=json.dumps(geojson))
     print("encoded pbf bytes")
     print(pbf_decode(encoded))
 
+    encoder = Encoder(round_z=3)
+    assert encoder.round_z() == 3
+
+    with pytest.raises(Exception) as excinfo:
+        Encoder(max_precision=int(10**10))  # uint32_t overflow
+    assert "incompatible constructor arguments" in repr(excinfo)
+
     decoder = Decoder()
     geojson_text = decoder.decode(encoded, indent=True)
     print(geojson_text)
+
+
+def test_geobuf_roundz():
+    f = geojson.Feature().from_rapidjson(sample_geojson())
+    llas0 = geojson.Feature().from_geobuf(f.to_geobuf()).to_numpy()
+
+    llas = geojson.Feature().from_geobuf(f.to_geobuf(precision=3)).to_numpy()
+    assert np.all(np.round(llas, 3) == llas)
+
+    llas = geojson.Feature().from_geobuf(f.to_geobuf(only_xy=True)).to_numpy()
+    assert np.all(llas[:, 2] == np.zeros(len(llas)))
+
+    llas = geojson.Feature().from_geobuf(f.to_geobuf(round_z=3)).to_numpy()
+    assert np.all(np.round(llas0[:, :2], 8) == llas[:, :2])
+    assert np.all(np.round(llas0[:, 2], 3) == llas[:, 2])
 
 
 def test_rapidjson_empty():
@@ -245,6 +273,28 @@ def test_rapidjson_sort_dump():
     obj6 = rapidjson().copy_from(obj5)
     assert id(obj6) != id(obj5)
     assert obj6 == obj5
+
+
+def test_rapidjson_round():
+    arr = rapidjson([1.23456, [3.2, 2.345]])
+    assert arr() == [1.23456, [3.2, 2.345]]
+    arr.round()
+    assert arr() == [1.235, [3.2, 2.345]]
+    arr.round(precision=2)
+    assert arr() == [1.24, [3.2, 2.35]]
+
+    obj = rapidjson(sample_geojson())
+    assert obj() == sample_geojson()
+    assert (
+        obj.clone().round(precision=1).dumps(sort_keys=True)
+        == '{"geometry":{"coordinates":[[120.4,31.4,1.1],[120.3,31.3,2.2],[120.4,31.2,3.3],[120.7,31.3,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.1},"double":3.1,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'  # noqa
+    )
+    assert (
+        obj.clone()
+        .round(precision=1, skip_keys=["geometry"])
+        .dumps(sort_keys=True)  # noqa
+        == '{"geometry":{"coordinates":[[120.40317479950272,31.416966084052177,1.111111],[120.28451900911591,31.30578266928819,2.22],[120.35592249359615,31.21781895672254,3.3333333333333],[120.67093786630113,31.299502266522722,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.1},"double":3.1,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'  # noqa
+    )
 
 
 def test_geojson_point():
