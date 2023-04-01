@@ -10,6 +10,11 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.1.0 (2023-04-01)
+
+*   round z in geobuf encoding
+*   round rapidjson
+
 ## Version 0.0.9 (2023-03-30)
 
 *   Export to geobuf with only xy (no z), `only_xy=False`
