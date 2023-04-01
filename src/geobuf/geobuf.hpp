@@ -7,6 +7,7 @@
 #include <protozero/pbf_reader.hpp>
 
 #include <map>
+#include <optional>
 #include <unordered_map>
 
 #define MAPBOX_GEOBUF_DEFAULT_PRECISION 6
