@@ -62,10 +62,19 @@ def test_geobuf():
     print(str2geojson2str(json.dumps(geojson), indent=True, sort_keys=True))
 
     # precision: 6(default), 7, 8(recommand), 9
+    encoder = Encoder()
+    assert encoder.max_precision() == 10**6
+    assert not encoder.only_xy()
+    assert encoder.round_z() is None
+
     encoder = Encoder(max_precision=int(10**8))
+    assert encoder.max_precision() == 10**8
     encoded = encoder.encode(geojson=json.dumps(geojson))
     print("encoded pbf bytes")
     print(pbf_decode(encoded))
+
+    encoder = Encoder(round_z=3)
+    assert encoder.round_z() == 3
 
     with pytest.raises(Exception) as excinfo:
         Encoder(max_precision=int(10**10))  # uint32_t overflow

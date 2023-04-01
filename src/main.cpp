@@ -94,7 +94,8 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
     py::class_<Encoder>(m, "Encoder", py::module_local())    //
         .def(py::init<uint32_t, bool, std::optional<int>>(), //
              py::kw_only(),
-             "max_precision"_a = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION),
+             "max_precision"_a = static_cast<uint32_t>(
+                 std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION)),
              "only_xy"_a = false, //
              "round_z"_a = std::nullopt)
         //
