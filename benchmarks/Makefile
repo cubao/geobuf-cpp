@@ -1,5 +1,5 @@
 clean:
-	rm *.pbf *.pbf.json
+	rm -f *.pbf *.pbf.json *linted*
 
 JSON_PATH ?= ak_alaska_zip_codes_geo.min.json
 ak_alaska_zip_codes_geo.min.json:
@@ -52,7 +52,7 @@ benchmark_all:
 	make benchmark_cpp
 
 normalize:
-	python3 -m pybind11_geobuf normalize_json $(JSON_PATH) --output_path $(JSON_PATH)__linted.json
-	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__js.pbf.json --output_path $(JSON_PATH)__js.pbf.linted.json
-	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__py.pbf.json --output_path $(JSON_PATH)__py.pbf.linted.json
-	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__cpp.pbf.json --output_path $(JSON_PATH)__cpp.pbf.linted.json
+	python3 -m pybind11_geobuf normalize_json $(JSON_PATH) --output_path linted_input.json
+	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__js.pbf.json --output_path linted_js.json
+	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__py.pbf.json --output_path linted_py.json
+	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__cpp.pbf.json --output_path linted_cpp.json && python3 fix.py linted_cpp.json
