@@ -17,21 +17,8 @@ decoding_js:
 benchmark_js:
 	hyperfine --warmup 3 'make encoding_js'
 	hyperfine --warmup 3 'make decoding_js'
-	hyperfine --warmup 3 'make roundtrip_js'
+#	hyperfine --warmup 3 'make roundtrip_js'
 .PHONY: roundtrip_js encoding_js decoding_js benchmark_js
-
-roundtrip_cpp:
-	make encoding_cpp
-	make decoding_cpp
-encoding_cpp:
-	python3 -m pybind11_geobuf json2geobuf --precision=6 --only_xy=True $(JSON_PATH) $(JSON_PATH)__cpp.pbf
-decoding_cpp:
-	python3 -m pybind11_geobuf geobuf2json $(JSON_PATH)__cpp.pbf $(JSON_PATH)__cpp.pbf.json
-benchmark_cpp:
-	hyperfine --warmup 3 'make encoding_cpp'
-	hyperfine --warmup 3 'make decoding_cpp'
-	hyperfine --warmup 3 'make roundtrip_cpp'
-.PHONY: roundtrip_cpp encoding_cpp decoding_cpp benchmark_cpp
 
 roundtrip_py:
 	make encoding_py
@@ -43,5 +30,29 @@ decoding_py:
 benchmark_py:
 	hyperfine --warmup 3 'make encoding_py'
 	hyperfine --warmup 3 'make decoding_py'
-	hyperfine --warmup 3 'make roundtrip_py'
+#	hyperfine --warmup 3 'make roundtrip_py'
 .PHONY: roundtrip_py encoding_py decoding_py benchmark_py
+
+roundtrip_cpp:
+	make encoding_cpp
+	make decoding_cpp
+encoding_cpp:
+	python3 -m pybind11_geobuf json2geobuf --precision=6 --only_xy=True $(JSON_PATH) $(JSON_PATH)__cpp.pbf
+decoding_cpp:
+	python3 -m pybind11_geobuf geobuf2json $(JSON_PATH)__cpp.pbf $(JSON_PATH)__cpp.pbf.json
+benchmark_cpp:
+	hyperfine --warmup 3 'make encoding_cpp'
+	hyperfine --warmup 3 'make decoding_cpp'
+#	hyperfine --warmup 3 'make roundtrip_cpp'
+.PHONY: roundtrip_cpp encoding_cpp decoding_cpp benchmark_cpp
+
+benchmark_all:
+	make benchmark_js
+	make benchmark_py
+	make benchmark_cpp
+
+normalize:
+	python3 -m pybind11_geobuf normalize_json $(JSON_PATH) --output_path $(JSON_PATH)__linted.json
+	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__js.pbf.json --output_path $(JSON_PATH)__js.pbf.linted.json
+	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__py.pbf.json --output_path $(JSON_PATH)__py.pbf.linted.json
+	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__cpp.pbf.json --output_path $(JSON_PATH)__cpp.pbf.linted.json
