@@ -56,3 +56,6 @@ normalize:
 	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__js.pbf.json --output_path linted_js.json
 	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__py.pbf.json --output_path linted_py.json
 	python3 -m pybind11_geobuf normalize_json $(JSON_PATH)__cpp.pbf.json --output_path linted_cpp.json && python3 fix.py linted_cpp.json
+
+check:
+	vim -p linted_input.json linted_js.json linted_py.json linted_cpp.json
