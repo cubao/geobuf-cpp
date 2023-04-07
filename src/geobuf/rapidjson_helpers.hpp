@@ -93,9 +93,40 @@ inline void round_rapidjson(RapidjsonValue &json, double scale, int depth = 1,
     } else if (json.IsDouble()) {
         // see round_coords in geojson_helpers
         json.SetDouble(std::floor(json.GetDouble() * scale + 0.5) / scale);
-    } else if (json.IsFloat()) {
-        json.SetFloat(std::floor(json.GetFloat() * scale + 0.5) / scale);
     }
+}
+
+inline void denoise_double_rapidjson(RapidjsonValue &json)
+{
+    if (json.IsArray()) {
+        for (auto &e : json.GetArray()) {
+            denoise_double_rapidjson(e);
+        }
+    } else if (json.IsObject()) {
+        auto obj = json.GetObject();
+        for (auto &kv : obj) {
+            denoise_double_rapidjson(kv.value);
+        }
+    } else if (json.IsDouble()) {
+        double d = json.GetDouble();
+        if (std::floor(d) == d) {
+            if (d >= 0) {
+                auto i = static_cast<uint64_t>(d);
+                if (i == d) {
+                    json.SetUint64(i);
+                }
+            } else {
+                auto i = static_cast<int64_t>(d);
+                if (i == d) {
+                    json.SetInt64(i);
+                }
+            }
+        }
+    }
+}
+
+inline void strip_z(RapidjsonValue &json)
+{
 }
 
 inline RapidjsonValue sort_keys(const RapidjsonValue &json)
