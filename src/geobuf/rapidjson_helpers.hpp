@@ -96,16 +96,16 @@ inline void round_rapidjson(RapidjsonValue &json, double scale, int depth = 1,
     }
 }
 
-inline void denoise_double_rapidjson(RapidjsonValue &json)
+inline void denoise_double_0_rapidjson(RapidjsonValue &json)
 {
     if (json.IsArray()) {
         for (auto &e : json.GetArray()) {
-            denoise_double_rapidjson(e);
+            denoise_double_0_rapidjson(e);
         }
     } else if (json.IsObject()) {
         auto obj = json.GetObject();
         for (auto &kv : obj) {
-            denoise_double_rapidjson(kv.value);
+            denoise_double_0_rapidjson(kv.value);
         }
     } else if (json.IsDouble()) {
         double d = json.GetDouble();
@@ -125,8 +125,76 @@ inline void denoise_double_rapidjson(RapidjsonValue &json)
     }
 }
 
-inline void strip_z(RapidjsonValue &json)
+inline bool __all_is_z0(RapidjsonValue &json)
 {
+    // [x, y, 0.0], [[x, y, 0.0], ...], [[[x, y, 0.0], ..], ..]
+    if (!json.IsArray()) {
+        return false;
+    }
+    if (json.Empty()) {
+        return true;
+    }
+    if (!json[0].IsNumber()) {
+        for (auto &e : json.GetArray()) {
+            if (!__all_is_z0(e)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    if (json.Size() != 3 || !json[2].IsNumber()) {
+        return false;
+    }
+    return json[2].GetDouble() == 0.0;
+}
+
+inline void __strip_geometry_z_0(RapidjsonValue &json)
+{
+    if (!json.IsArray() || json.Empty()) {
+        return;
+    }
+    if (!json[0].IsNumber()) {
+        for (auto &e : json.GetArray()) {
+            __strip_geometry_z_0(e);
+        }
+        return;
+    }
+    if (json.Size() == 3) {
+        json.PopBack();
+    }
+}
+
+inline void strip_geometry_z_0(RapidjsonValue &json)
+{
+    if (json.IsObject()) {
+        auto itr = json.FindMember("type");
+        if (itr == json.MemberEnd() || !itr->value.IsString()) {
+            return;
+        }
+        const auto type =
+            std::string(itr->value.GetString(), itr->value.GetStringLength());
+        if (type == "Feature") {
+            strip_geometry_z_0(json["geometry"]);
+        } else if (type == "FeatureCollection") {
+            for (auto &f : json["features"].GetArray()) {
+                strip_geometry_z_0(f["geometry"]);
+            }
+        } else if (type == "Point" || type == "MultiPoint" ||
+                   type == "LineString" || type == "MultiLineString" ||
+                   type == "Polygon" || type == "MultiPolygon") {
+            strip_geometry_z_0(json["coordinates"]);
+        } else if (type == "GeometryCollection") {
+            for (auto &g : json["geometries"].GetArray()) {
+                strip_geometry_z_0(g);
+            }
+        }
+        return;
+    }
+
+    if (!__all_is_z0(json)) {
+        return;
+    }
+    __strip_geometry_z_0(json);
 }
 
 inline RapidjsonValue sort_keys(const RapidjsonValue &json)

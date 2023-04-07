@@ -153,6 +153,16 @@ void bind_rapidjson(py::module &m)
                 "precision"_a = 3, //
                 "depth"_a = 32, //
                 "skip_keys"_a = std::vector<std::string>{})
+            .def("strip_geometry_z_0", [](RapidjsonValue &self) -> RapidjsonValue & {
+                strip_geometry_z_0(self);
+                return self;
+            }, rvp::reference_internal)
+            .def("denoise_double_0", [](RapidjsonValue &self) -> RapidjsonValue & {
+                denoise_double_0_rapidjson(self);
+                return self;
+            }, rvp::reference_internal)
+
+
             .def(
                 "get",
                 [](RapidjsonValue &self,
