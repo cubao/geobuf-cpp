@@ -1581,6 +1581,7 @@ def pytest_main(dir: str, *, test_file: str = None):
 
 
 if __name__ == "__main__":
+    test_rapidjson_normalize()
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
     pytest_main(pwd, test_file=os.path.basename(__file__))

@@ -153,10 +153,14 @@ void bind_rapidjson(py::module &m)
                 "precision"_a = 3, //
                 "depth"_a = 32, //
                 "skip_keys"_a = std::vector<std::string>{})
-            .def("round_geojson_non_geometry", [](RapidjsonValue &self, double precision) -> RapidjsonValue & {
+            .def("round_geojson_non_geometry", [](RapidjsonValue &self, int precision) -> RapidjsonValue & {
                 round_geojson_non_geometry(self, std::pow(10, precision));
                 return self;
             }, rvp::reference_internal, py::kw_only(), "precision"_a = 3)
+            .def("round_geojson_geometry", [](RapidjsonValue &self, const Eigen::Vector3i &precision) -> RapidjsonValue & {
+                round_geojson_geometry(self, precision);
+                return self;
+            }, rvp::reference_internal, py::kw_only(), "precision"_a = Eigen::Vector3i(8, 8, 3))
             .def("strip_geometry_z_0", [](RapidjsonValue &self) -> RapidjsonValue & {
                 strip_geometry_z_0(self);
                 return self;
@@ -165,16 +169,22 @@ void bind_rapidjson(py::module &m)
                 denoise_double_0_rapidjson(self);
                 return self;
             }, rvp::reference_internal)
-            .def("normalize", [](RapidjsonValue &self, bool sort_keys, bool strip_geometry_z_0, int round_geojson_non_geometry, bool denoise_double_0) -> RapidjsonValue & {
+            .def("normalize", [](RapidjsonValue &self,
+                    bool sort_keys,
+                    bool strip_geometry_z_0,
+                    int round_geojson_non_geometry,
+                    const Eigen::Vector3i &round_geojson_geometry,
+                    bool denoise_double_0) -> RapidjsonValue & {
                 if (sort_keys) {
                     sort_keys_inplace(self);
                 }
                 if (strip_geometry_z_0) {
                     cubao::strip_geometry_z_0(self);
                 }
-                if (round_geojson_non_geometry >= 0) {
+                if (round_geojson_non_geometry > 0) {
                     cubao::round_geojson_non_geometry(self, std::pow(10,round_geojson_non_geometry));
                 }
+                cubao::round_geojson_geometry(self, round_geojson_geometry);
                 if (denoise_double_0) {
                     cubao::denoise_double_0_rapidjson(self);
                 }
@@ -183,6 +193,7 @@ void bind_rapidjson(py::module &m)
                 "sort_keys"_a = true, //
                 "strip_geometry_z_0"_a = true,
                 "round_geojson_non_geometry"_a = 3,
+                "round_geojson_geometry"_a = Eigen::Vector3i(8, 8, 3),
                 "denoise_double_0"_a = true)
             .def(
                 "get",

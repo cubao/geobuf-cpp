@@ -34,7 +34,8 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         "normalize_json",
         [](const std::string &input, const std::string &output, bool indent,
            bool sort_keys, bool denoise_double_0, bool strip_geometry_z_0,
-           int round_geojson_non_geometry) {
+           int round_geojson_non_geometry,
+           const Eigen::Vector3i round_geojson_geometry) {
             auto json = mapbox::geobuf::load_json(input);
             if (sort_keys) {
                 mapbox::geobuf::sort_keys_inplace(json);
@@ -46,6 +47,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
                 cubao::round_geojson_non_geometry(
                     json, std::pow(10.0, round_geojson_non_geometry));
             }
+            cubao::round_geojson_geometry(json, round_geojson_geometry);
             if (denoise_double_0) {
                 cubao::denoise_double_0_rapidjson(json);
             }
@@ -57,7 +59,8 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         "sort_keys"_a = true,            //
         "denoise_double_0"_a = true,     //
         "strip_geometry_z_0"_a = true,   //
-        "round_geojson_non_geometry"_a = 3);
+        "round_geojson_non_geometry"_a = 3,
+        "round_geojson_geometry"_a = Eigen::Vector3i(8, 8, 3));
 
     m.def(
         "str2json2str",
