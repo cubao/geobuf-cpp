@@ -138,20 +138,13 @@ inline void __round_geojson_geometry(RapidjsonValue &json,
         }
         return;
     }
-    if (json[0].IsDouble()) {
-        double scale = std::pow(10, precision[0]);
-        json[0].SetDouble(std::floor(json[0].GetDouble() * scale + 0.5) /
-                          scale);
-    }
-    if (json[1].IsDouble()) {
-        double scale = std::pow(10, precision[1]);
-        json[1].SetDouble(std::floor(json[1].GetDouble() * scale + 0.5) /
-                          scale);
-    }
-    if (json.Size() > 2 && json[2].IsDouble()) {
-        double scale = std::pow(10, precision[2]);
-        json[2].SetDouble(std::floor(json[2].GetDouble() * scale + 0.5) /
-                          scale);
+    const int N = std::min(3, (int)json.Size());
+    for (int i = 0; i < N; ++i) {
+        if (json[i].IsDouble()) {
+            double scale = std::pow(10, precision[i]);
+            json[i].SetDouble(std::floor(json[i].GetDouble() * scale + 0.5) /
+                              scale);
+        }
     }
 }
 

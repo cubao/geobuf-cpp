@@ -4,6 +4,7 @@
 #undef __ARM_NEON__
 #endif
 
+#include <pybind11/eigen.h>
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -35,7 +36,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         [](const std::string &input, const std::string &output, bool indent,
            bool sort_keys, bool denoise_double_0, bool strip_geometry_z_0,
            int round_geojson_non_geometry,
-           const Eigen::Vector3i round_geojson_geometry) {
+           const Eigen::Vector3i &round_geojson_geometry) {
             auto json = mapbox::geobuf::load_json(input);
             if (sort_keys) {
                 mapbox::geobuf::sort_keys_inplace(json);
