@@ -96,6 +96,36 @@ inline void round_rapidjson(RapidjsonValue &json, double scale, int depth = 1,
     }
 }
 
+inline void round_geojson_non_geometry(RapidjsonValue &json, double scale)
+{
+    if (!json.IsObject()) {
+        return;
+    }
+    auto itr = json.FindMember("type");
+    if (itr == json.MemberEnd() || !itr->value.IsString()) {
+        return;
+    }
+    const auto type =
+        std::string(itr->value.GetString(), itr->value.GetStringLength());
+    if (type == "Feature") {
+        round_rapidjson(json, scale, INT_MAX, {"geometry"});
+    } else if (type == "FeatureCollection") {
+        round_rapidjson(json, scale, INT_MAX, {"features"});
+        for (auto &f : json["features"].GetArray()) {
+            round_rapidjson(f, scale);
+        }
+    } else if (type == "Point" || type == "MultiPoint" ||
+               type == "LineString" || type == "MultiLineString" ||
+               type == "Polygon" || type == "MultiPolygon") {
+        round_rapidjson(json, scale, INT_MAX, {"coordinates"});
+    } else if (type == "GeometryCollection") {
+        round_rapidjson(json, scale, INT_MAX, {"geometries"});
+        for (auto &g : json["geometries"].GetArray()) {
+            round_rapidjson(g, scale);
+        }
+    }
+}
+
 inline void denoise_double_0_rapidjson(RapidjsonValue &json)
 {
     if (json.IsArray()) {
