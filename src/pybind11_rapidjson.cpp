@@ -161,8 +161,21 @@ void bind_rapidjson(py::module &m)
                 denoise_double_0_rapidjson(self);
                 return self;
             }, rvp::reference_internal)
-
-
+            .def("normalize", [](RapidjsonValue &self, bool sort_keys, bool denoise_double_0, bool strip_geometry_z_0) -> RapidjsonValue & {
+                if (sort_keys) {
+                    sort_keys_inplace(self);
+                }
+                if (denoise_double_0) {
+                    cubao::denoise_double_0_rapidjson(self);
+                }
+                if (strip_geometry_z_0) {
+                    cubao::strip_geometry_z_0(self);
+                }
+                return self;
+            }, py::kw_only(), //
+                "sort_keys"_a = true, //
+                "denoise_double_0"_a = true, //
+                "strip_geometry_z_0"_a = true)
             .def(
                 "get",
                 [](RapidjsonValue &self,

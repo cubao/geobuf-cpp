@@ -33,15 +33,22 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
     m.def(
         "normalize_json",
         [](const std::string &input, const std::string &output, bool indent,
-           bool sort_keys) {
+           bool sort_keys, bool denoise_double_0, bool strip_geometry_z_0) {
             auto json = mapbox::geobuf::load_json(input);
             if (sort_keys) {
                 mapbox::geobuf::sort_keys_inplace(json);
             }
+            if (denoise_double_0) {
+                cubao::denoise_double_0_rapidjson(json);
+            }
+            if (strip_geometry_z_0) {
+                cubao::strip_geometry_z_0(json);
+            }
             return mapbox::geobuf::dump_json(output, json, indent);
         },
         "input_path"_a, "output_path"_a, //
-        py::kw_only(), "indent"_a = true, "sort_keys"_a = true);
+        py::kw_only(), "indent"_a = true, "sort_keys"_a = true,
+        "denoise_double_0"_a = true, "strip_geometry_z_0"_a = true);
 
     m.def(
         "str2json2str",

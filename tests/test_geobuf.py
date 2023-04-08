@@ -297,6 +297,13 @@ def test_rapidjson_round():
     )
 
 
+def test_rapidjson_strip_z_0():
+    arr = rapidjson([0.0, 0.1, 0.2])
+    assert arr.dumps() == "[0.0,0.1,0.2]"
+    assert arr.clone().denoise_double_0().dumps() == "[0,0.1,0.2]"
+    print()
+
+
 def test_geojson_point():
     # as_numpy
     g1 = geojson.Point()
@@ -1549,6 +1556,7 @@ def pytest_main(dir: str, *, test_file: str = None):
 
 
 if __name__ == "__main__":
+    test_rapidjson_strip_z_0()
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
     pytest_main(pwd, test_file=os.path.basename(__file__))
