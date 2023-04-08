@@ -297,11 +297,36 @@ def test_rapidjson_round():
     )
 
 
-def test_rapidjson_strip_z_0():
+def test_rapidjson_normalize():
     arr = rapidjson([0.0, 0.1, 0.2])
     assert arr.dumps() == "[0.0,0.1,0.2]"
     assert arr.clone().denoise_double_0().dumps() == "[0,0.1,0.2]"
-    print()
+
+    ls = geojson.LineString().from_numpy(np.ones((2, 2)))
+    expected = (
+        '{"type":"LineString","coordinates":[[1.0,1.0,0.0],[1.0,1.0,0.0]]}'  # noqa
+    )
+    assert ls.to_rapidjson().dumps() == expected
+    expected = '{"type":"LineString","coordinates":[[1,1,0],[1,1,0]]}'
+    assert ls.to_rapidjson().denoise_double_0().dumps() == expected
+    expected = '{"type":"LineString","coordinates":[[1.0,1.0],[1.0,1.0]]}'
+    assert ls.to_rapidjson().strip_geometry_z_0().dumps() == expected
+    expected = '{"coordinates":[[1,1],[1,1]],"type":"LineString"}'
+    assert ls.to_rapidjson().normalize().dumps() == expected
+    expected = '{"type":"LineString","coordinates":[[1,1],[1,1]]}'
+    assert ls.to_rapidjson().normalize(sort_keys=False).dumps() == expected
+
+    ls.as_numpy()[0, 2] = 0.1
+    expected = '{"type":"LineString","coordinates":[[1,1,0.1],[1,1,0]]}'
+    assert ls.to_rapidjson().normalize(sort_keys=False).dumps() == expected
+
+    mls = geojson.MultiLineString().from_numpy(np.ones((2, 2)))
+    mls.push_back(geojson.LineString().from_numpy(2 * np.ones((3, 2))))
+    expected = '{"coordinates":[[[1,1],[1,1]],[[2,2],[2,2],[2,2]]],"type":"MultiLineString"}'  # noqa
+    assert mls.to_rapidjson().normalize().dumps() == expected
+    mls[0][0].z = 0.5
+    expected = '{"coordinates":[[[1,1,0.5],[1,1,0]],[[2,2,0],[2,2,0],[2,2,0]]],"type":"MultiLineString"}'  # noqa
+    assert mls.to_rapidjson().normalize().dumps() == expected
 
 
 def test_geojson_point():
@@ -1556,7 +1581,6 @@ def pytest_main(dir: str, *, test_file: str = None):
 
 
 if __name__ == "__main__":
-    test_rapidjson_strip_z_0()
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
     pytest_main(pwd, test_file=os.path.basename(__file__))
