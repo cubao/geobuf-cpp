@@ -277,6 +277,36 @@ inline void strip_geometry_z_0(RapidjsonValue &json)
     __strip_geometry_z_0(json);
 }
 
+inline void
+normalize_json(RapidjsonValue &json,                              //
+               bool sort_keys = true,                             //
+               std::optional<int> round_geojson_non_geometry = 3, //
+               const std::optional<std::array<int, 3>> &round_geojson_geometry =
+                   std::array<int, 3>{8, 8, 3}, //
+               bool denoise_double_0 = true,    //
+               bool strip_geometry_z_0 = true)
+{
+    if (sort_keys) {
+        sort_keys_inplace(json);
+    }
+    if (round_geojson_non_geometry) {
+        double scale = std::pow(10.0, *round_geojson_non_geometry);
+        cubao::round_geojson_non_geometry(json, scale);
+    }
+    if (round_geojson_geometry) {
+        auto &precision = *round_geojson_geometry;
+        cubao::round_geojson_geometry(json, {std::pow(10.0, precision[0]),
+                                      std::pow(10.0, precision[1]),
+                                      std::pow(10.0, precision[2])});
+    }
+    if (strip_geometry_z_0) {
+        cubao::strip_geometry_z_0(json);
+    }
+    if (denoise_double_0) {
+        denoise_double_0_rapidjson(json);
+    }
+}
+
 inline RapidjsonValue sort_keys(const RapidjsonValue &json)
 {
     RapidjsonAllocator allocator;
