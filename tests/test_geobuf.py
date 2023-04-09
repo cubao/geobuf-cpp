@@ -13,6 +13,7 @@ from pybind11_geobuf import (  # noqa
     Decoder,
     Encoder,
     geojson,
+    normalize_json,
     pbf_decode,
     rapidjson,
     str2geojson2str,
@@ -330,7 +331,9 @@ def test_rapidjson_normalize():
 
     llas = np.array([[1.2345678, 2.3456789, 3.456789]])
     ls = geojson.LineString().from_numpy(llas)
-    expected = '{"coordinates":[[1.2345678,2.3456789,3.457]],"type":"LineString"}'
+    expected = (
+        '{"coordinates":[[1.2345678,2.3456789,3.457]],"type":"LineString"}'  # noqa
+    )
     assert ls.to_rapidjson().normalize().dumps() == expected
     expected = '{"coordinates":[[1.235,2.346,3.5]],"type":"LineString"}'
     assert (
@@ -340,30 +343,37 @@ def test_rapidjson_normalize():
     expected = rapidjson(llas.round(2).tolist()).dumps()
     assert (
         expected
-        in ls.to_rapidjson().normalize(round_geojson_geometry=[2, 2, 2]).dumps()
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[2, 2, 2]).dumps()  # noqa
     )
 
-    expected = '{"coordinates":[[1.2345678,2.3456789,3.456789]],"type":"LineString"}'
-    assert ls.to_rapidjson().normalize(round_geojson_geometry=None).dumps() == expected
+    expected = (
+        '{"coordinates":[[1.2345678,2.3456789,3.456789]],"type":"LineString"}'  # noqa
+    )
+    assert (
+        ls.to_rapidjson().normalize(round_geojson_geometry=None).dumps()
+        == expected  # noqa
+    )
 
     llas = np.array([[2.5, -10.5, 1.1]])
     ls = geojson.LineString().from_numpy(llas)
     expected = '{"coordinates":[[2.5,-10.5,1]],"type":"LineString"}'
     assert (
         expected
-        in ls.to_rapidjson().normalize(round_geojson_geometry=[1, 1, 0]).dumps()
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[1, 1, 0]).dumps()  # noqa
     )
     expected = '{"coordinates":[[3,-10,1]],"type":"LineString"}'
     assert (
         expected
-        in ls.to_rapidjson().normalize(round_geojson_geometry=[0, 0, 0]).dumps()
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[0, 0, 0]).dumps()  # noqa
     )
 
     for scale in [1.0, -1.0]:
         for _ in range(100):
             llas = np.random.random((100, 3)) * scale
             ls = geojson.LineString().from_numpy(llas)
-            coords = ls.to_rapidjson().normalize(round_geojson_geometry=[3, 3, 3])()[
+            coords = ls.to_rapidjson().normalize(
+                round_geojson_geometry=[3, 3, 3]
+            )()[  # noqa
                 "coordinates"
             ]
             assert np.all(np.array(coords) == np.round(llas, 3))
@@ -1465,10 +1475,14 @@ def test_geojson_feature():
     feature = geojson.Feature(sample_geojson())
     expected = '{"geometry":{"coordinates":[[120.4031748,31.41696608,1.111],[120.28451901,31.30578267,2.22],[120.35592249,31.21781896,3.333],[120.67093787,31.29950227,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.14},"double":3.142,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'  # noqa
     assert feature.to_rapidjson().normalize().dumps() == expected
+    assert normalize_json(feature.to_rapidjson()).dumps() == expected
+
     # adjust round_geojson_non_geometry
     assert feature.to_rapidjson().normalize()()["properties"]["double"] == 3.142  # noqa
     assert (
-        feature.to_rapidjson().normalize(round_geojson_non_geometry=1)()["properties"][
+        feature.to_rapidjson().normalize(round_geojson_non_geometry=1)()[
+            "properties"
+        ][  # noqa
             "double"
         ]
         == 3.1

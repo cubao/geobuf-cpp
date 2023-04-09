@@ -50,8 +50,10 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             }
             if (round_geojson_geometry) {
                 auto &precision = *round_geojson_geometry;
-                cubao::round_geojson_geometry(
-                    json, {precision[0], precision[1], precision[2]});
+                cubao::round_geojson_geometry(json,
+                                              {std::pow(10.0, precision[0]),
+                                               std::pow(10.0, precision[1]),
+                                               std::pow(10.0, precision[2])});
             }
             if (denoise_double_0) {
                 cubao::denoise_double_0_rapidjson(json);

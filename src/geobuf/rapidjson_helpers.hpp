@@ -127,29 +127,28 @@ inline void round_geojson_non_geometry(RapidjsonValue &json, double scale)
 }
 
 inline void __round_geojson_geometry(RapidjsonValue &json,
-                                     const Eigen::Vector3i &precision)
+                                     const Eigen::Vector3d &scale)
 {
     if (!json.IsArray() || json.Empty()) {
         return;
     }
     if (!json[0].IsNumber()) {
         for (auto &e : json.GetArray()) {
-            __round_geojson_geometry(e, precision);
+            __round_geojson_geometry(e, scale);
         }
         return;
     }
     const int N = std::min(3, (int)json.Size());
     for (int i = 0; i < N; ++i) {
         if (json[i].IsDouble()) {
-            double scale = std::pow(10, precision[i]);
-            json[i].SetDouble(std::floor(json[i].GetDouble() * scale + 0.5) /
-                              scale);
+            json[i].SetDouble(std::floor(json[i].GetDouble() * scale[i] + 0.5) /
+                              scale[i]);
         }
     }
 }
 
 inline void round_geojson_geometry(RapidjsonValue &json,
-                                   const Eigen::Vector3i &precision)
+                                   const Eigen::Vector3d &scale)
 {
     if (!json.IsObject()) {
         return;
@@ -161,18 +160,18 @@ inline void round_geojson_geometry(RapidjsonValue &json,
     const auto type =
         std::string(itr->value.GetString(), itr->value.GetStringLength());
     if (type == "Feature") {
-        round_geojson_geometry(json["geometry"], precision);
+        round_geojson_geometry(json["geometry"], scale);
     } else if (type == "FeatureCollection") {
         for (auto &f : json["features"].GetArray()) {
-            round_geojson_geometry(f["geometry"], precision);
+            round_geojson_geometry(f["geometry"], scale);
         }
     } else if (type == "Point" || type == "MultiPoint" ||
                type == "LineString" || type == "MultiLineString" ||
                type == "Polygon" || type == "MultiPolygon") {
-        __round_geojson_geometry(json["coordinates"], precision);
+        __round_geojson_geometry(json["coordinates"], scale);
     } else if (type == "GeometryCollection") {
         for (auto &g : json["geometries"].GetArray()) {
-            round_geojson_geometry(g, precision);
+            round_geojson_geometry(g, scale);
         }
     }
 }
