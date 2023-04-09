@@ -477,9 +477,17 @@ void Encoder::writeProps(const mapbox::feature::property_map &props,
 {
     std::vector<uint32_t> indexes;
     int valueIndex = 0;
+    std::vector<std::pair<std::string, const mapbox::feature::value *>> kv;
+    kv.reserve(props.size());
     for (auto &pair : props) {
+        kv.emplace_back(pair.first, &pair.second);
+    }
+    std::sort(kv.begin(), kv.end(), [](const auto &p1, const auto &p2) {
+        return p1.first < p2.first;
+    });
+    for (auto &pair : kv) {
         protozero::pbf_writer pbf_value{pbf, 13};
-        writeValue(pair.second, pbf_value);
+        writeValue(*pair.second, pbf_value);
         indexes.push_back(keys.at(pair.first));
         indexes.push_back(valueIndex++);
     }

@@ -153,6 +153,44 @@ void bind_rapidjson(py::module &m)
                 "precision"_a = 3, //
                 "depth"_a = 32, //
                 "skip_keys"_a = std::vector<std::string>{})
+            .def("round_geojson_non_geometry", [](RapidjsonValue &self, int precision) -> RapidjsonValue & {
+                round_geojson_non_geometry(self, std::pow(10, precision));
+                return self;
+            }, rvp::reference_internal, py::kw_only(), "precision"_a = 3)
+            .def("round_geojson_geometry", [](RapidjsonValue &self, const std::array<int, 3> &precision) -> RapidjsonValue & {
+                round_geojson_geometry(self, {
+                    std::pow(10, precision[0]),
+                    std::pow(10, precision[1]),
+                    std::pow(10, precision[2])});
+                return self;
+            }, rvp::reference_internal, py::kw_only(), "precision"_a = std::array<int, 3>{8, 8, 3})
+            .def("strip_geometry_z_0", [](RapidjsonValue &self) -> RapidjsonValue & {
+                strip_geometry_z_0(self);
+                return self;
+            }, rvp::reference_internal)
+            .def("denoise_double_0", [](RapidjsonValue &self) -> RapidjsonValue & {
+                denoise_double_0_rapidjson(self);
+                return self;
+            }, rvp::reference_internal)
+            .def("normalize", [](RapidjsonValue &self,
+                    bool sort_keys,
+                    bool strip_geometry_z_0,
+                    std::optional<int> round_geojson_non_geometry,
+                    const std::optional<std::array<int, 3>> &round_geojson_geometry,
+                    bool denoise_double_0) -> RapidjsonValue & {
+                        normalize_json(self,
+                            sort_keys,
+                            round_geojson_non_geometry,
+                            round_geojson_geometry,
+                            strip_geometry_z_0,
+                            denoise_double_0);
+                return self;
+            }, py::kw_only(), //
+                "sort_keys"_a = true, //
+                "strip_geometry_z_0"_a = true,
+                "round_geojson_non_geometry"_a = 3,
+                "round_geojson_geometry"_a = std::array<int, 3>{8, 8, 3},
+                "denoise_double_0"_a = true)
             .def(
                 "get",
                 [](RapidjsonValue &self,

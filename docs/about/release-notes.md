@@ -10,6 +10,12 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.1.1 (2023-04-09)
+
+*   benchmark (speed: cpp > js > python)
+*   normalize json round geometry/non-geometry parts
+*   sort keys in encoding geobuf
+
 ## Version 0.1.0 (2023-04-01)
 
 *   round z in geobuf encoding

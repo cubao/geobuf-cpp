@@ -13,6 +13,7 @@ from pybind11_geobuf import (  # noqa
     Decoder,
     Encoder,
     geojson,
+    normalize_json,
     pbf_decode,
     rapidjson,
     str2geojson2str,
@@ -295,6 +296,87 @@ def test_rapidjson_round():
         .dumps(sort_keys=True)  # noqa
         == '{"geometry":{"coordinates":[[120.40317479950272,31.416966084052177,1.111111],[120.28451900911591,31.30578266928819,2.22],[120.35592249359615,31.21781895672254,3.3333333333333],[120.67093786630113,31.299502266522722,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.1},"double":3.1,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'  # noqa
     )
+
+
+def test_rapidjson_normalize():
+    arr = rapidjson([0.0, 0.1, 0.2])
+    assert arr.dumps() == "[0.0,0.1,0.2]"
+    assert arr.clone().denoise_double_0().dumps() == "[0,0.1,0.2]"
+
+    ls = geojson.LineString().from_numpy(np.ones((2, 2)))
+    expected = (
+        '{"type":"LineString","coordinates":[[1.0,1.0,0.0],[1.0,1.0,0.0]]}'  # noqa
+    )
+    assert ls.to_rapidjson().dumps() == expected
+    expected = '{"type":"LineString","coordinates":[[1,1,0],[1,1,0]]}'
+    assert ls.to_rapidjson().denoise_double_0().dumps() == expected
+    expected = '{"type":"LineString","coordinates":[[1.0,1.0],[1.0,1.0]]}'
+    assert ls.to_rapidjson().strip_geometry_z_0().dumps() == expected
+    expected = '{"coordinates":[[1,1],[1,1]],"type":"LineString"}'
+    assert ls.to_rapidjson().normalize().dumps() == expected
+    expected = '{"type":"LineString","coordinates":[[1,1],[1,1]]}'
+    assert ls.to_rapidjson().normalize(sort_keys=False).dumps() == expected
+
+    ls.as_numpy()[0, 2] = 0.1
+    expected = '{"type":"LineString","coordinates":[[1,1,0.1],[1,1,0]]}'
+    assert ls.to_rapidjson().normalize(sort_keys=False).dumps() == expected
+
+    mls = geojson.MultiLineString().from_numpy(np.ones((2, 2)))
+    mls.push_back(geojson.LineString().from_numpy(2 * np.ones((3, 2))))
+    expected = '{"coordinates":[[[1,1],[1,1]],[[2,2],[2,2],[2,2]]],"type":"MultiLineString"}'  # noqa
+    assert mls.to_rapidjson().normalize().dumps() == expected
+    mls[0][0].z = 0.5
+    expected = '{"coordinates":[[[1,1,0.5],[1,1,0]],[[2,2,0],[2,2,0],[2,2,0]]],"type":"MultiLineString"}'  # noqa
+    assert mls.to_rapidjson().normalize().dumps() == expected
+
+    llas = np.array([[1.2345678, 2.3456789, 3.456789]])
+    ls = geojson.LineString().from_numpy(llas)
+    expected = (
+        '{"coordinates":[[1.2345678,2.3456789,3.457]],"type":"LineString"}'  # noqa
+    )
+    assert ls.to_rapidjson().normalize().dumps() == expected
+    expected = '{"coordinates":[[1.235,2.346,3.5]],"type":"LineString"}'
+    assert (
+        ls.to_rapidjson().normalize(round_geojson_geometry=[3, 3, 1]).dumps()
+        == expected
+    )
+    expected = rapidjson(llas.round(2).tolist()).dumps()
+    assert (
+        expected
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[2, 2, 2]).dumps()  # noqa
+    )
+
+    expected = (
+        '{"coordinates":[[1.2345678,2.3456789,3.456789]],"type":"LineString"}'  # noqa
+    )
+    assert (
+        ls.to_rapidjson().normalize(round_geojson_geometry=None).dumps()
+        == expected  # noqa
+    )
+
+    llas = np.array([[2.5, -10.5, 1.1]])
+    ls = geojson.LineString().from_numpy(llas)
+    expected = '{"coordinates":[[2.5,-10.5,1]],"type":"LineString"}'
+    assert (
+        expected
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[1, 1, 0]).dumps()  # noqa
+    )
+    expected = '{"coordinates":[[3,-10,1]],"type":"LineString"}'
+    assert (
+        expected
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[0, 0, 0]).dumps()  # noqa
+    )
+
+    for scale in [1.0, -1.0]:
+        for _ in range(100):
+            llas = np.random.random((100, 3)) * scale
+            ls = geojson.LineString().from_numpy(llas)
+            coords = ls.to_rapidjson().normalize(
+                round_geojson_geometry=[3, 3, 3]
+            )()[  # noqa
+                "coordinates"
+            ]
+            assert np.all(np.array(coords) == np.round(llas, 3))
 
 
 def test_geojson_point():
@@ -1389,6 +1471,28 @@ def test_geojson_feature():
     f2 = geojson.Feature().from_rapidjson(feature.to_rapidjson())
     assert f2 == feature
     assert f2() == feature()
+
+    feature = geojson.Feature(sample_geojson())
+    expected = '{"geometry":{"coordinates":[[120.4031748,31.41696608,1.111],[120.28451901,31.30578267,2.22],[120.35592249,31.21781896,3.333],[120.67093787,31.29950227,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.14},"double":3.142,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'  # noqa
+    assert feature.to_rapidjson().normalize().dumps() == expected
+    assert normalize_json(feature.to_rapidjson()).dumps() == expected
+
+    # adjust round_geojson_non_geometry
+    assert feature.to_rapidjson().normalize()()["properties"]["double"] == 3.142  # noqa
+    assert (
+        feature.to_rapidjson().normalize(round_geojson_non_geometry=1)()[
+            "properties"
+        ][  # noqa
+            "double"
+        ]
+        == 3.1
+    )  # noqa
+    assert (
+        feature.to_rapidjson().normalize(round_geojson_non_geometry=None)()[
+            "properties"
+        ]["double"]
+        == 3.141592653
+    )  # noqa
 
 
 def test_geojson_load_dump():

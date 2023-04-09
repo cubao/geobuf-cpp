@@ -93,8 +93,217 @@ inline void round_rapidjson(RapidjsonValue &json, double scale, int depth = 1,
     } else if (json.IsDouble()) {
         // see round_coords in geojson_helpers
         json.SetDouble(std::floor(json.GetDouble() * scale + 0.5) / scale);
-    } else if (json.IsFloat()) {
-        json.SetFloat(std::floor(json.GetFloat() * scale + 0.5) / scale);
+    }
+}
+
+inline void round_geojson_non_geometry(RapidjsonValue &json, double scale)
+{
+    if (!json.IsObject()) {
+        return;
+    }
+    auto itr = json.FindMember("type");
+    if (itr == json.MemberEnd() || !itr->value.IsString()) {
+        return;
+    }
+    const auto type =
+        std::string(itr->value.GetString(), itr->value.GetStringLength());
+    if (type == "Feature") {
+        round_rapidjson(json, scale, INT_MAX, {"geometry"});
+    } else if (type == "FeatureCollection") {
+        round_rapidjson(json, scale, INT_MAX, {"features"});
+        for (auto &f : json["features"].GetArray()) {
+            round_rapidjson(f, scale);
+        }
+    } else if (type == "Point" || type == "MultiPoint" ||
+               type == "LineString" || type == "MultiLineString" ||
+               type == "Polygon" || type == "MultiPolygon") {
+        round_rapidjson(json, scale, INT_MAX, {"coordinates"});
+    } else if (type == "GeometryCollection") {
+        round_rapidjson(json, scale, INT_MAX, {"geometries"});
+        for (auto &g : json["geometries"].GetArray()) {
+            round_rapidjson(g, scale);
+        }
+    }
+}
+
+inline void __round_geojson_geometry(RapidjsonValue &json,
+                                     const Eigen::Vector3d &scale)
+{
+    if (!json.IsArray() || json.Empty()) {
+        return;
+    }
+    if (!json[0].IsNumber()) {
+        for (auto &e : json.GetArray()) {
+            __round_geojson_geometry(e, scale);
+        }
+        return;
+    }
+    const int N = std::min(3, (int)json.Size());
+    for (int i = 0; i < N; ++i) {
+        if (json[i].IsDouble()) {
+            json[i].SetDouble(std::floor(json[i].GetDouble() * scale[i] + 0.5) /
+                              scale[i]);
+        }
+    }
+}
+
+inline void round_geojson_geometry(RapidjsonValue &json,
+                                   const Eigen::Vector3d &scale)
+{
+    if (!json.IsObject()) {
+        return;
+    }
+    auto itr = json.FindMember("type");
+    if (itr == json.MemberEnd() || !itr->value.IsString()) {
+        return;
+    }
+    const auto type =
+        std::string(itr->value.GetString(), itr->value.GetStringLength());
+    if (type == "Feature") {
+        round_geojson_geometry(json["geometry"], scale);
+    } else if (type == "FeatureCollection") {
+        for (auto &f : json["features"].GetArray()) {
+            round_geojson_geometry(f["geometry"], scale);
+        }
+    } else if (type == "Point" || type == "MultiPoint" ||
+               type == "LineString" || type == "MultiLineString" ||
+               type == "Polygon" || type == "MultiPolygon") {
+        __round_geojson_geometry(json["coordinates"], scale);
+    } else if (type == "GeometryCollection") {
+        for (auto &g : json["geometries"].GetArray()) {
+            round_geojson_geometry(g, scale);
+        }
+    }
+}
+
+inline void denoise_double_0_rapidjson(RapidjsonValue &json)
+{
+    if (json.IsArray()) {
+        for (auto &e : json.GetArray()) {
+            denoise_double_0_rapidjson(e);
+        }
+    } else if (json.IsObject()) {
+        auto obj = json.GetObject();
+        for (auto &kv : obj) {
+            denoise_double_0_rapidjson(kv.value);
+        }
+    } else if (json.IsDouble()) {
+        double d = json.GetDouble();
+        if (std::floor(d) == d) {
+            if (d >= 0) {
+                auto i = static_cast<uint64_t>(d);
+                if (i == d) {
+                    json.SetUint64(i);
+                }
+            } else {
+                auto i = static_cast<int64_t>(d);
+                if (i == d) {
+                    json.SetInt64(i);
+                }
+            }
+        }
+    }
+}
+
+inline bool __all_is_z0(RapidjsonValue &json)
+{
+    // [x, y, 0.0], [[x, y, 0.0], ...], [[[x, y, 0.0], ..], ..]
+    if (!json.IsArray()) {
+        return false;
+    }
+    if (json.Empty()) {
+        return true;
+    }
+    if (!json[0].IsNumber()) {
+        for (auto &e : json.GetArray()) {
+            if (!__all_is_z0(e)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    if (json.Size() != 3 || !json[2].IsNumber()) {
+        return false;
+    }
+    return json[2].GetDouble() == 0.0;
+}
+
+inline void __strip_geometry_z_0(RapidjsonValue &json)
+{
+    if (!json.IsArray() || json.Empty()) {
+        return;
+    }
+    if (!json[0].IsNumber()) {
+        for (auto &e : json.GetArray()) {
+            __strip_geometry_z_0(e);
+        }
+        return;
+    }
+    if (json.Size() == 3) {
+        json.PopBack();
+    }
+}
+
+inline void strip_geometry_z_0(RapidjsonValue &json)
+{
+    if (json.IsObject()) {
+        auto itr = json.FindMember("type");
+        if (itr == json.MemberEnd() || !itr->value.IsString()) {
+            return;
+        }
+        const auto type =
+            std::string(itr->value.GetString(), itr->value.GetStringLength());
+        if (type == "Feature") {
+            strip_geometry_z_0(json["geometry"]);
+        } else if (type == "FeatureCollection") {
+            for (auto &f : json["features"].GetArray()) {
+                strip_geometry_z_0(f["geometry"]);
+            }
+        } else if (type == "Point" || type == "MultiPoint" ||
+                   type == "LineString" || type == "MultiLineString" ||
+                   type == "Polygon" || type == "MultiPolygon") {
+            strip_geometry_z_0(json["coordinates"]);
+        } else if (type == "GeometryCollection") {
+            for (auto &g : json["geometries"].GetArray()) {
+                strip_geometry_z_0(g);
+            }
+        }
+        return;
+    }
+
+    if (!__all_is_z0(json)) {
+        return;
+    }
+    __strip_geometry_z_0(json);
+}
+
+inline void
+normalize_json(RapidjsonValue &json,                              //
+               bool sort_keys = true,                             //
+               std::optional<int> round_geojson_non_geometry = 3, //
+               const std::optional<std::array<int, 3>> &round_geojson_geometry =
+                   std::array<int, 3>{8, 8, 3}, //
+               bool denoise_double_0 = true,    //
+               bool strip_geometry_z_0 = true)
+{
+    if (sort_keys) {
+        sort_keys_inplace(json);
+    }
+    if (round_geojson_non_geometry) {
+        double scale = std::pow(10.0, *round_geojson_non_geometry);
+        cubao::round_geojson_non_geometry(json, scale);
+    }
+    if (round_geojson_geometry) {
+        auto &precision = *round_geojson_geometry;
+        cubao::round_geojson_geometry(json, {std::pow(10.0, precision[0]),
+                                             std::pow(10.0, precision[1]),
+                                             std::pow(10.0, precision[2])});
+    }
+    if (strip_geometry_z_0) {
+        cubao::strip_geometry_z_0(json);
+    }
+    if (denoise_double_0) {
+        denoise_double_0_rapidjson(json);
     }
 }
 

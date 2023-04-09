@@ -4,6 +4,7 @@
 #undef __ARM_NEON__
 #endif
 
+#include <pybind11/eigen.h>
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -19,6 +20,7 @@
 
 namespace py = pybind11;
 using namespace pybind11::literals;
+using rvp = py::return_value_policy;
 
 namespace cubao
 {
@@ -31,17 +33,51 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
     using namespace mapbox::geobuf;
 
     m.def(
-        "normalize_json",
-        [](const std::string &input, const std::string &output, bool indent,
-           bool sort_keys) {
-            auto json = mapbox::geobuf::load_json(input);
-            if (sort_keys) {
-                mapbox::geobuf::sort_keys_inplace(json);
-            }
-            return mapbox::geobuf::dump_json(output, json, indent);
-        },
-        "input_path"_a, "output_path"_a, //
-        py::kw_only(), "indent"_a = true, "sort_keys"_a = true);
+         "normalize_json",
+         [](const std::string &input, const std::string &output, bool indent,
+            bool sort_keys, bool denoise_double_0, bool strip_geometry_z_0,
+            std::optional<int> round_geojson_non_geometry,
+            const std::optional<std::array<int, 3>> &round_geojson_geometry) {
+             auto json = mapbox::geobuf::load_json(input);
+             cubao::normalize_json(json,                       //
+                                   sort_keys,                  //
+                                   round_geojson_non_geometry, //
+                                   round_geojson_geometry,     //
+                                   denoise_double_0,           //
+                                   strip_geometry_z_0);
+             return mapbox::geobuf::dump_json(output, json, indent);
+         },
+         "input_path"_a, "output_path"_a, //
+         py::kw_only(),                   //
+         "indent"_a = true,               //
+         "sort_keys"_a = true,            //
+         "denoise_double_0"_a = true,     //
+         "strip_geometry_z_0"_a = true,   //
+         "round_geojson_non_geometry"_a = 3,
+         "round_geojson_geometry"_a = std::array<int, 3>{8, 8, 3})
+        .def(
+            "normalize_json",
+            [](RapidjsonValue &json, bool sort_keys, bool denoise_double_0,
+               bool strip_geometry_z_0,
+               std::optional<int> round_geojson_non_geometry,
+               const std::optional<std::array<int, 3>> &round_geojson_geometry)
+                -> RapidjsonValue & {
+                cubao::normalize_json(json,                       //
+                                      sort_keys,                  //
+                                      round_geojson_non_geometry, //
+                                      round_geojson_geometry,     //
+                                      denoise_double_0,           //
+                                      strip_geometry_z_0);
+                return json;
+            },
+            "json"_a,
+            py::kw_only(),                 //
+            "sort_keys"_a = true,          //
+            "denoise_double_0"_a = true,   //
+            "strip_geometry_z_0"_a = true, //
+            "round_geojson_non_geometry"_a = 3,
+            "round_geojson_geometry"_a = std::array<int, 3>{8, 8, 3},
+            rvp::reference_internal);
 
     m.def(
         "str2json2str",
