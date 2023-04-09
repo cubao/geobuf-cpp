@@ -296,8 +296,8 @@ normalize_json(RapidjsonValue &json,                              //
     if (round_geojson_geometry) {
         auto &precision = *round_geojson_geometry;
         cubao::round_geojson_geometry(json, {std::pow(10.0, precision[0]),
-                                      std::pow(10.0, precision[1]),
-                                      std::pow(10.0, precision[2])});
+                                             std::pow(10.0, precision[1]),
+                                             std::pow(10.0, precision[2])});
     }
     if (strip_geometry_z_0) {
         cubao::strip_geometry_z_0(json);
