@@ -328,6 +328,43 @@ def test_rapidjson_normalize():
     expected = '{"coordinates":[[[1,1,0.5],[1,1,0]],[[2,2,0],[2,2,0],[2,2,0]]],"type":"MultiLineString"}'  # noqa
     assert mls.to_rapidjson().normalize().dumps() == expected
 
+    llas = np.array([[1.2345678, 2.3456789, 3.456789]])
+    ls = geojson.LineString().from_numpy(llas)
+    expected = '{"coordinates":[[1.2345678,2.3456789,3.457]],"type":"LineString"}'
+    assert ls.to_rapidjson().normalize().dumps() == expected
+    expected = '{"coordinates":[[1.235,2.346,3.5]],"type":"LineString"}'
+    assert (
+        ls.to_rapidjson().normalize(round_geojson_geometry=[3, 3, 1]).dumps()
+        == expected
+    )
+    expected = rapidjson(llas.round(2).tolist()).dumps()
+    assert (
+        expected
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[2, 2, 2]).dumps()
+    )
+
+    llas = np.array([[2.5, -10.5, 1.1]])
+    ls = geojson.LineString().from_numpy(llas)
+    expected = '{"coordinates":[[2.5,-10.5,1]],"type":"LineString"}'
+    assert (
+        expected
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[1, 1, 0]).dumps()
+    )
+    expected = '{"coordinates":[[3,-10,1]],"type":"LineString"}'
+    assert (
+        expected
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[0, 0, 0]).dumps()
+    )
+
+    for scale in [1.0, -1.0]:
+        for _ in range(100):
+            llas = np.random.random((100, 3)) * scale
+            ls = geojson.LineString().from_numpy(llas)
+            coords = ls.to_rapidjson().normalize(round_geojson_geometry=[3, 3, 3])()[
+                "coordinates"
+            ]
+            assert np.all(np.array(coords) == np.round(llas, 3))
+
 
 def test_geojson_point():
     # as_numpy
@@ -1582,6 +1619,6 @@ def pytest_main(dir: str, *, test_file: str = None):
 
 if __name__ == "__main__":
     test_rapidjson_normalize()
-    np.set_printoptions(suppress=True)
-    pwd = os.path.abspath(os.path.dirname(__file__))
-    pytest_main(pwd, test_file=os.path.basename(__file__))
+    # np.set_printoptions(suppress=True)
+    # pwd = os.path.abspath(os.path.dirname(__file__))
+    # pytest_main(pwd, test_file=os.path.basename(__file__))
