@@ -343,6 +343,9 @@ def test_rapidjson_normalize():
         in ls.to_rapidjson().normalize(round_geojson_geometry=[2, 2, 2]).dumps()
     )
 
+    expected = '{"coordinates":[[1.2345678,2.3456789,3.456789]],"type":"LineString"}'
+    assert ls.to_rapidjson().normalize(round_geojson_geometry=None).dumps() == expected
+
     llas = np.array([[2.5, -10.5, 1.1]])
     ls = geojson.LineString().from_numpy(llas)
     expected = '{"coordinates":[[2.5,-10.5,1]],"type":"LineString"}'
@@ -1459,6 +1462,24 @@ def test_geojson_feature():
     assert f2 == feature
     assert f2() == feature()
 
+    feature = geojson.Feature(sample_geojson())
+    expected = '{"geometry":{"coordinates":[[120.4031748,31.41696608,1.111],[120.28451901,31.30578267,2.22],[120.35592249,31.21781896,3.333],[120.67093787,31.29950227,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.14},"double":3.142,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'  # noqa
+    assert feature.to_rapidjson().normalize().dumps() == expected
+    # adjust round_geojson_non_geometry
+    assert feature.to_rapidjson().normalize()()["properties"]["double"] == 3.142  # noqa
+    assert (
+        feature.to_rapidjson().normalize(round_geojson_non_geometry=1)()["properties"][
+            "double"
+        ]
+        == 3.1
+    )  # noqa
+    assert (
+        feature.to_rapidjson().normalize(round_geojson_non_geometry=None)()[
+            "properties"
+        ]["double"]
+        == 3.141592653
+    )  # noqa
+
 
 def test_geojson_load_dump():
     dirname = os.path.abspath(f"{__pwd}/../data")
@@ -1619,6 +1640,7 @@ def pytest_main(dir: str, *, test_file: str = None):
 
 if __name__ == "__main__":
     test_rapidjson_normalize()
+    test_geojson_feature()
     # np.set_printoptions(suppress=True)
     # pwd = os.path.abspath(os.path.dirname(__file__))
     # pytest_main(pwd, test_file=os.path.basename(__file__))

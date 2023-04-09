@@ -35,8 +35,8 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         "normalize_json",
         [](const std::string &input, const std::string &output, bool indent,
            bool sort_keys, bool denoise_double_0, bool strip_geometry_z_0,
-           int round_geojson_non_geometry,
-           const std::array<int, 3> &round_geojson_geometry) {
+           std::optional<int> round_geojson_non_geometry,
+           const std::optional<std::array<int, 3>> &round_geojson_geometry) {
             auto json = mapbox::geobuf::load_json(input);
             if (sort_keys) {
                 mapbox::geobuf::sort_keys_inplace(json);
@@ -44,12 +44,15 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             if (strip_geometry_z_0) {
                 cubao::strip_geometry_z_0(json);
             }
-            if (round_geojson_non_geometry > 0) {
-                cubao::round_geojson_non_geometry(
-                    json, std::pow(10.0, round_geojson_non_geometry));
+            if (round_geojson_non_geometry) {
+                double scale = std::pow(10.0, *round_geojson_non_geometry);
+                cubao::round_geojson_non_geometry(json, scale);
             }
-            // cubao::round_geojson_geometry(json,
-            // round_geojson_geometry.cast<int>());
+            if (round_geojson_geometry) {
+                auto &precision = *round_geojson_geometry;
+                cubao::round_geojson_geometry(
+                    json, {precision[0], precision[1], precision[2]});
+            }
             if (denoise_double_0) {
                 cubao::denoise_double_0_rapidjson(json);
             }
