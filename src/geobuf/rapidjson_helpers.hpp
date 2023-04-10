@@ -112,7 +112,7 @@ inline void round_geojson_non_geometry(RapidjsonValue &json, double scale)
     } else if (type == "FeatureCollection") {
         round_rapidjson(json, scale, INT_MAX, {"features"});
         for (auto &f : json["features"].GetArray()) {
-            round_rapidjson(f, scale);
+            round_rapidjson(f, scale, INT_MAX);
         }
     } else if (type == "Point" || type == "MultiPoint" ||
                type == "LineString" || type == "MultiLineString" ||
@@ -121,7 +121,7 @@ inline void round_geojson_non_geometry(RapidjsonValue &json, double scale)
     } else if (type == "GeometryCollection") {
         round_rapidjson(json, scale, INT_MAX, {"geometries"});
         for (auto &g : json["geometries"].GetArray()) {
-            round_rapidjson(g, scale);
+            round_rapidjson(g, scale, INT_MAX);
         }
     }
 }
