@@ -109,6 +109,7 @@ inline void round_geojson_non_geometry(RapidjsonValue &json, double scale)
         std::string(itr->value.GetString(), itr->value.GetStringLength());
     if (type == "Feature") {
         round_rapidjson(json, scale, INT_MAX, {"geometry"});
+        round_geojson_non_geometry(json["geometry"], scale);
     } else if (type == "FeatureCollection") {
         round_rapidjson(json, scale, INT_MAX, {"features"});
         for (auto &f : json["features"].GetArray()) {
