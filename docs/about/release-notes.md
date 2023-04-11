@@ -10,6 +10,10 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.1.3 (2023-04-11)
+
+*   Fix round geojson-non-geometry
+
 ## Version 0.1.2 (2023-04-10)
 
 *   Fix round geojson-non-geometry, should be recursive

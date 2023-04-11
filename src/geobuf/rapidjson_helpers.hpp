@@ -109,10 +109,11 @@ inline void round_geojson_non_geometry(RapidjsonValue &json, double scale)
         std::string(itr->value.GetString(), itr->value.GetStringLength());
     if (type == "Feature") {
         round_rapidjson(json, scale, INT_MAX, {"geometry"});
+        round_geojson_non_geometry(json["geometry"], scale);
     } else if (type == "FeatureCollection") {
         round_rapidjson(json, scale, INT_MAX, {"features"});
         for (auto &f : json["features"].GetArray()) {
-            round_rapidjson(f, scale, INT_MAX);
+            round_geojson_non_geometry(f, scale);
         }
     } else if (type == "Point" || type == "MultiPoint" ||
                type == "LineString" || type == "MultiLineString" ||
@@ -121,7 +122,7 @@ inline void round_geojson_non_geometry(RapidjsonValue &json, double scale)
     } else if (type == "GeometryCollection") {
         round_rapidjson(json, scale, INT_MAX, {"geometries"});
         for (auto &g : json["geometries"].GetArray()) {
-            round_rapidjson(g, scale, INT_MAX);
+            round_geojson_non_geometry(g, scale);
         }
     }
 }
