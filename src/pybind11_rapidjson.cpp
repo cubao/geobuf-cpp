@@ -109,6 +109,10 @@ void bind_rapidjson(py::module &m)
                     return values;
                 },
                 rvp::reference_internal)
+            //
+            .def("is_subset_of", [](const RapidjsonValue &self, const RapidjsonValue &other) -> bool {
+                return is_subset_of(self, other);
+            }, "other"_a)
             // load/dump file
             .def(
                 "load",

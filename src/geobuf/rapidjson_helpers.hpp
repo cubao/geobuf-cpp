@@ -12,6 +12,7 @@
 #include "rapidjson/stringbuffer.h"
 #include <fstream>
 #include <iostream>
+#include <set>
 
 namespace cubao
 {
@@ -511,6 +512,54 @@ inline RapidjsonValue to_rapidjson(const mapbox::geojson::value &json)
 // {
 //     return mapbox::geojson::convert<mapbox::geojson::value>(json);
 // }
+
+inline bool is_subset_of(const RapidjsonValue &a, const RapidjsonValue &b)
+{
+    if (a.IsArray()) {
+        if (!b.IsArray() || a.Size() != b.Size()) {
+            return false;
+        }
+        auto aArr = a.GetArray();
+        auto bArr = b.GetArray();
+        for (int i = 0, N = a.Size(); i < N; ++i) {
+            if (!is_subset_of(aArr[i], bArr[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+    if (!a.IsObject()) {
+        if (b.IsObject()) {
+            return false;
+        }
+        return a == b;
+    }
+    if (!b.IsObject()) {
+        return false;
+    }
+    auto aObj = a.GetObject();
+    auto bObj = b.GetObject();
+    std::set<std::string> aKeys, bKeys;
+    std::for_each(aObj.MemberBegin(), aObj.MemberEnd(), [&](auto &kv) {
+        aKeys.insert(
+            std::string(kv.name.GetString(), kv.name.GetStringLength()));
+    });
+    std::for_each(bObj.MemberBegin(), bObj.MemberEnd(), [&](auto &kv) {
+        bKeys.insert(
+            std::string(kv.name.GetString(), kv.name.GetStringLength()));
+    });
+    if (!std::includes(bKeys.begin(), bKeys.end(), //
+                       aKeys.begin(), aKeys.end())) {
+        return false;
+    }
+    for (const auto &k : aKeys) {
+        if (!is_subset_of(aObj.FindMember(k.c_str())->value,
+                          bObj.FindMember(k.c_str())->value)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 } // namespace cubao
 
