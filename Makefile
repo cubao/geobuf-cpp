@@ -105,7 +105,9 @@ python_sdist:
 	# tar -tvf dist/geobuf-*.tar.gz
 python_test: pytest
 
-cli_test:
+cli_test: cli_test1 cli_test2 cli_test3 cli_test4
+
+cli_test1:
 	python3 -m pybind11_geobuf
 	python3 -m pybind11_geobuf --help
 	python3 -m pybind11_geobuf json2geobuf data/sample1.json build/sample1.pbf
@@ -119,6 +121,21 @@ cli_test2:
 	python3 -m pybind11_geobuf round_trip data/sample2.json -o build/test/python --json2pb_use_python=True --pb2json_use_python=True
 	python3 -m pybind11_geobuf round_trip data/sample2.json -o build/test/cxx_py --json2pb_use_python=False --pb2json_use_python=True
 	python3 -m pybind11_geobuf round_trip data/sample2.json -o build/test/py_cxx --json2pb_use_python=True --pb2json_use_python=False
+
+cli_test3:
+	python3 -m pybind11_geobuf normalize_json data/feature_collection.json build/fc.json && cat build/fc.json | grep '"double": 3.142,'
+	python3 -m pybind11_geobuf normalize_json data/feature_collection.json build/fc.json --round_geojson_non_geometry=None && cat build/fc.json | grep '"double": 3.141592653'
+	python3 -m pybind11_geobuf normalize_json data/feature_collection.json build/fc.json --round_geojson_geometry=None && cat build/fc.json | grep 3.3333333333333
+	python3 -m pybind11_geobuf normalize_json data/feature_collection.json build/fc.json --round_geojson_geometry=3,3,2 && cat build/fc.json | grep '120.285,'
+	python3 -m pybind11_geobuf normalize_json data/feature_collection.json build/fc.json --round_geojson_geometry=0,0,0 && cat build/fc.json | grep '120,'
+	python3 -m pybind11_geobuf normalize_json data/feature_collection.json build/fc.json --round_geojson_geometry=0,0,0 --denoise_double_0=False && cat build/fc.json | grep '120.0,'
+	python3 -m pybind11_geobuf normalize_json data/feature_collection.json build/fc.json --round_geojson_geometry=8,8,-1 && cat build/fc.json | wc -l | grep 49
+	python3 -m pybind11_geobuf normalize_json data/feature_collection.json build/fc.json --round_geojson_geometry=8,8,-1 --strip_geometry_z_0=False && cat build/fc.json | wc -l | grep 53
+
+cli_test4:
+	python3 -m pybind11_geobuf is_subset_of data/feature_collection.json data/feature_collection.json
+
+.PHONY: cli_test cli_test1 cli_test2 cli_test3
 
 # conda create -y -n py36 python=3.6
 # conda create -y -n py37 python=3.7

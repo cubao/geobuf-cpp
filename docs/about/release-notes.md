@@ -10,6 +10,11 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.1.4 (2023-04-15)
+
+*   More options to normalize_json
+*   Add `is_subset_of(json1, json2)`
+
 ## Version 0.1.3 (2023-04-11)
 
 *   Fix round geojson-non-geometry

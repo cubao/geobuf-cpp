@@ -80,6 +80,15 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             rvp::reference_internal);
 
     m.def(
+        "is_subset_of",
+        [](const std::string &path1, const std::string &path2) {
+            auto json1 = mapbox::geobuf::load_json(path1);
+            auto json2 = mapbox::geobuf::load_json(path2);
+            return cubao::is_subset_of(json1, json2);
+        },
+        "path1"_a, "path2"_a);
+
+    m.def(
         "str2json2str",
         [](const std::string &json_string, //
            bool indent,                    //
