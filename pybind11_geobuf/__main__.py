@@ -5,6 +5,7 @@ from loguru import logger
 
 from pybind11_geobuf import rapidjson  # noqa
 from pybind11_geobuf import Decoder, Encoder  # noqa
+from pybind11_geobuf import is_subset_of as is_subset_of_impl  # noqa
 from pybind11_geobuf import normalize_json as normalize_json_impl  # noqa
 from pybind11_geobuf import pbf_decode as pbf_decode_impl  # noqa
 
@@ -164,12 +165,6 @@ def round_trip(
     json2pb_use_python: bool = False,
     pb2json_use_python: bool = False,
 ):
-    """
-    _0.json
-    _1.pbf
-    _2.pbf.txt
-    _3.json
-    """
     assert path.endswith((".json", ".geojson")) and os.path.isfile(path)
     path = os.path.abspath(path)
     output_dir = os.path.abspath(output_dir or os.path.dirname(path))
@@ -209,6 +204,10 @@ def round_trip(
     logger.info(f"wrote to {opath}")
 
 
+def is_subset_of(path1: str, path2: str):
+    assert is_subset_of_impl(path1, path2)
+
+
 if __name__ == "__main__":
     import fire
 
@@ -216,6 +215,7 @@ if __name__ == "__main__":
     fire.Fire(
         {
             "geobuf2json": geobuf2json,
+            "is_subset_of": is_subset_of,
             "json2geobuf": json2geobuf,
             "normalize_geobuf": normalize_geobuf,
             "normalize_json": normalize_json,

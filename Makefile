@@ -105,7 +105,7 @@ python_sdist:
 	# tar -tvf dist/geobuf-*.tar.gz
 python_test: pytest
 
-cli_test: cli_test1 cli_test2 cli_test3
+cli_test: cli_test1 cli_test2 cli_test3 cli_test4
 
 cli_test1:
 	python3 -m pybind11_geobuf
@@ -131,6 +131,9 @@ cli_test3:
 	python3 -m pybind11_geobuf normalize_json data/feature_collection.json build/fc.json --round_geojson_geometry=0,0,0 --denoise_double_0=False && cat build/fc.json | grep '120.0,'
 	python3 -m pybind11_geobuf normalize_json data/feature_collection.json build/fc.json --round_geojson_geometry=8,8,-1 && cat build/fc.json | wc -l | grep 49
 	python3 -m pybind11_geobuf normalize_json data/feature_collection.json build/fc.json --round_geojson_geometry=8,8,-1 --strip_geometry_z_0=False && cat build/fc.json | wc -l | grep 53
+
+cli_test4:
+	python3 -m pybind11_geobuf is_subset_of data/feature_collection.json data/feature_collection.json
 
 .PHONY: cli_test cli_test1 cli_test2 cli_test3
 
