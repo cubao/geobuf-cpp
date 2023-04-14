@@ -34,4 +34,4 @@ jobs:
 
     - name: Test
       if: ${{ startsWith(matrix.platform, 'ubuntu') }}
-      run: python -m pytest && make clitest
+      run: python -m pytest && make cli_test
