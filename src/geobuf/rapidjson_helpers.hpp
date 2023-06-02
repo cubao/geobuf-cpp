@@ -341,24 +341,25 @@ inline bool dump_json(const std::string &path, const RapidjsonValue &json,
     }
     using namespace rapidjson;
     char writeBuffer[65536];
+    bool succ = false;
     FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
     if (indent) {
         PrettyWriter<FileWriteStream> writer(os);
         if (sort_keys) {
-            cubao::sort_keys(json).Accept(writer);
+            succ = cubao::sort_keys(json).Accept(writer);
         } else {
-            json.Accept(writer);
+            succ = json.Accept(writer);
         }
     } else {
         Writer<FileWriteStream> writer(os);
         if (sort_keys) {
-            cubao::sort_keys(json).Accept(writer);
+            succ = cubao::sort_keys(json).Accept(writer);
         } else {
-            json.Accept(writer);
+            succ = json.Accept(writer);
         }
     }
     fclose(fp);
-    return true;
+    return succ;
 }
 
 inline RapidjsonValue loads(const std::string &json)
