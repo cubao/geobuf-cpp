@@ -69,6 +69,37 @@ inline void sort_keys_inplace(RapidjsonValue &json)
     }
 }
 
+inline std::optional<std::string> locate_nan_inf(const RapidjsonValue &json,
+                                                 const std::string &path = "")
+{
+    if (json.IsObject()) {
+        for (auto &kv : json.GetObject()) {
+            auto p = locate_nan_inf(kv.value);
+            if (p) {
+                return path + "[\"" +
+                       std::string(kv.name.GetString(),
+                                   kv.name.GetStringLength()) +
+                       "\"]" + *p;
+            }
+        }
+    } else if (json.IsArray()) {
+        int index = -1;
+        for (auto &m : json.GetArray()) {
+            ++index;
+            auto p = locate_nan_inf(m);
+            if (p) {
+                return path + "[" + std::to_string(index) + "]" + *p;
+            }
+        }
+    } else if (json.IsDouble()) {
+        double d = json.GetDouble();
+        if (std::isnan(d) || std::isinf(d)) {
+            return path;
+        }
+    }
+    return {};
+}
+
 inline void round_rapidjson(RapidjsonValue &json, double scale, int depth = 1,
                             const std::vector<std::string> &skip_keys = {})
 {

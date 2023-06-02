@@ -1652,6 +1652,30 @@ def pytest_main(dir: str, *, test_file: str = None):
     )
 
 
+def test_rapidjson_dump_nan():
+    j = rapidjson(
+        {
+            "key": "value",
+            "pi": 3.14,
+            "nan": np.nan,
+        }
+    )
+    assert j.dumps() == '{"key":"value","pi":3.14,"nan":'
+    assert j.locate_nan_inf() == '["nan"]'
+    del j["nan"]
+    assert j.locate_nan_inf() is None
+    j["inf"] = np.inf
+    assert j.locate_nan_inf() == '["inf"]'
+
+    assert rapidjson(np.inf).locate_nan_inf() == ""
+    assert rapidjson(np.nan).locate_nan_inf() == ""
+    assert rapidjson("json").locate_nan_inf() is None
+
+    jj = rapidjson({"root": {}})
+    jj["root"]["child"] = j
+    assert jj.locate_nan_inf() == '["root"]["child"]["inf"]'
+
+
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
