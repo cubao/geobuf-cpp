@@ -149,6 +149,10 @@ void bind_rapidjson(py::module &m)
                 sort_keys_inplace(self);
                 return self;
             }, rvp::reference_internal)
+            // locate_nan_inf
+            .def("locate_nan_inf", [](const RapidjsonValue &self) -> std::optional<std::string> {
+                return locate_nan_inf(self);
+            })
             .def("round", [](RapidjsonValue &self, double precision, int depth, //
                 const std::vector<std::string> &skip_keys) -> RapidjsonValue & {
                     round_rapidjson(self, std::pow(10, precision), depth, skip_keys);

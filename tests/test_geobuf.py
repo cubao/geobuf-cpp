@@ -1,8 +1,11 @@
 import base64
+import contextlib
 import json
 import os
 import pickle
+import shutil
 import sys
+import tempfile
 from copy import deepcopy
 
 import numpy as np
@@ -1649,6 +1652,106 @@ def pytest_main(dir: str, *, test_file: str = None):
                 "-x",
             ]
         )
+    )
+
+
+@contextlib.contextmanager
+def context_tempdir():
+    temp_dir = tempfile.mkdtemp()
+    try:
+        yield temp_dir
+    finally:
+        if os.path.isdir(temp_dir):
+            shutil.rmtree(temp_dir)
+
+
+def test_rapidjson_dump_nan():
+    j = rapidjson(
+        {
+            "key": "value",
+            "pi": 3.14,
+            "nan": np.nan,
+        }
+    )
+    assert j.dumps() == '{"key":"value","pi":3.14,"nan":'
+    assert j.locate_nan_inf() == '["nan"]'
+    del j["nan"]
+    assert j.locate_nan_inf() is None
+    j["inf"] = np.inf
+    assert j.locate_nan_inf() == '["inf"]'
+
+    assert rapidjson(np.inf).locate_nan_inf() == ""
+    assert rapidjson(np.nan).locate_nan_inf() == ""
+    assert rapidjson("json").locate_nan_inf() is None
+
+    jj = rapidjson({"root": {}})
+    jj["root"]["child"] = j
+    assert jj.locate_nan_inf() == '["root"]["child"]["inf"]'
+
+    with context_tempdir() as dir:
+        j = rapidjson({"root": {}})
+        path = f"{dir}/okay.json"
+        assert j.dump(path)
+        with open(path) as f:
+            text = f.read()
+            assert text == '{"root":{}}'
+
+    with context_tempdir() as dir:
+        path = f"{dir}/fail.json"
+        assert not jj.dump(path)
+
+
+def test_rapidjson_normalize_non_geojson():
+    j = normalize_json(rapidjson({"value": 3.14156}))
+    assert j.dumps() == '{"value":3.142}'
+
+    j = normalize_json(rapidjson({"value": 3.14156}), round_non_geojson=None)
+    assert j.dumps() == '{"value":3.14156}'
+
+    j = normalize_json(
+        rapidjson(
+            {
+                "type": "Point",
+                "coordinates": [1.23456, 7.890123, 4.567],
+                "value": 3.123456,
+            }
+        ).sort_keys(),
+        round_geojson_geometry=[3, 2, 1],
+    )
+    assert (
+        j.dumps()
+        == '{"coordinates":[1.235,7.89,4.6],"type":"Point","value":3.123}'  # noqa
+    )
+
+    j = normalize_json(
+        rapidjson(
+            {
+                "type": "Point",
+                "coordinates": [1.23456, 7.890123, 4.567],
+                "value": 3.123456,
+            }
+        ).sort_keys(),
+        round_geojson_geometry=None,
+    )
+    assert (
+        j.dumps()
+        == '{"coordinates":[1.23456,7.890123,4.567],"type":"Point","value":3.123}'  # noqa
+    )
+
+    j = normalize_json(
+        rapidjson(
+            {
+                "type": "Point",
+                "coordinates": [1.23456, 7.890123, 4.567],
+                "value": 3.123456,
+            }
+        ).sort_keys(),
+        round_geojson_geometry=[1, 1, 1],
+        round_geojson_non_geometry=None,
+    )
+    assert (
+        j.dumps()
+        == '{"coordinates":[1.2,7.9,4.6],"type":"Point","value":3.123456}'  # noqa
     )
 
 
