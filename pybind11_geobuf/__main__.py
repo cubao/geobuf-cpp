@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+from typing import Optional, Tuple
 
 from loguru import logger
 
@@ -94,8 +94,9 @@ def normalize_json(
     only_xy: bool = False,
     denoise_double_0: bool = True,
     strip_geometry_z_0: bool = True,
-    round_geojson_non_geometry: int = 3,
-    round_geojson_geometry: Tuple[int, int, int] = (8, 8, 3),
+    round_non_geojson: Optional[int] = 3,
+    round_geojson_non_geometry: Optional[int] = 3,
+    round_geojson_geometry: Optional[Tuple[int, int, int]] = (8, 8, 3),
 ):
     logger.info(
         f"normalize_json {input_path} ({__filesize(input_path):,} bytes)"
@@ -124,6 +125,7 @@ def normalize_json(
             sort_keys=sort_keys,
             denoise_double_0=denoise_double_0,
             strip_geometry_z_0=strip_geometry_z_0,
+            round_non_geojson=round_non_geojson,
             round_geojson_non_geometry=round_geojson_non_geometry,
             round_geojson_geometry=round_geojson_geometry,
         ), f"failed to normalize json to {output_path}"

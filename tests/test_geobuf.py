@@ -1701,6 +1701,60 @@ def test_rapidjson_dump_nan():
         assert not jj.dump(path)
 
 
+def test_rapidjson_normalize_non_geojson():
+    j = normalize_json(rapidjson({"value": 3.14156}))
+    assert j.dumps() == '{"value":3.142}'
+
+    j = normalize_json(rapidjson({"value": 3.14156}), round_non_geojson=None)
+    assert j.dumps() == '{"value":3.14156}'
+
+    j = normalize_json(
+        rapidjson(
+            {
+                "type": "Point",
+                "coordinates": [1.23456, 7.890123, 4.567],
+                "value": 3.123456,
+            }
+        ).sort_keys(),
+        round_geojson_geometry=[3, 2, 1],
+    )
+    assert (
+        j.dumps()
+        == '{"coordinates":[1.235,7.89,4.6],"type":"Point","value":3.123}'  # noqa
+    )
+
+    j = normalize_json(
+        rapidjson(
+            {
+                "type": "Point",
+                "coordinates": [1.23456, 7.890123, 4.567],
+                "value": 3.123456,
+            }
+        ).sort_keys(),
+        round_geojson_geometry=None,
+    )
+    assert (
+        j.dumps()
+        == '{"coordinates":[1.23456,7.890123,4.567],"type":"Point","value":3.123}'  # noqa
+    )
+
+    j = normalize_json(
+        rapidjson(
+            {
+                "type": "Point",
+                "coordinates": [1.23456, 7.890123, 4.567],
+                "value": 3.123456,
+            }
+        ).sort_keys(),
+        round_geojson_geometry=[1, 1, 1],
+        round_geojson_non_geometry=None,
+    )
+    assert (
+        j.dumps()
+        == '{"coordinates":[1.2,7.9,4.6],"type":"Point","value":3.123456}'  # noqa
+    )
+
+
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))

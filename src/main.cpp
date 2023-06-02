@@ -36,6 +36,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
          "normalize_json",
          [](const std::string &input, const std::string &output, bool indent,
             bool sort_keys, bool denoise_double_0, bool strip_geometry_z_0,
+            std::optional<int> round_non_geojson,
             std::optional<int> round_geojson_non_geometry,
             const std::optional<std::array<int, 3>> &round_geojson_geometry) {
              auto json = mapbox::geobuf::load_json(input);
@@ -43,22 +44,24 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
                                    sort_keys,                  //
                                    round_geojson_non_geometry, //
                                    round_geojson_geometry,     //
+                                   round_non_geojson,          //
                                    denoise_double_0,           //
                                    strip_geometry_z_0);
              return mapbox::geobuf::dump_json(output, json, indent);
          },
-         "input_path"_a, "output_path"_a, //
-         py::kw_only(),                   //
-         "indent"_a = true,               //
-         "sort_keys"_a = true,            //
-         "denoise_double_0"_a = true,     //
-         "strip_geometry_z_0"_a = true,   //
-         "round_geojson_non_geometry"_a = 3,
+         "input_path"_a, "output_path"_a,    //
+         py::kw_only(),                      //
+         "indent"_a = true,                  //
+         "sort_keys"_a = true,               //
+         "denoise_double_0"_a = true,        //
+         "strip_geometry_z_0"_a = true,      //
+         "round_non_geojson"_a = 3,          //
+         "round_geojson_non_geometry"_a = 3, //
          "round_geojson_geometry"_a = std::array<int, 3>{8, 8, 3})
         .def(
             "normalize_json",
             [](RapidjsonValue &json, bool sort_keys, bool denoise_double_0,
-               bool strip_geometry_z_0,
+               bool strip_geometry_z_0, std::optional<int> round_non_geojson,
                std::optional<int> round_geojson_non_geometry,
                const std::optional<std::array<int, 3>> &round_geojson_geometry)
                 -> RapidjsonValue & {
@@ -66,6 +69,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
                                       sort_keys,                  //
                                       round_geojson_non_geometry, //
                                       round_geojson_geometry,     //
+                                      round_non_geojson,          //
                                       denoise_double_0,           //
                                       strip_geometry_z_0);
                 return json;
@@ -75,6 +79,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             "sort_keys"_a = true,          //
             "denoise_double_0"_a = true,   //
             "strip_geometry_z_0"_a = true, //
+            "round_non_geojson"_a = 3,     //
             "round_geojson_non_geometry"_a = 3,
             "round_geojson_geometry"_a = std::array<int, 3>{8, 8, 3},
             rvp::reference_internal);

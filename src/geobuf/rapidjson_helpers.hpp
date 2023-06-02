@@ -128,6 +128,30 @@ inline void round_rapidjson(RapidjsonValue &json, double scale, int depth = 1,
     }
 }
 
+inline void round_non_geojson(RapidjsonValue &json, double scale)
+{
+    if (json.IsObject()) {
+        auto itr = json.FindMember("type");
+        if (itr != json.MemberEnd() && itr->value.IsString()) {
+            const auto type = std::string(itr->value.GetString(),
+                                          itr->value.GetStringLength());
+            if (                             //
+                type == "FeatureCollection"  //
+                || type == "Feature"         //
+                || type == "Point"           //
+                || type == "MultiPoint"      //
+                || type == "LineString"      //
+                || type == "MultiLineString" //
+                || type == "Polygon"         //
+                || type == "MultiPolygon"    //
+                || type == "GeometryCollection") {
+                return;
+            }
+        }
+    }
+    round_rapidjson(json, scale, INT_MAX);
+}
+
 inline void round_geojson_non_geometry(RapidjsonValue &json, double scale)
 {
     if (!json.IsObject()) {
@@ -315,8 +339,9 @@ normalize_json(RapidjsonValue &json,                              //
                bool sort_keys = true,                             //
                std::optional<int> round_geojson_non_geometry = 3, //
                const std::optional<std::array<int, 3>> &round_geojson_geometry =
-                   std::array<int, 3>{8, 8, 3}, //
-               bool denoise_double_0 = true,    //
+                   std::array<int, 3>{8, 8, 3},          //
+               std::optional<int> round_non_geojson = 3, //
+               bool denoise_double_0 = true,             //
                bool strip_geometry_z_0 = true)
 {
     if (sort_keys) {
@@ -331,6 +356,10 @@ normalize_json(RapidjsonValue &json,                              //
         cubao::round_geojson_geometry(json, {std::pow(10.0, precision[0]),
                                              std::pow(10.0, precision[1]),
                                              std::pow(10.0, precision[2])});
+    }
+    if (round_non_geojson) {
+        double scale = std::pow(10.0, *round_non_geojson);
+        cubao::round_non_geojson(json, scale);
     }
     if (strip_geometry_z_0) {
         cubao::strip_geometry_z_0(json);
@@ -539,11 +568,6 @@ inline RapidjsonValue to_rapidjson(const mapbox::geojson::value &json)
     RapidjsonAllocator allocator;
     return to_rapidjson(json, allocator);
 }
-
-// inline mapbox::geojson::value to_geojson_value(const RapidjsonValue &json)
-// {
-//     return mapbox::geojson::convert<mapbox::geojson::value>(json);
-// }
 
 inline bool is_subset_of(const RapidjsonValue &a, const RapidjsonValue &b)
 {
