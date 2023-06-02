@@ -1,8 +1,11 @@
 import base64
+import contextlib
 import json
 import os
 import pickle
+import shutil
 import sys
+import tempfile
 from copy import deepcopy
 
 import numpy as np
@@ -1652,6 +1655,16 @@ def pytest_main(dir: str, *, test_file: str = None):
     )
 
 
+@contextlib.contextmanager
+def context_tempdir():
+    temp_dir = tempfile.mkdtemp()
+    try:
+        yield temp_dir
+    finally:
+        if os.path.isdir(temp_dir):
+            shutil.rmtree(temp_dir)
+
+
 def test_rapidjson_dump_nan():
     j = rapidjson(
         {
@@ -1674,6 +1687,18 @@ def test_rapidjson_dump_nan():
     jj = rapidjson({"root": {}})
     jj["root"]["child"] = j
     assert jj.locate_nan_inf() == '["root"]["child"]["inf"]'
+
+    with context_tempdir() as dir:
+        j = rapidjson({"root": {}})
+        path = f"{dir}/okay.json"
+        assert j.dump(path)
+        with open(path) as f:
+            text = f.read()
+            assert text == '{"root":{}}'
+
+    with context_tempdir() as dir:
+        path = f"{dir}/fail.json"
+        assert not jj.dump(path)
 
 
 if __name__ == "__main__":

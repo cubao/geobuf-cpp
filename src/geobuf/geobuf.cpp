@@ -75,15 +75,16 @@ bool dump_json(FILE *fp, const RapidjsonValue &json, bool indent,
     using namespace rapidjson;
     char writeBuffer[65536];
     FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
+    bool succ = false;
     if (indent) {
         PrettyWriter<FileWriteStream> writer(os);
-        json.Accept(writer);
+        succ = json.Accept(writer);
     } else {
         Writer<FileWriteStream> writer(os);
-        json.Accept(writer);
+        succ = json.Accept(writer);
     }
     fclose(fp);
-    return true;
+    return succ;
 }
 
 bool dump_json(const std::string &path, const RapidjsonValue &json, bool indent,
