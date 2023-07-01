@@ -6,6 +6,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
 
+#include "geobuf/geojson_cropping.hpp"
 #include "geobuf/geojson_helpers.hpp"
 #include "geobuf/pybind11_helpers.hpp"
 #include "geobuf/rapidjson_helpers.hpp"
@@ -145,6 +146,20 @@ void bind_geojson(py::module &geojson)
                 "precision"_a = 8,   //
                 "only_xy"_a = false, //
                 "round_z"_a = std::nullopt)
+            //
+            .def(
+                "crop",
+                [](mapbox::geojson::geojson &self, const RowVectors &polygon,
+                   const std::string &mode std::optional<double> max_z_offset)
+                    -> mapbox::geojson::feature_collection {
+                    return cubao::geojson_cropping(self,    //
+                                                   polygon, //
+                                                   mode,    //
+                                                   max_z_offset);
+                },
+                "polygon"_a, py::kw_only(), //
+                "mode"_a = "longest",       //
+                "max_z_offset"_a = std::nullopt)
             //
             .def(
                 "load",
