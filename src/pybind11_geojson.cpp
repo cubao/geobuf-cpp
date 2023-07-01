@@ -150,7 +150,7 @@ void bind_geojson(py::module &geojson)
             .def(
                 "crop",
                 [](mapbox::geojson::geojson &self, const RowVectors &polygon,
-                   const std::string &mode std::optional<double> max_z_offset)
+                   const std::string &mode, std::optional<double> max_z_offset)
                     -> mapbox::geojson::feature_collection {
                     return cubao::geojson_cropping(self,    //
                                                    polygon, //

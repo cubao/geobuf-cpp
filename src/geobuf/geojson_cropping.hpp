@@ -15,6 +15,24 @@ namespace cubao
 {
 using RowVectors = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
 
+inline bool geojson_cropping(const mapbox::geojson::feature &feature,
+                             const RowVectors &polygon,
+                             const std::optional<Eigen::Vector4d> &bbox,
+                             const std::string &clipping_mode = "longest",
+                             const std::optional<double> = {})
+{
+    return false;
+}
+
+inline mapbox::geojson::feature_collection
+geojson_cropping(const mapbox::geojson::feature_collection &features,
+                 const RowVectors &polygon,
+                 const std::string &clipping_mode = "longest",
+                 const std::optional<double> = {})
+{
+    return mapbox::geojson::feature_collection{};
+}
+
 inline mapbox::geojson::feature_collection
 geojson_cropping(const mapbox::geojson::geojson &geojson,
                  const RowVectors &polygon,
@@ -23,6 +41,7 @@ geojson_cropping(const mapbox::geojson::geojson &geojson,
 {
     return mapbox::geojson::feature_collection{};
 }
+
 } // namespace cubao
 
 #endif
