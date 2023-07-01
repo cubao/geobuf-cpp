@@ -95,6 +95,15 @@ test_in_mac:
 test_in_linux:
 	docker run --rm -w `pwd` -v `pwd`:`pwd` -v `pwd`/build/linux:`pwd`/build -it $(DOCKER_TAG_LINUX) bash
 
+DEV_CONTAINER_NAME ?= $(USER)_$(subst /,_,$(PROJECT_NAME)____$(PROJECT_SOURCE_DIR))
+DEV_CONTAINER_IMAG ?= $(DOCKER_TAG_LINUX)
+test_in_dev_container:
+	docker ps | grep $(DEV_CONTAINER_NAME) \
+		&& docker exec -it $(DEV_CONTAINER_NAME) bash \
+		|| docker run --rm --name $(DEV_CONTAINER_NAME) \
+			--network host --security-opt seccomp=unconfined \
+			-v `pwd`:`pwd` -w `pwd` -it $(DEV_CONTAINER_IMAG) bash
+
 PYTHON ?= python3
 python_install:
 	$(PYTHON) setup.py install --force
@@ -155,7 +164,7 @@ python_build_py310:
 	PYTHON=python conda run --no-capture-output -n py310 make python_build
 python_build_all: python_build_py36 python_build_py37 python_build_py38 python_build_py39 python_build_py310
 python_build_all_in_linux:
-	docker run --rm -w `pwd` -v `pwd`:`pwd` -v `pwd`/build/win:`pwd`/build -it $(DOCKER_TAG_LINUX) make python_build_all
+	docker run --rm -w `pwd` -v `pwd`:`pwd` -v `pwd`/build/linux:`pwd`/build -it $(DOCKER_TAG_LINUX) make python_build_all
 	make repair_wheels && rm -rf dist/*.whl && mv wheelhouse/*.whl dist && rm -rf wheelhouse
 python_build_all_in_macos: python_build_py38 python_build_py39 python_build_py310
 python_build_all_in_windows: python_build_all
