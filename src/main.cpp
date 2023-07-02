@@ -26,6 +26,7 @@ namespace cubao
 {
 void bind_geojson(py::module &m);
 void bind_rapidjson(py::module &m);
+void bind_crs_transform(py::module &m);
 } // namespace cubao
 
 PYBIND11_MODULE(_pybind11_geobuf, m)
@@ -257,9 +258,19 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
 
     cubao::bind_rapidjson(m);
 
+    auto tf = m.def_submodule("tf");
+    cubao::bind_crs_transform(tf);
+
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 #else
     m.attr("__version__") = "dev";
 #endif
 }
+
+#define CUBAO_STATIC_LIBRARY
+#ifndef CUBAO_ARGV_DEFAULT_NONE
+#define CUBAO_ARGV_DEFAULT_NONE(argv) py::arg_v(#argv, std::nullopt, "None")
+#endif
+
+#include "cubao/pybind11_crs_transform.hpp"

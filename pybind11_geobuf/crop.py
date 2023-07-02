@@ -2,8 +2,21 @@ import os
 from typing import List, Optional, Tuple, Union  # noqa
 
 import numpy as np
-from _pybind11_geobuf import *  # noqa
+from _pybind11_geobuf import geojson, tf
 from loguru import logger
+
+
+def bbox2polygon(bbox: np.ndarray):
+    lon0, lat0, lon1, lat1 = bbox
+    return np.array(
+        [
+            [lon0, lat0, 0.0],
+            [lon1, lat0, 0.0],
+            [lon1, lat1, 0.0],
+            [lon0, lat1, 0.0],
+            [lon0, lat0, 0.0],
+        ]
+    )
 
 
 def crop_by_feature_id(
@@ -11,9 +24,59 @@ def crop_by_feature_id(
     output_path: str,
     *,
     feature_id: str,
-    size: Union[float, Tuple[float, float]] = 100.0,
-):
-    logger.info(f"wrote to {output_path}")
+    buffer: Union[float, Tuple[float, float]] = 100.0,
+    clipping_mode: str = "longest",
+    max_z_offset: float = None,
+) -> bool:
+    if not feature_id:
+        logger.info(
+            f"invalid feature id: {feature_id} (type: {type(feature_id)})"
+        )  # noqa
+        return False
+    g = geojson.GeoJSON().load(input_path)
+    if not g.is_feature_collection():
+        logger.warning(f"{input_path} is not valid GeoJSON FeatureCollection")
+        return False
+
+    fc = g.as_feature_collection()
+    bbox = None
+    height = None
+    for f in fc:
+        props = f.properties()
+        if "id" not in props:
+            continue
+        fid = props["id"]()
+        if fid == feature_id:
+            bbox = f.bbox()
+            if max_z_offset is not None:
+                height = f.bbox(with_z=True)[2::3].mean()
+    if bbox is None:
+        logger.error(f"not any feature matched by id: {feature_id}")
+        return False
+
+    dlon, dlat = 1.0 / tf.cheap_ruler_k(bbox[1::2].mean())[:2]
+    if isinstance(buffer, (int, float, np.generic)):
+        dlon *= buffer
+        dlat *= buffer
+    else:
+        dlon *= buffer[0]
+        dlat *= buffer[1]
+    bbox += [-dlon, -dlat, dlon, dlat]
+    logger.info(f"bbox: {bbox}")
+
+    polygon = bbox2polygon(bbox)
+    if height is not None:
+        polygon[:, 2] = height
+    logger.info(f"polygon:\n{polygon}")
+
+    logger.info(f"writing to {output_path} ...")
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    cropped = g.crop(
+        polygon,
+        clipping_mode=clipping_mode,
+        max_z_offset=max_z_offset,
+    )
+    return cropped.to_rapidjson().sort_keys().dump(output_path, indent=True)
 
 
 def crop_by_grid(
