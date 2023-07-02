@@ -50,6 +50,22 @@ inline BboxType row_vectors_to_bbox(const RowVectors &coords)
     return bbox;
 }
 
+inline RowVectors bbox2row_vectors(const BboxType &bbox)
+{
+    auto coords = RowVectors(5, 3);
+    coords << bbox.min.x, bbox.min.y, 0.0, //
+        bbox.max.x, bbox.min.y, 0.0,       //
+        bbox.max.x, bbox.max.y, 0.0,       //
+        bbox.min.x, bbox.max.y, 0.0,       //
+        bbox.min.x, bbox.min.y, 0.0;
+    return coords;
+}
+
+inline RowVectors bbox2row_vectors(const Eigen::Vector4d &bbox)
+{
+    return bbox2row_vectors(BboxType({bbox[0], bbox[1]}, {bbox[2], bbox[3]}));
+}
+
 inline mapbox::geojson::point
 geometry_to_centroid(const mapbox::geojson::geometry &geom)
 {
@@ -83,6 +99,11 @@ inline bool bbox_overlap(const BboxType &bbox1, const BboxType &bbox2,
 }
 
 /*
+there is a difference between
+-   "cropping" (more like in a bigger picture) and
+-   "clipping" (more like focused onto something specific, like in tunnel
+vision).
+
 clipping_mode
     -   longest
     -   first
@@ -176,7 +197,7 @@ geojson_cropping(const mapbox::geojson::feature_collection &features,
                  const std::optional<double> max_z_offset = {})
 {
     auto bbox = row_vectors_to_bbox(polygon);
-    bbox.min[2] = bbox.max[2] = (bbox.min[2] + bbox.max[2]) / 2.0;
+    bbox.min.z = bbox.max.z = (bbox.min.z + bbox.max.z) / 2.0;
     mapbox::geojson::feature_collection output;
     for (auto &f : features) {
         geojson_cropping(f, output, polygon, bbox, clipping_mode, max_z_offset);
@@ -197,12 +218,12 @@ geojson_cropping(const mapbox::geojson::geojson &geojson,
                     mapbox::geojson::feature_collection{g}},
                 polygon, clipping_mode, max_z_offset);
         },
-        [](const mapbox::geojson::feature &f) {
+        [&](const mapbox::geojson::feature &f) {
             return geojson_cropping(mapbox::geojson::feature_collection{f},
                                     polygon, clipping_mode, max_z_offset);
         },
-        [](const mapbox::geojson::feature_collection &fc) {
-            return geojson_cropping(fc, clipping_mode, max_z_offset);
+        [&](const mapbox::geojson::feature_collection &fc) {
+            return geojson_cropping(fc, polygon, clipping_mode, max_z_offset);
         });
 }
 

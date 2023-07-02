@@ -150,15 +150,16 @@ void bind_geojson(py::module &geojson)
             .def(
                 "crop",
                 [](mapbox::geojson::geojson &self, const RowVectors &polygon,
-                   const std::string &mode, std::optional<double> max_z_offset)
+                   const std::string &clipping_mode,
+                   std::optional<double> max_z_offset)
                     -> mapbox::geojson::feature_collection {
-                    return cubao::geojson_cropping(self,    //
-                                                   polygon, //
-                                                   mode,    //
+                    return cubao::geojson_cropping(self,          //
+                                                   polygon,       //
+                                                   clipping_mode, //
                                                    max_z_offset);
                 },
-                "polygon"_a, py::kw_only(), //
-                "mode"_a = "longest",       //
+                "polygon"_a, py::kw_only(),    //
+                "clipping_mode"_a = "longest", //
                 "max_z_offset"_a = std::nullopt)
             //
             .def(
