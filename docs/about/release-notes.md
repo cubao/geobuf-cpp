@@ -10,6 +10,10 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.1.6 (2023-07-02)
+
+*   Crop geojson features by polygon (alpha release)
+
 ## Version 0.1.5 (2023-06-02)
 
 *   Add `round_non_geojson` to `normalize_json`

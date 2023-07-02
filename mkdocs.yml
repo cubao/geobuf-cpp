@@ -4,7 +4,7 @@ site_description: A compact binary encoding for geographic data, with python bin
 site_author: district10
 
 repo_url: https://github.com/cubao/pybind11-geobuf
-edit_uri: blob/master/docs/
+edit_uri: blob/dev/docs/
 
 theme: readthedocs
 nav:

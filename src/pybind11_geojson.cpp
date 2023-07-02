@@ -6,6 +6,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
 
+#include "geobuf/geojson_cropping.hpp"
 #include "geobuf/geojson_helpers.hpp"
 #include "geobuf/pybind11_helpers.hpp"
 #include "geobuf/rapidjson_helpers.hpp"
@@ -35,6 +36,24 @@ using namespace pybind11::literals;
 using rvp = py::return_value_policy;
 
 using PropertyMap = mapbox::geojson::value::object_type;
+
+template <typename T> Eigen::VectorXd geom2bbox(const T &t, bool with_z)
+{
+    auto bbox = mapbox::geometry::envelope(t);
+    if (with_z) {
+        return (Eigen::VectorXd(6) << //
+                    bbox.min.x,
+                bbox.min.y, bbox.min.z, //
+                bbox.max.x, bbox.max.y, bbox.max.z)
+            .finished();
+    } else {
+        return (Eigen::VectorXd(4) << //
+                    bbox.min.x,
+                bbox.min.y, //
+                bbox.max.x, bbox.max.y)
+            .finished();
+    }
+}
 
 inline bool endswith(const std::string &text, const std::string &suffix)
 {
@@ -145,6 +164,21 @@ void bind_geojson(py::module &geojson)
                 "precision"_a = 8,   //
                 "only_xy"_a = false, //
                 "round_z"_a = std::nullopt)
+            //
+            .def(
+                "crop",
+                [](mapbox::geojson::geojson &self, const RowVectors &polygon,
+                   const std::string &clipping_mode,
+                   std::optional<double> max_z_offset)
+                    -> mapbox::geojson::feature_collection {
+                    return cubao::geojson_cropping(self,          //
+                                                   polygon,       //
+                                                   clipping_mode, //
+                                                   max_z_offset);
+                },
+                "polygon"_a, py::kw_only(),    //
+                "clipping_mode"_a = "longest", //
+                "max_z_offset"_a = std::nullopt)
             //
             .def(
                 "load",
@@ -549,6 +583,9 @@ void bind_geojson(py::module &geojson)
             "sort_keys"_a = false, //
             "precision"_a = 8, //
             "only_xy"_a = false)
+        .def("bbox", [](const mapbox::geojson::geometry &self, bool with_z) -> Eigen::VectorXd {
+            return geom2bbox(self, with_z);
+        }, py::kw_only(), "with_z"_a = false)
         .def(py::self == py::self) //
         .def(py::self != py::self) //
 
@@ -650,6 +687,11 @@ void bind_geojson(py::module &geojson)
                      mapbox::geojson::geometry{self}, allocator);
                  return json;
              })
+        .def(
+            "bbox",
+            [](const mapbox::geojson::point &self, bool with_z)
+                -> Eigen::VectorXd { return geom2bbox(self, with_z); },
+            py::kw_only(), "with_z"_a = false)
         .def(py::self == py::self) //
         .def(py::self != py::self) //
         .def(
@@ -793,12 +835,18 @@ void bind_geojson(py::module &geojson)
                 return self;                                                   \
             },                                                                 \
             rvp::reference_internal)                                           \
-        .def("to_rapidjson", [](const mapbox::geojson::geom_type &self) {      \
-            RapidjsonAllocator allocator;                                      \
-            auto json = mapbox::geojson::convert(                              \
-                mapbox::geojson::geometry{self}, allocator);                   \
-            return json;                                                       \
-        })
+        .def("to_rapidjson",                                                   \
+             [](const mapbox::geojson::geom_type &self) {                      \
+                 RapidjsonAllocator allocator;                                 \
+                 auto json = mapbox::geojson::convert(                         \
+                     mapbox::geojson::geometry{self}, allocator);              \
+                 return json;                                                  \
+             })                                                                \
+        .def(                                                                  \
+            "bbox",                                                            \
+            [](const mapbox::geojson::geom_type &self, bool with_z)            \
+                -> Eigen::VectorXd { return geom2bbox(self, with_z); },        \
+            py::kw_only(), "with_z"_a = false)
 
     py::class_<mapbox::geojson::multi_point,
                std::vector<mapbox::geojson::point>>(geojson, "MultiPoint",
@@ -956,7 +1004,12 @@ void bind_geojson(py::module &geojson)
                 return self;                                                   \
             },                                                                 \
             py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,              \
-            rvp::reference_internal) GEOMETRY_DEDUPLICATE_XYZ(geom_type)
+            rvp::reference_internal) GEOMETRY_DEDUPLICATE_XYZ(geom_type)       \
+        .def(                                                                  \
+            "bbox",                                                            \
+            [](const mapbox::geojson::geom_type &self, bool with_z)            \
+                -> Eigen::VectorXd { return geom2bbox(self, with_z); },        \
+            py::kw_only(), "with_z"_a = false)
 
     py::class_<mapbox::geojson::linear_ring,
                mapbox::geojson::linear_ring::container_type>(
@@ -1151,6 +1204,11 @@ void bind_geojson(py::module &geojson)
                      mapbox::geojson::geometry{self}, allocator);
                  return json;
              })
+        .def(
+            "bbox",
+            [](const mapbox::geojson::multi_polygon &self, bool with_z)
+                -> Eigen::VectorXd { return geom2bbox(self, with_z); },
+            py::kw_only(), "with_z"_a = false)
         .def(py::self == py::self) //
         .def(py::self != py::self) //
         //
@@ -1720,6 +1778,11 @@ void bind_geojson(py::module &geojson)
                 return self;
             },
             rvp::reference_internal)
+        .def(
+            "bbox",
+            [](const mapbox::geojson::feature &self, bool with_z)
+                -> Eigen::VectorXd { return geom2bbox(self.geometry, with_z); },
+            py::kw_only(), "with_z"_a = false)
         .def(py::self == py::self) //
         .def(py::self != py::self) //
         //
