@@ -8,6 +8,8 @@
 #endif
 
 #include "cubao/point_in_polygon.hpp"
+#include "cubao/polyline_in_polygon.hpp"
+#include "geojson_helpers.hpp"
 #include <Eigen/Core>
 #include <limits>
 #include <mapbox/geojson.hpp>
@@ -80,6 +82,14 @@ inline bool bbox_overlap(const BboxType &bbox1, const BboxType &bbox2,
     return true;
 }
 
+/*
+clipping_mode
+    -   longest
+    -   first
+    -   all
+    -   whole
+*/
+
 inline int geojson_cropping(const mapbox::geojson::feature &feature,
                             mapbox::geojson::feature_collection &output,
                             const RowVectors &polygon,
@@ -99,9 +109,10 @@ inline int geojson_cropping(const mapbox::geojson::feature &feature,
                       *bbox,                                        //
                       (bool)max_z_offset)                           // check_z?
     ) {
-        return false;
+        return 0;
     }
-    if (!feature.geometry.is<mapbox::geojson::line_string>()) {
+    if (!feature.geometry.is<mapbox::geojson::line_string>() ||
+        clipping_mode == "whole") {
         // only check centroid
         auto centroid = geometry_to_centroid(feature.geometry);
         auto mask =
@@ -114,7 +125,48 @@ inline int geojson_cropping(const mapbox::geojson::feature &feature,
             return 0;
         }
     }
-    return 0;
+    auto &line_string = feature.geometry.get<mapbox::geojson::line_string>();
+    auto polyline =
+        Eigen::Map<const RowVectors>(&line_string[0].x, line_string.size(), 3);
+    auto segs = polyline_in_polygon(polyline, polygon.leftCols<2>());
+    if (segs.empty()) {
+        return 0;
+    }
+    if (clipping_mode == "first") {
+        auto &coords = segs.begin()->second;
+        auto geom = mapbox::geojson::line_string();
+        geom.resize(coords.rows());
+        as_row_vectors(geom) = coords;
+        auto f = feature;
+        f.geometry = geom;
+        output.push_back(std::move(f));
+        return 1;
+    }
+    // longest or all
+    std::vector<PolylineChunks::key_type> keys;
+    keys.reserve(segs.size());
+    for (auto &pair : segs) {
+        keys.push_back(pair.first);
+    }
+    if (clipping_mode == "longest") { // else assume all
+        auto itr = std::max_element(
+            keys.begin(), keys.end(), [](const auto &k1, const auto &k2) {
+                double len1 = std::get<5>(k1) - std::get<2>(k1);
+                double len2 = std::get<5>(k2) - std::get<2>(k2);
+                return len1 < len2;
+            });
+        keys = {*itr};
+    }
+    for (auto &key : keys) {
+        auto &coords = segs[key];
+        auto geom = mapbox::geojson::line_string();
+        geom.resize(coords.rows());
+        as_row_vectors(geom) = coords;
+        auto f = feature;
+        f.geometry = geom;
+        output.push_back(std::move(f));
+    }
+    return keys.size();
 }
 
 inline mapbox::geojson::feature_collection
@@ -123,16 +175,35 @@ geojson_cropping(const mapbox::geojson::feature_collection &features,
                  const std::string &clipping_mode = "longest",
                  const std::optional<double> max_z_offset = {})
 {
-    return mapbox::geojson::feature_collection{};
+    auto bbox = row_vectors_to_bbox(polygon);
+    bbox.min[2] = bbox.max[2] = (bbox.min[2] + bbox.max[2]) / 2.0;
+    mapbox::geojson::feature_collection output;
+    for (auto &f : features) {
+        geojson_cropping(f, output, polygon, bbox, clipping_mode, max_z_offset);
+    }
+    return output;
 }
 
 inline mapbox::geojson::feature_collection
 geojson_cropping(const mapbox::geojson::geojson &geojson,
                  const RowVectors &polygon,
                  const std::string &clipping_mode = "longest",
-                 const std::optional<double> = {})
+                 const std::optional<double> max_z_offset = {})
 {
-    return mapbox::geojson::feature_collection{};
+    return geojson.match(
+        [&](const mapbox::geojson::geometry &g) {
+            return geojson_cropping(
+                mapbox::geojson::feature_collection{
+                    mapbox::geojson::feature_collection{g}},
+                polygon, clipping_mode, max_z_offset);
+        },
+        [](const mapbox::geojson::feature &f) {
+            return geojson_cropping(mapbox::geojson::feature_collection{f},
+                                    polygon, clipping_mode, max_z_offset);
+        },
+        [](const mapbox::geojson::feature_collection &fc) {
+            return geojson_cropping(fc, clipping_mode, max_z_offset);
+        });
 }
 
 } // namespace cubao
