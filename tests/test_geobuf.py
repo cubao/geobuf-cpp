@@ -1401,7 +1401,7 @@ def test_geojson_feature():
     assert props["list"].is_array()
     for x in list(props["list"].as_array()):
         assert isinstance(x, geojson.value)
-        assert type(x) == geojson.value
+        assert type(x) is geojson.value
     with pytest.raises(RuntimeError) as excinfo:
         props["list"].as_object()
     assert "in get<T>()" in repr(excinfo)
@@ -1413,7 +1413,7 @@ def test_geojson_feature():
     for k, v in props["dict"].as_object().items():
         assert isinstance(k, str)
         assert isinstance(v, geojson.value)
-        assert type(x) == geojson.value
+        assert type(x) is geojson.value
     with pytest.raises(RuntimeError) as excinfo:
         props["dict"].as_array()
     assert "in get<T>()" in repr(excinfo)
