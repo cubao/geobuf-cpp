@@ -265,6 +265,13 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def("features",
              py::overload_cast<const mapbox::geojson::feature_collection &>(
                  &Planet::features))
+        .def("build", &Planet::build)
+        .def("query", &Planet::query, "min"_a, "max"_a)
+        .def("copy", &Planet::copy)
+        .def("crop", &Planet::crop, "polygon"_a, py::kw_only(),
+             "clipping_mode"_a = "longest", //
+             "strip_properties"_a = false,  //
+             "is_wgs84"_a = true)
         //
         ;
 

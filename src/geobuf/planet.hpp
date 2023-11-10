@@ -25,6 +25,7 @@ struct Planet
 
     void build() const { this->rtree(); }
 
+    // TODO, query by style expression
     Eigen::VectorXi query(const Eigen::Vector2d &min,
                           const Eigen::Vector2d &max) const
     {
@@ -36,7 +37,7 @@ struct Planet
         }
         return index;
     }
-    FeatureCollection select(const Eigen::VectorXi &index) const
+    FeatureCollection copy(const Eigen::VectorXi &index) const
     {
         auto fc = FeatureCollection();
         fc.reserve(index.size());
@@ -46,9 +47,10 @@ struct Planet
         return fc;
     }
 
-    FeatureCollection crop(const RowVectorsNx2 &polygon,
+    FeatureCollection crop(const Eigen::Ref<const RowVectorsNx2> &polygon,
                            const std::string &clipping_mode = "longest",
-                           bool strip_properties = false) const
+                           bool strip_properties = false,
+                           bool is_wgs84 = true) const
     {
         auto bbox = row_vectors_to_bbox(polygon);
         auto hits =
@@ -78,7 +80,7 @@ struct Planet
                 feature.geometry.get<mapbox::geojson::line_string>();
             auto polyline = Eigen::Map<const RowVectors>(&line_string[0].x,
                                                          line_string.size(), 3);
-            auto segs = polyline_in_polygon(polyline, polygon);
+            auto segs = polyline_in_polygon(polyline, polygon, is_wgs84);
             if (segs.empty()) {
                 continue;
             }

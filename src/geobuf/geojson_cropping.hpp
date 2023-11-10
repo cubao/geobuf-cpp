@@ -51,7 +51,8 @@ inline BboxType row_vectors_to_bbox(const RowVectors &coords)
     return bbox;
 }
 
-inline BboxType row_vectors_to_bbox(const RowVectorsNx2 &coords)
+inline BboxType
+row_vectors_to_bbox(const Eigen::Ref<const RowVectorsNx2> &coords)
 {
     using limits = std::numeric_limits<double>;
     double min_t = limits::has_infinity ? -limits::infinity() : limits::min();
