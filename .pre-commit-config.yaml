@@ -45,6 +45,7 @@ repos:
   rev: 5.11.5
   hooks:
   - id: isort
+    args: [--profile, black]
 
 # Upgrade older Python syntax
 - repo: https://github.com/asottile/pyupgrade
@@ -61,7 +62,7 @@ repos:
     exclude: ^(docs|Makefile|benchmarks/Makefile)
 
 - repo: https://github.com/PyCQA/flake8
-  rev: 3.9.2
+  rev: 6.1.0
   hooks:
   - id: flake8
     additional_dependencies: [flake8-bugbear]
