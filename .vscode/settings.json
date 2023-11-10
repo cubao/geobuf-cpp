@@ -93,7 +93,14 @@
         "regex": "cpp",
         "future": "cpp",
         "__bits": "cpp",
-        "bit": "cpp"
+        "bit": "cpp",
+        "charconv": "cpp",
+        "concepts": "cpp",
+        "memory_resource": "cpp",
+        "ranges": "cpp",
+        "shared_mutex": "cpp",
+        "span": "cpp",
+        "stop_token": "cpp"
     },
     "workbench.colorCustomizations": {
         "activityBar.background": "#143328",

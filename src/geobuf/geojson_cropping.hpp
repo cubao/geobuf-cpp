@@ -20,6 +20,7 @@
 namespace cubao
 {
 using RowVectors = Eigen::Matrix<double, Eigen::Dynamic, 3, Eigen::RowMajor>;
+using RowVectorsNx2 = Eigen::Matrix<double, Eigen::Dynamic, 2, Eigen::RowMajor>;
 using BboxType = mapbox::geometry::box<double>;
 
 inline BboxType row_vectors_to_bbox(const RowVectors &coords)
@@ -30,7 +31,7 @@ inline BboxType row_vectors_to_bbox(const RowVectors &coords)
     auto bbox = BboxType({max_t, max_t, max_t}, {min_t, min_t, min_t});
     auto &min = bbox.min;
     auto &max = bbox.max;
-    for (int i = 1, N = coords.rows(); i < N; ++i) {
+    for (int i = 0, N = coords.rows(); i < N; ++i) {
         double x = coords(i, 0);
         double y = coords(i, 1);
         double z = coords(i, 2);
@@ -46,6 +47,30 @@ inline BboxType row_vectors_to_bbox(const RowVectors &coords)
             max.y = y;
         if (max.z < z)
             max.z = z;
+    }
+    return bbox;
+}
+
+inline BboxType
+row_vectors_to_bbox(const Eigen::Ref<const RowVectorsNx2> &coords)
+{
+    using limits = std::numeric_limits<double>;
+    double min_t = limits::has_infinity ? -limits::infinity() : limits::min();
+    double max_t = limits::has_infinity ? limits::infinity() : limits::max();
+    auto bbox = BboxType({max_t, max_t, 0.0}, {min_t, min_t, 0.0});
+    auto &min = bbox.min;
+    auto &max = bbox.max;
+    for (int i = 0, N = coords.rows(); i < N; ++i) {
+        double x = coords(i, 0);
+        double y = coords(i, 1);
+        if (min.x > x)
+            min.x = x;
+        if (min.y > y)
+            min.y = y;
+        if (max.x < x)
+            max.x = x;
+        if (max.y < y)
+            max.y = y;
     }
     return bbox;
 }
@@ -176,7 +201,7 @@ inline int geojson_cropping(const mapbox::geojson::feature &feature,
                 double len2 = std::get<5>(k2) - std::get<2>(k2);
                 return len1 < len2;
             });
-        keys = {*itr};
+        keys = {*itr}; // pick longest
     }
     for (auto &key : keys) {
         auto &coords = segs[key];

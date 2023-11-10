@@ -10,6 +10,10 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.1.7 (2023-11-11)
+
+*   Integrate PackedRTree (rbush)
+
 ## Version 0.1.6 (2023-07-02)
 
 *   Crop geojson features by polygon (alpha release)
