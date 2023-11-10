@@ -15,11 +15,14 @@ namespace cubao
 struct Planet
 {
     using FeatureCollection = mapbox::geojson::feature_collection;
+    Planet() = default;
+    Planet(const FeatureCollection &features) { this->features(features); }
 
     const FeatureCollection &features() const { return features_; }
     Planet &features(const FeatureCollection &features)
     {
         features_ = features;
+        rtree_.reset();
         return *this;
     }
 

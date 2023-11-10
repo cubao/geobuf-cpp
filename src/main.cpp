@@ -260,6 +260,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
     using Planet = cubao::Planet;
     py::class_<Planet>(m, "Planet", py::module_local())
         .def(py::init<>())
+        .def(py::init<const mapbox::geojson::feature_collection &>())
         .def("features", py::overload_cast<>(&Planet::features, py::const_),
              rvp::reference_internal)
         .def("features",

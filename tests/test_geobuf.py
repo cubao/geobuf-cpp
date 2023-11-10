@@ -15,6 +15,7 @@ import pybind11_geobuf
 from pybind11_geobuf import (  # noqa
     Decoder,
     Encoder,
+    Planet,
     geojson,
     normalize_json,
     pbf_decode,
@@ -1753,6 +1754,27 @@ def test_rapidjson_normalize_non_geojson():
         j.dumps()
         == '{"coordinates":[1.2,7.9,4.6],"type":"Point","value":3.123456}'  # noqa
     )
+
+
+def test_query():
+    path = f"{__pwd}/../data/suzhoubeizhan.pbf"
+    fc = geojson.FeatureCollection().load(path)
+    planet = Planet(fc)
+    hits = planet.query([120.64094, 31.41515], [120.64137, 31.41534])
+    assert len(hits) == 4
+
+    path = f"{__pwd}/../data/suzhoubeizhan_crossover.json"
+    polygon = geojson.Feature().load(path).to_numpy()
+
+    cropped1 = planet.crop(polygon[:, :2])
+    cropped2 = planet.crop(polygon[:, :2], strip_properties=True)
+    # cropped1.dump('cropped1.json', indent=True)
+    # cropped2.dump('cropped2.json', indent=True)
+    assert len(cropped1) == len(cropped2) == 54
+    assert len(list(cropped1[0].properties().keys())) == 6
+    assert list(cropped2[0].properties().keys()) == ["index"]
+    assert cropped2[0].properties()["index"]() == 438
+    assert fc[438] == cropped1[0]
 
 
 if __name__ == "__main__":
