@@ -11,6 +11,7 @@
 #include <pybind11/stl_bind.h>
 
 #include "geobuf/geobuf.hpp"
+#include "geobuf/planet.hpp"
 #include "geobuf/pybind11_helpers.hpp"
 
 #include <optional>
@@ -255,6 +256,16 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
 
     auto geojson = m.def_submodule("geojson");
     cubao::bind_geojson(geojson);
+
+    using Planet = cubao::Planet;
+    py::class_<Planet>(m, "Planet", py::module_local())
+        .def(py::init<>())
+        .def("features", py::overload_cast<>(&Planet::features, py::const_), rvp::reference_internal)
+        .def("features",
+             py::overload_cast<const mapbox::geojson::feature_collection &>(
+                 &Planet::features))
+        //
+        ;
 
     cubao::bind_rapidjson(m);
 
