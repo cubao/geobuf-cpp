@@ -23,6 +23,110 @@ struct Planet
         return *this;
     }
 
+    void build() const { this->rtree(); }
+
+    Eigen::VectorXi query(const Eigen::Vector2d &min,
+                          const Eigen::Vector2d &max) const
+    {
+        auto &tree = this->rtree();
+        auto hits = tree.search(min[0], min[1], max[0], max[1]);
+        Eigen::VectorXi index(hits.size());
+        for (int i = 0, N = hits.size(); i < N; ++i) {
+            index[i] = hits[i].offset;
+        }
+        return index;
+    }
+    FeatureCollection select(const Eigen::VectorXi &index) const
+    {
+        auto fc = FeatureCollection();
+        fc.reserve(index.size());
+        for (int i = 0, N = index.size(); i < N; ++i) {
+            fc.push_back(features_[index[i]]);
+        }
+        return fc;
+    }
+
+    FeatureCollection crop(const RowVectorsNx2 &polygon,
+                           const std::string &clipping_mode = "longest",
+                           bool strip_properties = false) const
+    {
+        auto bbox = row_vectors_to_bbox(polygon);
+        auto hits =
+            this->query({bbox.min.x, bbox.min.y}, {bbox.max.x, bbox.max.y});
+        auto fc = FeatureCollection();
+        fc.reserve(hits.size());
+        for (auto idx : hits) {
+            auto &feature = features_[idx];
+            if (!feature.geometry.is<mapbox::geojson::line_string>() ||
+                clipping_mode == "whole") {
+                // only check centroid
+                auto centroid = geometry_to_centroid(feature.geometry);
+                auto mask = point_in_polygon(
+                    Eigen::Map<const RowVectorsNx2>(&centroid.x, 1, 2),
+                    polygon);
+                if (mask[0]) {
+                    fc.emplace_back(
+                        feature.geometry,
+                        strip_properties
+                            ? mapbox::feature::property_map{{"index", idx}}
+                            : feature.properties,
+                        feature.id);
+                }
+                continue;
+            }
+            auto &line_string =
+                feature.geometry.get<mapbox::geojson::line_string>();
+            auto polyline = Eigen::Map<const RowVectors>(&line_string[0].x,
+                                                         line_string.size(), 3);
+            auto segs = polyline_in_polygon(polyline, polygon);
+            if (segs.empty()) {
+                continue;
+            }
+            if (clipping_mode == "first") {
+                auto &coords = segs.begin()->second;
+                auto geom = mapbox::geojson::line_string();
+                geom.resize(coords.rows());
+                as_row_vectors(geom) = coords;
+                fc.emplace_back(
+                    geom,
+                    strip_properties
+                        ? mapbox::feature::property_map{{"index", idx}}
+                        : feature.properties,
+                    feature.id);
+                continue;
+            }
+            // longest or all
+            std::vector<PolylineChunks::key_type> keys;
+            keys.reserve(segs.size());
+            for (auto &pair : segs) {
+                keys.push_back(pair.first);
+            }
+            if (clipping_mode == "longest") { // else assume all
+                auto itr = std::max_element(
+                    keys.begin(), keys.end(),
+                    [](const auto &k1, const auto &k2) {
+                        double len1 = std::get<5>(k1) - std::get<2>(k1);
+                        double len2 = std::get<5>(k2) - std::get<2>(k2);
+                        return len1 < len2;
+                    });
+                keys = {*itr}; // pick longest
+            }
+            for (auto &key : keys) {
+                auto &coords = segs[key];
+                auto geom = mapbox::geojson::line_string();
+                geom.resize(coords.rows());
+                as_row_vectors(geom) = coords;
+                fc.emplace_back(
+                    geom,
+                    strip_properties
+                        ? mapbox::feature::property_map{{"index", idx}}
+                        : feature.properties,
+                    feature.id);
+            }
+        }
+        return fc;
+    }
+
   private:
     FeatureCollection features_;
 
