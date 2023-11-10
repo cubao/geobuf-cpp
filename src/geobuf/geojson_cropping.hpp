@@ -31,7 +31,7 @@ inline BboxType row_vectors_to_bbox(const RowVectors &coords)
     auto bbox = BboxType({max_t, max_t, max_t}, {min_t, min_t, min_t});
     auto &min = bbox.min;
     auto &max = bbox.max;
-    for (int i = 1, N = coords.rows(); i < N; ++i) {
+    for (int i = 0, N = coords.rows(); i < N; ++i) {
         double x = coords(i, 0);
         double y = coords(i, 1);
         double z = coords(i, 2);
@@ -60,7 +60,7 @@ row_vectors_to_bbox(const Eigen::Ref<const RowVectorsNx2> &coords)
     auto bbox = BboxType({max_t, max_t, 0.0}, {min_t, min_t, 0.0});
     auto &min = bbox.min;
     auto &max = bbox.max;
-    for (int i = 1, N = coords.rows(); i < N; ++i) {
+    for (int i = 0, N = coords.rows(); i < N; ++i) {
         double x = coords(i, 0);
         double y = coords(i, 1);
         if (min.x > x)
