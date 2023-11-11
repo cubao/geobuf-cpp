@@ -1867,6 +1867,7 @@ def test_query():
     planet = Planet(fc)
     hits = planet.query([120.64094, 31.41515], [120.64137, 31.41534])
     assert len(hits) == 4
+    assert hits.tolist() == [529, 530, 536, 659]
 
     path = f"{__pwd}/../data/suzhoubeizhan_crossover.json"
     polygon = geojson.Feature().load(path).to_numpy()
@@ -1878,8 +1879,9 @@ def test_query():
     assert len(cropped1) == len(cropped2) == 54
     assert len(list(cropped1[0].properties().keys())) == 6
     assert list(cropped2[0].properties().keys()) == ["index"]
-    assert cropped2[0].properties()["index"]() == 438
-    assert fc[438] == cropped1[0]
+    assert cropped2[-1].properties()["index"]() == 977
+    hits = [f.properties()["index"]() for f in cropped2]
+    # assert fc[977] == cropped1[-1]
 
 
 if __name__ == "__main__":

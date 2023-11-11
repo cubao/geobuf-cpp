@@ -202,7 +202,7 @@ struct Planet
                 if (ymin > ymax) {
                     std::swap(ymin, ymax);
                 }
-                nodes.emplace_back(xmin, ymin, xmax, ymax, index);
+                nodes.push_back({xmin, ymin, xmax, ymax, index});
             }
             ++index;
         }
