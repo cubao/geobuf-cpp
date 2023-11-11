@@ -61,11 +61,11 @@ bool decode_printable_string(std::stringstream &out,
     static constexpr const std::size_t max_string_length = 60;
 
     const std::string str{view.data(), view.size()};
-    if (str.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV"
-                              "WXYZ0123456789_:-") != std::string::npos) {
+    if (!std::all_of(str.begin(), str.end(), [](char c) {
+            return std::isprint(static_cast<unsigned char>(c));
+        })) {
         return false;
     }
-
     if (str.size() > max_string_length) {
         out << '"' << str.substr(0, max_string_length) << "\"...\n";
     } else {

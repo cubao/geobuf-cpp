@@ -1561,6 +1561,12 @@ def test_geojson_feature():
 
     feature.clear()
 
+    feature.id(3.14)
+    assert feature.id() == 3.14
+    pbf = feature.to_geobuf()
+    text = pbf_decode(pbf)
+    print(text)
+
     feature.id(2**63 - 1)
     assert feature.id() == 9223372036854775807
     pbf = feature.to_geobuf()
@@ -1588,6 +1594,9 @@ def test_geojson_feature():
     feature.id(3.14)
     assert feature.id() == 3.14
     pbf = feature.to_geobuf()
+
+    f2 = geojson.Feature().from_geobuf(pbf)
+    assert f2.id() == 3.14
     text = pbf_decode(pbf)
     print()
     # assert '11: "3.14"' in text

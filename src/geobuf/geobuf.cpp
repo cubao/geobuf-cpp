@@ -414,7 +414,6 @@ void Encoder::writeFeature(const mapbox::geojson::feature &feature, Pbf &pbf)
         // using identifier = mapbox::util::variant<null_value_t, uint64_t,
         // int64_t, double, std::string>;
         feature.id.match(
-            // shit
             [&](uint64_t uid) {
                 if (uid <= static_cast<uint64_t>(
                                std::numeric_limits<int64_t>::max())) {
@@ -425,10 +424,7 @@ void Encoder::writeFeature(const mapbox::geojson::feature &feature, Pbf &pbf)
             },
             [&](int64_t id) { pbf.add_int64(12, id); },
             [&](double d) {
-                pbf.add_string(11, "what");
-                // pbf.add_string(11, dbg(fmt::format("{}", d)));
-                // pbf.add_string(11, std::to_string(d));
-                //
+                pbf.add_string(11, std::to_string(d));
             },
             [&](const std::string &id) { pbf.add_string(11, id); },
             [&](const auto &) {
