@@ -10,6 +10,13 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.1.8 (2023-11-11)
+
+*   Fix readthedocs
+*   Full support of geobuf Feature id
+*   Fix geojson value uint64_t/int64_t
+*   Misc updates
+
 ## Version 0.1.7 (2023-11-11)
 
 *   Integrate PackedRTree (rbush)
