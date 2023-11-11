@@ -291,19 +291,35 @@ inline std::string get_type(const mapbox::geojson::value &self)
 inline void geometry_push_back(mapbox::geojson::geometry &self,
                                const mapbox::geojson::point &point)
 {
-    self.match([&](mapbox::geojson::multi_point &g) { g.push_back(point); },
-               [&](mapbox::geojson::line_string &g) { g.push_back(point); },
-               [&](mapbox::geojson::multi_line_string &g) {
-                   g.back().push_back(point);
-               },
-               [&](mapbox::geojson::polygon &g) { g.back().push_back(point); },
-               [&](mapbox::geojson::multi_polygon &g) {
-                   g.back().back().push_back(point);
-               },
-               [&](auto &g) {
-                   std::cerr << "geometry_push_back not handled for this type: "
-                             << geometry_type(g) << std::endl;
-               });
+    self.match(
+        [&](mapbox::geojson::multi_point &g) { g.push_back(point); },
+        [&](mapbox::geojson::line_string &g) { g.push_back(point); },
+        [&](mapbox::geojson::multi_line_string &g) {
+            if (g.empty()) {
+                throw std::invalid_argument(
+                    "can't push_back Point to empty MultiLineString, may "
+                    "resize first");
+            }
+            g.back().push_back(point);
+        },
+        [&](mapbox::geojson::polygon &g) {
+            if (g.empty()) {
+                throw std::invalid_argument(
+                    "can't push_back Point to empty Polygon, may resize first");
+            }
+            g.back().push_back(point);
+        },
+        [&](mapbox::geojson::multi_polygon &g) {
+            if (g.empty() || g.back().empty()) {
+                throw std::invalid_argument("can't push_back Point to invalid "
+                                            "MultiPolygon, may resize first");
+            }
+            g.back().back().push_back(point);
+        },
+        [&](auto &g) {
+            std::cerr << "geometry_push_back(point) not handled for this type: "
+                      << geometry_type(g) << std::endl;
+        });
 }
 
 inline void geometry_push_back(mapbox::geojson::geometry &self,
@@ -325,8 +341,9 @@ inline void geometry_push_back(mapbox::geojson::geometry &self,
             eigen2geom(points, g.back());
         },
         [&](auto &g) {
-            std::cerr << "geometry_push_back not handled for this type: "
-                      << geometry_type(g) << std::endl;
+            std::cerr
+                << "geometry_push_back(ndarray) not handled for this type: "
+                << geometry_type(g) << std::endl;
         });
 }
 
@@ -336,8 +353,9 @@ inline void geometry_push_back(mapbox::geojson::geometry &self,
     self.match(
         [&](mapbox::geojson::geometry_collection &g) { g.push_back(geom); },
         [&](auto &g) {
-            std::cerr << "geometry_push_back(geom) not handled for this type: "
-                      << geometry_type(g) << std::endl;
+            std::cerr << "geometry_push_back(geom:" << geometry_type(geom)
+                      << ") not handled for this type: " << geometry_type(g)
+                      << std::endl;
         });
 }
 
@@ -383,6 +401,20 @@ inline void geometry_clear(mapbox::geojson::geometry &self)
                [&](mapbox::geojson::geometry_collection &g) { g.clear(); },
                [&](auto &g) {
                    std::cerr << "geometry_clear() not handled for this type: "
+                             << geometry_type(g) << std::endl;
+               });
+}
+
+inline void geometry_resize(mapbox::geojson::geometry &self, int size)
+{
+    self.match([&](mapbox::geojson::multi_point &g) { g.resize(size); },
+               [&](mapbox::geojson::line_string &g) { g.resize(size); },
+               [&](mapbox::geojson::multi_line_string &g) { g.resize(size); },
+               [&](mapbox::geojson::polygon &g) { g.resize(size); },
+               [&](mapbox::geojson::multi_polygon &g) { g.resize(size); },
+               [&](mapbox::geojson::geometry_collection &g) { g.resize(size); },
+               [&](auto &g) {
+                   std::cerr << "geometry_resize() not handled for this type: "
                              << geometry_type(g) << std::endl;
                });
 }

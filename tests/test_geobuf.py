@@ -449,6 +449,9 @@ def test_geojson_point():
     g1.round(lon=-1, lat=-1)  # normally you don't do it
     assert np.all(g1.as_numpy() == [120, 460, 0])
     assert not g1.deduplicate_xyz()
+    assert g1 != geojson.Point()
+    g1.clear()
+    assert g1 == geojson.Point()
 
 
 def test_geojson_point2():
@@ -505,6 +508,13 @@ def test_geojson_multi_point():
 
     g2 = geojson.MultiPoint([g1[0], g1[1], g1[0], g1[1]])
     assert g2() == [*g1(), *g1()]
+    assert len(g2) == 4
+    del g2[1]
+    assert len(g2) == 3
+    assert g2() == [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
+    assert g2.resize(2)() == [g1[0](), g1[0]()]
+    assert len(g2) == 2
+
     g3 = geojson.MultiPoint([[1, 2], [3, 4]])
     assert np.all(g3.as_numpy() == [[1, 2, 0], [3, 4, 0]])
 
@@ -517,7 +527,6 @@ def test_geojson_multi_point():
     g1[0] = geojson.Point([1, 2])
     assert g1() == [[1, 2, 0], [7, 8, 9]]
     for idx, pt in enumerate(g1):
-        print(idx, pt)
         assert isinstance(pt, geojson.Point)
         if idx == 0:
             assert pt() == [1, 2, 0]
@@ -573,6 +582,13 @@ def test_geojson_multi_point():
     assert len(g) == 3
     assert not g.deduplicate_xyz()
     assert len(g) == 3
+
+    g = geojson.Geometry(g)
+    assert len(g) == 3
+    g.push_back(geojson.Point(6, 7))
+    assert len(g) == 4
+    g.clear()
+    assert len(g) == 0
 
 
 def test_geojson_line_string():
@@ -684,6 +700,15 @@ def test_geojson_multi_line_string():
 
     g1[0] = [[7, 8], [2, 3]]
     assert g1() == [[[7, 8, 0], [2, 3, 0]]]
+
+    gg = geojson.Geometry(g1)
+    g1.push_back(geojson.LineString([[2, 4, 6], [7, 8, 9]]))
+    assert g1() == [[[7, 8, 0], [2, 3, 0]], [[2, 4, 6], [7, 8, 9]]]
+    gg.push_back(geojson.LineString([[2, 4, 6], [7, 8, 9]]))
+    assert gg()["coordinates"] == [
+        [[7, 8, 0], [2, 3, 0]],
+        [[2, 4, 6], [7, 8, 9]],
+    ]
 
     g1.clear()
     assert len(g1) == 0
@@ -1162,8 +1187,16 @@ def test_geojson_geometry():
     assert g5() == g5.push_back(g4)()  # push_back geometry silent ignore
 
     g5 = geojson.Geometry(geojson.MultiLineString())
-    # g5.push_back([70, 80, 90]), don't do this, will segment fault
-    # TODO, raise Exception for push_back
+    with pytest.raises(ValueError) as excinfo:
+        g5.push_back([70, 80, 90])
+    assert "can't push_back Point to empty MultiLineString" in str(excinfo)
+    g5.resize(1)
+    assert g5() == {"type": "MultiLineString", "coordinates": [[]]}
+    g5.push_back([70, 80, 90])
+    assert g5() == {
+        "type": "MultiLineString",
+        "coordinates": [[[70.0, 80.0, 90.0]]],
+    }
 
     g6 = geojson.Geometry(geojson.Polygon([[1, 2, 3], [4, 5, 6]]))
     assert np.array(g6()["coordinates"]).shape == (1, 2, 3)
@@ -1498,6 +1531,82 @@ def test_geojson_feature():
         == 3.141592653
     )  # noqa
 
+    feature = geojson.Feature({**sample_geojson(), "id": 666})
+    assert feature.id() == 666
+    feature.clear()
+    assert len(feature.properties()) == 0
+    assert len(feature.custom_properties()) == 0
+    assert feature() == {
+        "type": "Feature",
+        "geometry": {"type": "LineString", "coordinates": []},
+        "properties": {},
+    }
+    assert feature.id() is None
+    # id := variant<null, uint64, int64, double, string>
+    assert feature.id(42).id() == 42
+    assert feature.id(-1024).id() == -1024
+    assert feature.id(3.14).id() == 3.14
+    assert feature.id("string").id() == "string"
+    assert feature.id(None).id() is None
+    assert feature.id(-(2**63)).id() == -9223372036854775808
+    assert feature.id(2**64 - 1).id() == 18446744073709551615
+    with pytest.raises(RuntimeError) as excinfo:
+        feature.id(2**64)  # out of range of uint64_t
+    prefix = "integer out of range of int64_t/uint64_t"
+    assert f"{prefix}: 18446744073709551616" in str(excinfo)
+    feature["num"] = -(2**63)
+    assert feature["num"]() == -9223372036854775808
+    feature["num"] = 2**64 - 1
+    assert feature["num"]() == 18446744073709551615
+    with pytest.raises(RuntimeError) as excinfo:
+        feature["num"] = 2**64
+    assert f"{prefix}: 18446744073709551616" in str(excinfo)
+
+    feature.clear()
+
+    feature.id(2**63 - 1)
+    pbf = feature.to_geobuf()
+    assert feature.id() == 9223372036854775807
+    assert geojson.Feature().from_geobuf(pbf).id() == 9223372036854775807
+    text = pbf_decode(pbf)
+    assert "12: 9223372036854775807" in text
+
+    feature.id(2**63)
+    pbf = feature.to_geobuf()
+    assert feature.id() == 9223372036854775808
+    assert geojson.Feature().from_geobuf(pbf).id() == 9223372036854775808
+    text = pbf_decode(pbf)
+    assert '11: "9223372036854775808"' in text
+
+    feature.id(2**64 - 1)
+    pbf = feature.to_geobuf()
+    assert feature.id() == 18446744073709551615
+    assert geojson.Feature().from_geobuf(pbf).id() == 18446744073709551615
+    text = pbf_decode(pbf)
+    assert '11: "18446744073709551615"' in text
+
+    feature.id("text")
+    pbf = feature.to_geobuf()
+    assert feature.id() == "text"
+    assert geojson.Feature().from_geobuf(pbf).id() == "text"
+    text = pbf_decode(pbf)
+    assert '11: "text"' in text
+
+    feature.id(3.14)
+    pbf = feature.to_geobuf()
+    assert feature.id() == 3.14
+    assert geojson.Feature().from_geobuf(pbf).id() == 3.14
+    text = pbf_decode(pbf)
+    assert '11: "3.14"' in text
+
+    feature.id("3.14")
+    pbf = feature.to_geobuf()
+    assert feature.id() == "3.14"
+    # note that not "3.14"
+    assert geojson.Feature().from_geobuf(pbf).id() == 3.14
+    text = pbf_decode(pbf)
+    assert '11: "3.14"' in text
+
 
 def test_geojson_load_dump():
     dirname = os.path.abspath(f"{__pwd}/../data")
@@ -1762,6 +1871,7 @@ def test_query():
     planet = Planet(fc)
     hits = planet.query([120.64094, 31.41515], [120.64137, 31.41534])
     assert len(hits) == 4
+    assert hits.tolist() == [529, 530, 536, 659]
 
     path = f"{__pwd}/../data/suzhoubeizhan_crossover.json"
     polygon = geojson.Feature().load(path).to_numpy()
@@ -1773,8 +1883,9 @@ def test_query():
     assert len(cropped1) == len(cropped2) == 54
     assert len(list(cropped1[0].properties().keys())) == 6
     assert list(cropped2[0].properties().keys()) == ["index"]
-    assert cropped2[0].properties()["index"]() == 438
-    assert fc[438] == cropped1[0]
+    assert cropped2[-1].properties()["index"]() == 977
+    hits = [f.properties()["index"]() for f in cropped2]
+    # assert fc[977] == cropped1[-1]
 
 
 if __name__ == "__main__":

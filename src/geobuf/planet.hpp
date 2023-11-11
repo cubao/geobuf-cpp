@@ -33,12 +33,12 @@ struct Planet
                           const Eigen::Vector2d &max) const
     {
         auto &tree = this->rtree();
-        auto hits = tree.search(min[0], min[1], max[0], max[1]);
-        Eigen::VectorXi index(hits.size());
-        for (int i = 0, N = hits.size(); i < N; ++i) {
-            index[i] = hits[i].offset;
+        std::set<int> hits;
+        for (auto h : tree.search(min[0], min[1], max[0], max[1])) {
+            hits.insert(h.offset);
         }
-        return index;
+        std::vector<int> index(hits.begin(), hits.end());
+        return Eigen::VectorXi::Map(index.data(), index.size());
     }
     FeatureCollection copy(const Eigen::VectorXi &index) const
     {
@@ -169,11 +169,42 @@ struct Planet
         if (rtree_) {
             return *rtree_;
         }
+        size_t N = 0;
+        for (auto &feature : features_) {
+            if (!feature.geometry.is<mapbox::geojson::line_string>()) {
+                ++N;
+                continue;
+            }
+            auto &ls = feature.geometry.get<mapbox::geojson::line_string>();
+            N += std::max(ls.size() - 1, size_t{1});
+        }
         auto nodes = std::vector<FlatGeobuf::NodeItem>{};
-        nodes.reserve(features_.size());
+        nodes.reserve(N);
         uint64_t index{0};
         for (auto &feature : features_) {
-            nodes.emplace_back(envelope_2d(feature.geometry, index++));
+            if (!feature.geometry.is<mapbox::geojson::line_string>()) {
+                nodes.emplace_back(envelope_2d(feature.geometry, index++));
+                continue;
+            }
+            auto &ls = feature.geometry.get<mapbox::geojson::line_string>();
+            if (ls.size() < 2) {
+                nodes.emplace_back(envelope_2d(feature.geometry, index++));
+                continue;
+            }
+            for (size_t i = 0, I = ls.size() - 1; i < I; ++i) {
+                double xmin = ls[i].x;
+                double xmax = ls[i + 1].x;
+                double ymin = ls[i].y;
+                double ymax = ls[i + 1].y;
+                if (xmin > xmax) {
+                    std::swap(xmin, xmax);
+                }
+                if (ymin > ymax) {
+                    std::swap(ymin, ymax);
+                }
+                nodes.push_back({xmin, ymin, xmax, ymax, index});
+            }
+            ++index;
         }
         auto extent = calcExtent(nodes);
         hilbertSort(nodes, extent);

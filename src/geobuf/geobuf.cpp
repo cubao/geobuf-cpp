@@ -411,17 +411,24 @@ void Encoder::writeFeature(const mapbox::geojson::feature &feature, Pbf &pbf)
         // int64_t, double, std::string>;
         feature.id.match(
             [&](uint64_t uid) {
-                int id = static_cast<int64_t>(uid);
-                if (id >= 0) {
-                    pbf.add_int64(12, id);
+                if (uid <= static_cast<uint64_t>(
+                               std::numeric_limits<int64_t>::max())) {
+                    pbf.add_int64(12, static_cast<int64_t>(uid));
                 } else {
                     pbf.add_string(11, std::to_string(uid));
                 }
             },
             [&](int64_t id) { pbf.add_int64(12, id); },
+            [&](double d) {
+                rapidjson::StringBuffer s;
+                rapidjson::Writer<rapidjson::StringBuffer> writer(s);
+                writer.Double(d);
+                pbf.add_string(11, s.GetString());
+            },
             [&](const std::string &id) { pbf.add_string(11, id); },
             [&](const auto &) {
-                pbf.add_string(11, dump(to_json(feature.id)));
+                throw std::invalid_argument("invalid id: " +
+                                            dump(to_json(feature.id)));
             });
     }
     if (!feature.properties.empty()) {
@@ -702,7 +709,25 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
             protozero::pbf_reader pbf_g = pbf.get_message();
             f.geometry = readGeometry(pbf_g);
         } else if (tag == 11) {
-            f.id = pbf.get_string(); // TODO, restore to mapbox::geojson id
+            // see "feature.id.match(" in this source file
+            // protobuf:    oneof id_type {
+            //                  string id = 11;
+            //                  sint64 int_id = 12;
+            //              }
+            // geojson:     id := <null, uint64_t, int64_t, double, string>
+            auto text = pbf.get_string();
+            auto json = parse(text);
+            if (json.IsNumber()) {
+                if (json.IsUint64()) {
+                    f.id = json.GetUint64();
+                } else if (json.IsInt64()) {
+                    f.id = json.GetInt64();
+                } else {
+                    f.id = json.GetDouble();
+                }
+            } else {
+                f.id = text;
+            }
         } else if (tag == 12) {
             f.id = pbf.get_int64();
         } else if (tag == 13) {
