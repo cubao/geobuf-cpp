@@ -1866,6 +1866,8 @@ def test_query():
 
 
 if __name__ == "__main__":
+    test_geojson_feature()
+
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
     pytest_main(pwd, test_file=os.path.basename(__file__))

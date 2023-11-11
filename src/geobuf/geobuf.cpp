@@ -412,6 +412,7 @@ void Encoder::writeFeature(const mapbox::geojson::feature &feature, Pbf &pbf)
         // using identifier = mapbox::util::variant<null_value_t, uint64_t,
         // int64_t, double, std::string>;
         feature.id.match(
+            // shit
             [&](uint64_t uid) {
                 if (uid <= static_cast<uint64_t>(
                                std::numeric_limits<int64_t>::max())) {
@@ -706,15 +707,25 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
             protozero::pbf_reader pbf_g = pbf.get_message();
             f.geometry = readGeometry(pbf_g);
         } else if (tag == 11) {
-            // shit
-            f.id = pbf.get_string(); // TODO, restore to mapbox::geojson id
-            // https://github.com/mapbox/geobuf/blob/daad5e039f842f4d4f24ed7d59f31586563b71b8/geobuf.proto#L18-L21
-            // oneof id_type {
-            //     string id = 11;
-            //     sint64 int_id = 12;
-            // }
-            // using identifier = mapbox::util::variant<null_value_t, uint64_t,
-            // int64_t, double, std::string>;
+            // see "feature.id.match(" in this source file
+            // protobuf:    oneof id_type {
+            //                  string id = 11;
+            //                  sint64 int_id = 12;
+            //              }
+            // geojson:     id := <null, uint64_t, int64_t, double, string>
+            auto text = pbf.get_string();
+            auto json = parse(text);
+            if (json.IsNumber()) {
+                if (json.IsUint64()) {
+                    f.id = json.GetUint64();
+                } else if (json.IsInt64()) {
+                    f.id = json.GetInt64();
+                } else {
+                    f.id = json.GetDouble();
+                }
+            } else {
+                f.id = text;
+            }
         } else if (tag == 12) {
             f.id = pbf.get_int64();
         } else if (tag == 13) {
