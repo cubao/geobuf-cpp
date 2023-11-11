@@ -405,6 +405,20 @@ inline void geometry_clear(mapbox::geojson::geometry &self)
                });
 }
 
+inline void geometry_resize(mapbox::geojson::geometry &self, int size)
+{
+    self.match([&](mapbox::geojson::multi_point &g) { g.resize(size); },
+               [&](mapbox::geojson::line_string &g) { g.resize(size); },
+               [&](mapbox::geojson::multi_line_string &g) { g.resize(size); },
+               [&](mapbox::geojson::polygon &g) { g.resize(size); },
+               [&](mapbox::geojson::multi_polygon &g) { g.resize(size); },
+               [&](mapbox::geojson::geometry_collection &g) { g.resize(size); },
+               [&](auto &g) {
+                   std::cerr << "geometry_resize() not handled for this type: "
+                             << geometry_type(g) << std::endl;
+               });
+}
+
 inline void geojson_value_clear(mapbox::geojson::value &self)
 {
     self.match([](mapbox::geojson::value::array_type &arr) { arr.clear(); },

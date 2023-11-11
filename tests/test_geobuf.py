@@ -1180,6 +1180,10 @@ def test_geojson_geometry():
     with pytest.raises(ValueError) as excinfo:
         g5.push_back([70, 80, 90])
     assert "can't push_back Point to empty MultiLineString" in str(excinfo)
+    g5.resize(1)
+    assert g5() == {'type': 'MultiLineString', 'coordinates': [[]]}
+    g5.push_back([70, 80, 90])
+    assert g5() == {'type': 'MultiLineString', 'coordinates': [[[70.0, 80.0, 90.0]]]}
 
     g6 = geojson.Geometry(geojson.Polygon([[1, 2, 3], [4, 5, 6]]))
     assert np.array(g6()["coordinates"]).shape == (1, 2, 3)

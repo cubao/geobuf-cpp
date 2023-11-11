@@ -433,6 +433,13 @@ void bind_geojson(py::module &geojson)
             },
             rvp::reference_internal)
         .def(
+            "resize",
+            [](mapbox::geojson::geometry &self, int size) -> mapbox::geojson::geometry & {
+                geometry_resize(self, size);
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
             "clear",
             [](mapbox::geojson::geometry &self) -> mapbox::geojson::geometry & {
                 geometry_clear(self);
