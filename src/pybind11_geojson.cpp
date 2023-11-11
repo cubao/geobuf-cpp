@@ -443,6 +443,7 @@ void bind_geojson(py::module &geojson)
             "clear",
             [](mapbox::geojson::geometry &self) -> mapbox::geojson::geometry & {
                 geometry_clear(self);
+                self.custom_properties.clear();
                 return self;
             },
             rvp::reference_internal)
@@ -1777,6 +1778,10 @@ void bind_geojson(py::module &geojson)
         .def(
             "clear",
             [](mapbox::geojson::feature &self) -> mapbox::geojson::feature & {
+                geometry_clear(self.geometry);
+                self.geometry.custom_properties.clear();
+                self.properties.clear();
+                self.id = mapbox::geojson::null_value_t();
                 self.custom_properties.clear();
                 return self;
             },

@@ -1526,6 +1526,8 @@ def test_geojson_feature():
     )  # noqa
 
     feature = geojson.Feature(sample_geojson())
+    assert len(feature.properties()) == 0
+    assert len(feature.custom_properties()) == 0
     print()  # shit
 
 
@@ -1813,6 +1815,7 @@ if __name__ == "__main__":
     test_geojson_multi_point()
     test_geojson_geometry()
     test_geojson_feature()
+    test_rapidjson_obj()
     # np.set_printoptions(suppress=True)
     # pwd = os.path.abspath(os.path.dirname(__file__))
     # pytest_main(pwd, test_file=os.path.basename(__file__))
