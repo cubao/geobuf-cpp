@@ -424,7 +424,7 @@ void Encoder::writeFeature(const mapbox::geojson::feature &feature, Pbf &pbf)
             },
             [&](int64_t id) { pbf.add_int64(12, id); },
             [&](double d) {
-                pbf.add_string(11, std::to_string(d));
+                pbf.add_string(11, dbg(fmt::format("{}", d)));
             },
             [&](const std::string &id) { pbf.add_string(11, id); },
             [&](const auto &) {
