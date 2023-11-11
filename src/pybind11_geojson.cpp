@@ -478,30 +478,6 @@ void bind_geojson(py::module &geojson)
         BIND_PY_FLUENT_ATTRIBUTE(mapbox::geojson::geometry,  //
                                  PropertyMap,               //
                                  custom_properties)         //
-        .def("__getitem__",
-                [](mapbox::geojson::geometry &self,
-                const std::string &key) -> mapbox::geojson::value & {
-                    return self.custom_properties.at(key);
-                },
-                rvp::reference_internal)                         //
-        .def(
-            "get",
-            [](mapbox::geojson::geometry &self,
-                const std::string &key) -> mapbox::geojson::value * {
-                    auto &obj = self.custom_properties;
-                auto itr = obj.find(key);
-                if (itr == obj.end()) {
-                    return nullptr;
-                }
-                return &itr->second;
-            },
-            "key"_a, rvp::reference_internal)
-        .def("__setitem__",
-                [](mapbox::geojson::geometry &self, const std::string &key, const py::object &value) {
-                    auto &obj = self.custom_properties;
-                    obj[key] = to_geojson_value(value);
-                    return value;
-                })
             .def("keys",
                  [](mapbox::geojson::geometry &self) {
                      return py::make_key_iterator(self.custom_properties);
