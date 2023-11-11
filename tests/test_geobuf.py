@@ -449,6 +449,9 @@ def test_geojson_point():
     g1.round(lon=-1, lat=-1)  # normally you don't do it
     assert np.all(g1.as_numpy() == [120, 460, 0])
     assert not g1.deduplicate_xyz()
+    assert g1 != geojson.Point()
+    g1.clear()
+    assert g1 == geojson.Point()
 
 
 def test_geojson_point2():
@@ -517,7 +520,6 @@ def test_geojson_multi_point():
     g1[0] = geojson.Point([1, 2])
     assert g1() == [[1, 2, 0], [7, 8, 9]]
     for idx, pt in enumerate(g1):
-        print(idx, pt)
         assert isinstance(pt, geojson.Point)
         if idx == 0:
             assert pt() == [1, 2, 0]
@@ -573,6 +575,13 @@ def test_geojson_multi_point():
     assert len(g) == 3
     assert not g.deduplicate_xyz()
     assert len(g) == 3
+
+    g = geojson.Geometry(g)
+    assert len(g) == 3
+    g.push_back(geojson.Point(6, 7))
+    assert len(g) == 4
+    g.clear()
+    assert len(g) == 0
 
 
 def test_geojson_line_string():
@@ -684,6 +693,13 @@ def test_geojson_multi_line_string():
 
     g1[0] = [[7, 8], [2, 3]]
     assert g1() == [[[7, 8, 0], [2, 3, 0]]]
+
+    gg = geojson.Geometry(g1)
+    g1.push_back(geojson.LineString([[2,4,6], [7,8,9]]))
+    assert g1() == [[[7, 8, 0], [2, 3, 0]], [[2,4,6], [7,8,9]]]
+    # support by (self: _pybind11_geobuf.geojson.Geometry, arg0: _pybind11_geobuf.geojson.Geometry)
+    gg.push_back(geojson.LineString([[2,4,6], [7,8,9]]))
+    assert gg()['coordinates'] == [[[7, 8, 0], [2, 3, 0]], [[2,4,6], [7,8,9]]]
 
     g1.clear()
     assert len(g1) == 0
@@ -1498,6 +1514,9 @@ def test_geojson_feature():
         == 3.141592653
     )  # noqa
 
+    feature = geojson.Feature(sample_geojson())
+    print() # shit
+
 
 def test_geojson_load_dump():
     dirname = os.path.abspath(f"{__pwd}/../data")
@@ -1778,6 +1797,11 @@ def test_query():
 
 
 if __name__ == "__main__":
-    np.set_printoptions(suppress=True)
-    pwd = os.path.abspath(os.path.dirname(__file__))
-    pytest_main(pwd, test_file=os.path.basename(__file__))
+    # test_geojson_geometry_collection()
+    test_geojson_multi_line_string()
+    test_geojson_multi_point()
+    test_geojson_geometry()
+    test_geojson_feature()
+    # np.set_printoptions(suppress=True)
+    # pwd = os.path.abspath(os.path.dirname(__file__))
+    # pytest_main(pwd, test_file=os.path.basename(__file__))

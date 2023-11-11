@@ -352,7 +352,7 @@ void bind_geojson(py::module &geojson)
         .def("__setitem__",
              [](mapbox::geojson::geometry &self, const std::string &key,
                 const py::object &value) {
-                 if (key == "type" || key == "coordinates") {
+                 if (key == "type" || key == "coordinates" || key == "geometries") {
                      throw pybind11::key_error(key);
                  }
                  self.custom_properties[key] = to_geojson_value(value);
@@ -360,7 +360,6 @@ void bind_geojson(py::module &geojson)
              })
         .def("__len__",
              [](mapbox::geojson::geometry &self) { return __len__(self); })
-        // TODO, remove push_backs
         .def(
             "push_back",
             [](mapbox::geojson::geometry &self,
