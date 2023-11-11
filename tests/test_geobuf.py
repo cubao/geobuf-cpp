@@ -1559,6 +1559,30 @@ def test_geojson_feature():
         excinfo
     )
 
+    feature.clear()
+
+    feature.id(2**63 - 1)
+    assert feature.id() == 9223372036854775807
+    pbf = feature.to_geobuf()
+    text = pbf_decode(pbf)
+    assert "12: 9223372036854775807" in text
+
+    feature.id(2**63)
+    assert feature.id() == 9223372036854775808
+    pbf = feature.to_geobuf()
+    text = pbf_decode(pbf)
+    assert '11: "9223372036854775808"' in text
+
+    feature.id(3.14)
+    assert feature.id() == 3.14
+    pbf = feature.to_geobuf()
+    text = pbf_decode(pbf)
+    assert '11: "3.14"' in text
+
+    print()
+
+    # shit
+
 
 def test_geojson_load_dump():
     dirname = os.path.abspath(f"{__pwd}/../data")
