@@ -1525,24 +1525,28 @@ def test_geojson_feature():
         == 3.141592653
     )  # noqa
 
-    feature = geojson.Feature({**sample_geojson(), 'id': 666})
+    feature = geojson.Feature({**sample_geojson(), "id": 666})
     assert feature.id() == 666
     feature.clear()
     assert len(feature.properties()) == 0
     assert len(feature.custom_properties()) == 0
-    assert feature() == {'type': 'Feature', 'geometry': {'type': 'LineString', 'coordinates': []}, 'properties': {}}
+    assert feature() == {
+        "type": "Feature",
+        "geometry": {"type": "LineString", "coordinates": []},
+        "properties": {},
+    }
     assert feature.id() is None
     # using identifier = mapbox::util::variant<null_value_t, uint64_t, int64_t, double, std::string>;
     assert feature.id(42).id() == 42
     assert feature.id(-1024).id() == -1024
     assert feature.id(3.14).id() == 3.14
-    assert feature.id('string').id() == 'string'
+    assert feature.id("string").id() == "string"
     assert feature.id(None).id() is None
-    assert feature.id(-2**63).id() == -9223372036854775808
-    assert feature.id(2**64-1).id() == 18446744073709551615
+    assert feature.id(-(2**63)).id() == -9223372036854775808
+    assert feature.id(2**64 - 1).id() == 18446744073709551615
     with pytest.raises(RuntimeError) as excinfo:
-        feature.id(2**63) # out of range of uint64_t
-    print() # shit
+        feature.id(2**63)  # out of range of uint64_t
+    print()  # shit
 
 
 def test_geojson_load_dump():

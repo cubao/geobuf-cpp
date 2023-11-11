@@ -319,12 +319,23 @@ inline mapbox::geojson::identifier to_feature_id(const py::object &obj)
         return {};
     }
     if (py::isinstance<py::int_>(obj)) {
-        auto val = obj.cast<long long>();
-        if (val < 0) {
-            return int64_t(val);
-        } else {
-            return uint64_t(val);
+        // __py_int_to_rapidjson
+        try {
+            auto num = obj.cast<int64_t>();
+            if (py::int_(num).equal(obj)) {
+                return num;
+            }
+        } catch (...) {
         }
+        try {
+            auto num = obj.cast<uint64_t>();
+            if (py::int_(num).equal(obj)) {
+                return num;
+            }
+        } catch (...) {
+        }
+        throw std::runtime_error("integer out of range of int64_t/uint64_t: " +
+                                 py::repr(obj).cast<std::string>());
     } else if (py::isinstance<py::float_>(obj)) {
         return obj.cast<double>();
     } else if (py::isinstance<py::str>(obj)) {
