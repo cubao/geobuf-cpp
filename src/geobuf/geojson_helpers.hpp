@@ -291,19 +291,20 @@ inline std::string get_type(const mapbox::geojson::value &self)
 inline void geometry_push_back(mapbox::geojson::geometry &self,
                                const mapbox::geojson::point &point)
 {
-    self.match([&](mapbox::geojson::multi_point &g) { g.push_back(point); },
-               [&](mapbox::geojson::line_string &g) { g.push_back(point); },
-               [&](mapbox::geojson::multi_line_string &g) {
-                   g.back().push_back(point);
-               },
-               [&](mapbox::geojson::polygon &g) { g.back().push_back(point); },
-               [&](mapbox::geojson::multi_polygon &g) {
-                   g.back().back().push_back(point);
-               },
-               [&](auto &g) {
-                   std::cerr << "geometry_push_back not handled for this type: "
-                             << geometry_type(g) << std::endl;
-               });
+    self.match(
+        [&](mapbox::geojson::multi_point &g) { g.push_back(point); },
+        [&](mapbox::geojson::line_string &g) { g.push_back(point); },
+        [&](mapbox::geojson::multi_line_string &g) {
+            g.back().push_back(point);
+        },
+        [&](mapbox::geojson::polygon &g) { g.back().push_back(point); },
+        [&](mapbox::geojson::multi_polygon &g) {
+            g.back().back().push_back(point);
+        },
+        [&](auto &g) {
+            std::cerr << "geometry_push_back(point) not handled for this type: "
+                      << geometry_type(g) << std::endl;
+        });
 }
 
 inline void geometry_push_back(mapbox::geojson::geometry &self,
@@ -325,8 +326,9 @@ inline void geometry_push_back(mapbox::geojson::geometry &self,
             eigen2geom(points, g.back());
         },
         [&](auto &g) {
-            std::cerr << "geometry_push_back not handled for this type: "
-                      << geometry_type(g) << std::endl;
+            std::cerr
+                << "geometry_push_back(ndarray) not handled for this type: "
+                << geometry_type(g) << std::endl;
         });
 }
 
@@ -336,8 +338,9 @@ inline void geometry_push_back(mapbox::geojson::geometry &self,
     self.match(
         [&](mapbox::geojson::geometry_collection &g) { g.push_back(geom); },
         [&](auto &g) {
-            std::cerr << "geometry_push_back(geom) not handled for this type: "
-                      << geometry_type(g) << std::endl;
+            std::cerr << "geometry_push_back(geom:" << geometry_type(geom)
+                      << ") not handled for this type: " << geometry_type(g)
+                      << std::endl;
         });
 }
 
