@@ -31,6 +31,7 @@ using geojson_value = mapbox::geojson::value;
 
 inline RapidjsonValue __py_int_to_rapidjson(const py::handle &obj)
 {
+    // https://github.com/pybind/pybind11_json/blob/master/include/pybind11_json/pybind11_json.hpp#L84-L104
     try {
         auto num = obj.cast<int64_t>();
         if (py::int_(num).equal(obj)) {
@@ -319,7 +320,7 @@ inline mapbox::geojson::identifier to_feature_id(const py::object &obj)
         return {};
     }
     if (py::isinstance<py::int_>(obj)) {
-        // __py_int_to_rapidjson
+        // similar to __py_int_to_rapidjson
         try {
             auto num = obj.cast<int64_t>();
             if (py::int_(num).equal(obj)) {
@@ -397,26 +398,37 @@ inline py::object to_python(const mapbox::geojson::feature_collection &features)
 inline geojson_value to_geojson_value(const py::handle &obj)
 {
     if (obj.ptr() == nullptr || obj.is_none()) {
-        return nullptr;
+        return {};
     }
     if (py::isinstance<py::bool_>(obj)) {
         return obj.cast<bool>();
     }
     if (py::isinstance<py::int_>(obj)) {
-        auto val = obj.cast<long long>();
-        if (val < 0) {
-            return int64_t(val);
-        } else {
-            return uint64_t(val);
+        // similar to __py_int_to_rapidjson
+        try {
+            auto num = obj.cast<int64_t>();
+            if (py::int_(num).equal(obj)) {
+                return num;
+            }
+        } catch (...) {
         }
+        try {
+            auto num = obj.cast<uint64_t>();
+            if (py::int_(num).equal(obj)) {
+                return num;
+            }
+        } catch (...) {
+        }
+        throw std::runtime_error("integer out of range of int64_t/uint64_t: " +
+                                 py::repr(obj).cast<std::string>());
     }
+
     if (py::isinstance<py::float_>(obj)) {
         return obj.cast<double>();
     }
     if (py::isinstance<py::str>(obj)) {
         return obj.cast<std::string>();
     }
-    // TODO, bytes
     if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
         geojson_value::array_type ret;
         for (const py::handle &e : obj) {
@@ -430,6 +442,14 @@ inline geojson_value to_geojson_value(const py::handle &obj)
             ret[py::str(key).cast<std::string>()] = to_geojson_value(obj[key]);
         }
         return ret;
+    }
+    if (py::isinstance<py::bytes>(obj)) {
+        // https://github.com/pybind/pybind11_json/blob/master/include/pybind11_json/pybind11_json.hpp#L112
+        py::module base64 = py::module::import("base64");
+        auto str = base64.attr("b64encode")(obj)
+                       .attr("decode")("utf-8")
+                       .cast<std::string>();
+        return str;
     }
     throw std::runtime_error(
         "to_geojson_value not implemented for this type of object: " +
