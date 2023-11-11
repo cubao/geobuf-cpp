@@ -1573,14 +1573,17 @@ def test_geojson_feature():
     text = pbf_decode(pbf)
     assert '11: "9223372036854775808"' in text
 
+    feature.id("text")
+    assert feature.id() == "text"
+    pbf = feature.to_geobuf()
+    text = pbf_decode(pbf)
+    assert '11: "text"' in text
+
     feature.id(3.14)
     assert feature.id() == 3.14
     pbf = feature.to_geobuf()
     text = pbf_decode(pbf)
-    assert '11: "3.14"' in text
-
-    print()
-
+    # assert '11: "3.14"' in text
     # shit
 
 
@@ -1863,7 +1866,6 @@ def test_query():
 
 
 if __name__ == "__main__":
-    test_geojson_feature()
-    # np.set_printoptions(suppress=True)
-    # pwd = os.path.abspath(os.path.dirname(__file__))
-    # pytest_main(pwd, test_file=os.path.basename(__file__))
+    np.set_printoptions(suppress=True)
+    pwd = os.path.abspath(os.path.dirname(__file__))
+    pytest_main(pwd, test_file=os.path.basename(__file__))

@@ -21,12 +21,14 @@
 // https://github.com/mapbox/geobuf/blob/master/encode.js
 // https://github.com/mapbox/geobuf/blob/master/decode.js
 
-#ifdef NDEBUG
-#define dbg(x) x
-#else
-#define DBG_MACRO_NO_WARNING
 #include "dbg.h"
-#endif
+
+// #ifdef NDEBUG
+// #define dbg(x) x
+// #else
+// #define DBG_MACRO_NO_WARNING
+// #include "dbg.h"
+// #endif
 
 constexpr const auto RJFLAGS = rapidjson::kParseDefaultFlags |      //
                                rapidjson::kParseCommentsFlag |      //
