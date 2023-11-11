@@ -806,6 +806,12 @@ void bind_geojson(py::module &geojson)
             eigen2geom(points, self);                                          \
             return self;                                                       \
         }))                                                                    \
+        .def("resize",                                                         \
+             [](mapbox::geojson::geom_type &self,                              \
+                int size) -> mapbox::geojson::geom_type & {                    \
+                 self.resize(size);                                            \
+                 return self;                                                  \
+             })                                                                \
         .def(py::pickle(                                                       \
             [](const mapbox::geojson::geom_type &self) {                       \
                 return to_python(mapbox::geojson::geometry{self});             \

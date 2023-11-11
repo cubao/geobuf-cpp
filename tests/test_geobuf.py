@@ -508,6 +508,13 @@ def test_geojson_multi_point():
 
     g2 = geojson.MultiPoint([g1[0], g1[1], g1[0], g1[1]])
     assert g2() == [*g1(), *g1()]
+    assert len(g2) == 4
+    del g2[1]
+    assert len(g2) == 3
+    assert g2() == [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
+    assert g2.resize(2)() == [g1[0](), g1[0]()]
+    assert len(g2) == 2
+
     g3 = geojson.MultiPoint([[1, 2], [3, 4]])
     assert np.all(g3.as_numpy() == [[1, 2, 0], [3, 4, 0]])
 
@@ -1181,9 +1188,9 @@ def test_geojson_geometry():
         g5.push_back([70, 80, 90])
     assert "can't push_back Point to empty MultiLineString" in str(excinfo)
     g5.resize(1)
-    assert g5() == {'type': 'MultiLineString', 'coordinates': [[]]}
+    assert g5() == {"type": "MultiLineString", "coordinates": [[]]}
     g5.push_back([70, 80, 90])
-    assert g5() == {'type': 'MultiLineString', 'coordinates': [[[70.0, 80.0, 90.0]]]}
+    assert g5() == {"type": "MultiLineString", "coordinates": [[[70.0, 80.0, 90.0]]]}
 
     g6 = geojson.Geometry(geojson.Polygon([[1, 2, 3], [4, 5, 6]]))
     assert np.array(g6()["coordinates"]).shape == (1, 2, 3)
