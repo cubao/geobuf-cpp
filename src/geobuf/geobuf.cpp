@@ -6,8 +6,6 @@
 #include <mapbox/geojson_value_impl.hpp>
 #include <set>
 
-#include "spdlog/spdlog.h"
-
 #include "rapidjson/error/en.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/filewritestream.h"
@@ -23,14 +21,12 @@
 // https://github.com/mapbox/geobuf/blob/master/encode.js
 // https://github.com/mapbox/geobuf/blob/master/decode.js
 
+#ifdef NDEBUG
+#define dbg(x) x
+#else
+#define DBG_MACRO_NO_WARNING
 #include "dbg.h"
-
-// #ifdef NDEBUG
-// #define dbg(x) x
-// #else
-// #define DBG_MACRO_NO_WARNING
-// #include "dbg.h"
-// #endif
+#endif
 
 constexpr const auto RJFLAGS = rapidjson::kParseDefaultFlags |      //
                                rapidjson::kParseCommentsFlag |      //
@@ -424,7 +420,10 @@ void Encoder::writeFeature(const mapbox::geojson::feature &feature, Pbf &pbf)
             },
             [&](int64_t id) { pbf.add_int64(12, id); },
             [&](double d) {
-                pbf.add_string(11, dbg(fmt::format("{}", d)));
+                rapidjson::StringBuffer s;
+                rapidjson::Writer<rapidjson::StringBuffer> writer(s);
+                writer.Double(d);
+                pbf.add_string(11, s.GetString());
             },
             [&](const std::string &id) { pbf.add_string(11, id); },
             [&](const auto &) {

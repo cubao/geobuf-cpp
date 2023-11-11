@@ -1561,46 +1561,47 @@ def test_geojson_feature():
 
     feature.clear()
 
-    feature.id(3.14)
-    assert feature.id() == 3.14
-    pbf = feature.to_geobuf()
-    text = pbf_decode(pbf)
-    print(text)
-
     feature.id(2**63 - 1)
-    assert feature.id() == 9223372036854775807
     pbf = feature.to_geobuf()
+    assert feature.id() == 9223372036854775807
+    assert geojson.Feature().from_geobuf(pbf).id() == 9223372036854775807
     text = pbf_decode(pbf)
     assert "12: 9223372036854775807" in text
 
     feature.id(2**63)
-    assert feature.id() == 9223372036854775808
     pbf = feature.to_geobuf()
+    assert feature.id() == 9223372036854775808
+    assert geojson.Feature().from_geobuf(pbf).id() == 9223372036854775808
     text = pbf_decode(pbf)
     assert '11: "9223372036854775808"' in text
 
     feature.id(2**64 - 1)
-    assert feature.id() == 18446744073709551615
     pbf = feature.to_geobuf()
+    assert feature.id() == 18446744073709551615
+    assert geojson.Feature().from_geobuf(pbf).id() == 18446744073709551615
     text = pbf_decode(pbf)
     assert '11: "18446744073709551615"' in text
 
     feature.id("text")
-    assert feature.id() == "text"
     pbf = feature.to_geobuf()
+    assert feature.id() == "text"
+    assert geojson.Feature().from_geobuf(pbf).id() == "text"
     text = pbf_decode(pbf)
     assert '11: "text"' in text
 
     feature.id(3.14)
-    assert feature.id() == 3.14
     pbf = feature.to_geobuf()
-
-    f2 = geojson.Feature().from_geobuf(pbf)
-    assert f2.id() == 3.14
+    assert feature.id() == 3.14
+    assert geojson.Feature().from_geobuf(pbf).id() == 3.14
     text = pbf_decode(pbf)
-    print()
-    # assert '11: "3.14"' in text
-    # shit
+    assert '11: "3.14"' in text
+
+    feature.id("3.14")
+    pbf = feature.to_geobuf()
+    assert feature.id() == "3.14"
+    assert geojson.Feature().from_geobuf(pbf).id() == 3.14  # note that not "3.14"
+    text = pbf_decode(pbf)
+    assert '11: "3.14"' in text
 
 
 def test_geojson_load_dump():
@@ -1882,8 +1883,6 @@ def test_query():
 
 
 if __name__ == "__main__":
-    test_geojson_feature()
-
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
     pytest_main(pwd, test_file=os.path.basename(__file__))
