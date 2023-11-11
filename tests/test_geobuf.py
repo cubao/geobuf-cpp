@@ -1549,7 +1549,15 @@ def test_geojson_feature():
     assert "integer out of range of int64_t/uint64_t: 18446744073709551616" in str(
         excinfo
     )
-    print()
+    feature["num"] = -(2**63)
+    assert feature["num"]() == -9223372036854775808
+    feature["num"] = 2**64 - 1
+    assert feature["num"]() == 18446744073709551615
+    with pytest.raises(RuntimeError) as excinfo:
+        feature["num"] = 2**64
+    assert "integer out of range of int64_t/uint64_t: 18446744073709551616" in str(
+        excinfo
+    )
 
 
 def test_geojson_load_dump():
