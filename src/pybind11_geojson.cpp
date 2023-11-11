@@ -406,6 +406,21 @@ void bind_geojson(py::module &geojson)
                 -> mapbox::geojson::geometry & {
                     if (self.is<mapbox::geojson::multi_polygon>()) {
                         self.get<mapbox::geojson::multi_polygon>().push_back(geom);
+                    } else {
+                        std::cerr << "can only push_back Polygon to MultiPolygon, current type: " << geometry_type(self) << std::endl;
+                    }
+                return self;
+            },
+            rvp::reference_internal)
+        .def(
+            "push_back",
+            [](mapbox::geojson::geometry &self,
+               const mapbox::geojson::line_string &geom)
+                -> mapbox::geojson::geometry & {
+                    if (self.is<mapbox::geojson::multi_line_string>()) {
+                        self.get<mapbox::geojson::multi_line_string>().push_back(geom);
+                    } else {
+                        std::cerr << "can only push_back LineString to MultiLineString, current type: " << geometry_type(self) << std::endl;
                     }
                 return self;
             },

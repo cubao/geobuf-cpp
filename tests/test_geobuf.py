@@ -695,11 +695,10 @@ def test_geojson_multi_line_string():
     assert g1() == [[[7, 8, 0], [2, 3, 0]]]
 
     gg = geojson.Geometry(g1)
-    g1.push_back(geojson.LineString([[2,4,6], [7,8,9]]))
-    assert g1() == [[[7, 8, 0], [2, 3, 0]], [[2,4,6], [7,8,9]]]
-    # support by (self: _pybind11_geobuf.geojson.Geometry, arg0: _pybind11_geobuf.geojson.Geometry)
-    gg.push_back(geojson.LineString([[2,4,6], [7,8,9]]))
-    assert gg()['coordinates'] == [[[7, 8, 0], [2, 3, 0]], [[2,4,6], [7,8,9]]]
+    g1.push_back(geojson.LineString([[2, 4, 6], [7, 8, 9]]))
+    assert g1() == [[[7, 8, 0], [2, 3, 0]], [[2, 4, 6], [7, 8, 9]]]
+    gg.push_back(geojson.LineString([[2, 4, 6], [7, 8, 9]]))
+    assert gg()["coordinates"] == [[[7, 8, 0], [2, 3, 0]], [[2, 4, 6], [7, 8, 9]]]
 
     g1.clear()
     assert len(g1) == 0
@@ -1515,7 +1514,7 @@ def test_geojson_feature():
     )  # noqa
 
     feature = geojson.Feature(sample_geojson())
-    print() # shit
+    print()  # shit
 
 
 def test_geojson_load_dump():
