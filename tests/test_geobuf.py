@@ -705,7 +705,10 @@ def test_geojson_multi_line_string():
     g1.push_back(geojson.LineString([[2, 4, 6], [7, 8, 9]]))
     assert g1() == [[[7, 8, 0], [2, 3, 0]], [[2, 4, 6], [7, 8, 9]]]
     gg.push_back(geojson.LineString([[2, 4, 6], [7, 8, 9]]))
-    assert gg()["coordinates"] == [[[7, 8, 0], [2, 3, 0]], [[2, 4, 6], [7, 8, 9]]]
+    assert gg()["coordinates"] == [
+        [[7, 8, 0], [2, 3, 0]],
+        [[2, 4, 6], [7, 8, 9]],
+    ]
 
     g1.clear()
     assert len(g1) == 0
@@ -1190,7 +1193,10 @@ def test_geojson_geometry():
     g5.resize(1)
     assert g5() == {"type": "MultiLineString", "coordinates": [[]]}
     g5.push_back([70, 80, 90])
-    assert g5() == {"type": "MultiLineString", "coordinates": [[[70.0, 80.0, 90.0]]]}
+    assert g5() == {
+        "type": "MultiLineString",
+        "coordinates": [[[70.0, 80.0, 90.0]]],
+    }
 
     g6 = geojson.Geometry(geojson.Polygon([[1, 2, 3], [4, 5, 6]]))
     assert np.array(g6()["coordinates"]).shape == (1, 2, 3)
@@ -1536,7 +1542,7 @@ def test_geojson_feature():
         "properties": {},
     }
     assert feature.id() is None
-    # using identifier = mapbox::util::variant<null_value_t, uint64_t, int64_t, double, std::string>;
+    # id := variant<null, uint64, int64, double, string>
     assert feature.id(42).id() == 42
     assert feature.id(-1024).id() == -1024
     assert feature.id(3.14).id() == 3.14
@@ -1546,18 +1552,15 @@ def test_geojson_feature():
     assert feature.id(2**64 - 1).id() == 18446744073709551615
     with pytest.raises(RuntimeError) as excinfo:
         feature.id(2**64)  # out of range of uint64_t
-    assert "integer out of range of int64_t/uint64_t: 18446744073709551616" in str(
-        excinfo
-    )
+    prefix = "integer out of range of int64_t/uint64_t"
+    assert f"{prefix}: 18446744073709551616" in str(excinfo)
     feature["num"] = -(2**63)
     assert feature["num"]() == -9223372036854775808
     feature["num"] = 2**64 - 1
     assert feature["num"]() == 18446744073709551615
     with pytest.raises(RuntimeError) as excinfo:
         feature["num"] = 2**64
-    assert "integer out of range of int64_t/uint64_t: 18446744073709551616" in str(
-        excinfo
-    )
+    assert f"{prefix}: 18446744073709551616" in str(excinfo)
 
     feature.clear()
 
@@ -1599,7 +1602,8 @@ def test_geojson_feature():
     feature.id("3.14")
     pbf = feature.to_geobuf()
     assert feature.id() == "3.14"
-    assert geojson.Feature().from_geobuf(pbf).id() == 3.14  # note that not "3.14"
+    # note that not "3.14"
+    assert geojson.Feature().from_geobuf(pbf).id() == 3.14
     text = pbf_decode(pbf)
     assert '11: "3.14"' in text
 
