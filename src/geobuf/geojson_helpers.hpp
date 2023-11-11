@@ -295,10 +295,25 @@ inline void geometry_push_back(mapbox::geojson::geometry &self,
         [&](mapbox::geojson::multi_point &g) { g.push_back(point); },
         [&](mapbox::geojson::line_string &g) { g.push_back(point); },
         [&](mapbox::geojson::multi_line_string &g) {
+            if (g.empty()) {
+                throw std::invalid_argument(
+                    "can't push_back Point to empty MultiLineString, may "
+                    "resize first");
+            }
             g.back().push_back(point);
         },
-        [&](mapbox::geojson::polygon &g) { g.back().push_back(point); },
+        [&](mapbox::geojson::polygon &g) {
+            if (g.empty()) {
+                throw std::invalid_argument(
+                    "can't push_back Point to empty Polygon, may resize first");
+            }
+            g.back().push_back(point);
+        },
         [&](mapbox::geojson::multi_polygon &g) {
+            if (g.empty() || g.back().empty()) {
+                throw std::invalid_argument("can't push_back Point to invalid "
+                                            "MultiPolygon, may resize first");
+            }
             g.back().back().push_back(point);
         },
         [&](auto &g) {
