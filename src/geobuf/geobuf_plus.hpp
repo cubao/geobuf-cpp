@@ -3,10 +3,10 @@
 #include "planet.hpp"
 #include <spdlog/spdlog.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <mio/mio.hpp>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 namespace cubao
 {
@@ -15,17 +15,26 @@ struct GeobufPlus
 {
     GeobufPlus() = default;
     mio::shared_ummap_source mmap;
+    int num_features;
+    FlatGeobuf::PackedRTree rtree;
 
-    bool mmap_init(const std::string &path) {
+    bool mmap_init(const std::string &path)
+    {
         mmap = std::make_shared<mio::ummap_source>(path);
         int cursor = 10;
         if (std::string((const char *)mmap.data(), cursor) != "GeobufPlus") {
             spdlog::error("invalid geobuf plus file, wrong magic");
             return false;
         }
-        auto xx =  mmap[cursor];
-        int num_features = *(const int*)(mmap.data() + cursor);
+        auto xx = mmap[cursor];
+        int num_features = *(const int *)(mmap.data() + cursor);
         spdlog::info("#features: {}", num_features);
+
+        FlatGeobuf::NodeItem extent;
+        int num_items;
+        int num_nodes;
+        int node_size;
+
         return true;
     }
 
