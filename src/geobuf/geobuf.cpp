@@ -214,7 +214,7 @@ std::string dump(const mapbox::geojson::geojson &geojson, //
 
 std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
 {
-    std::string data;
+    data.clear();
     Encoder::Pbf pbf{data};
 
     dim = MAPBOX_GEOBUF_DEFAULT_DIM;
@@ -244,9 +244,10 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
         MAPBOX_GEOBUF_DEFAULT_PRECISION) { // assumed default precision in proto
         pbf.add_uint32(3, precision);
     }
-
     geojson.match(
         [&](const mapbox::geojson::feature_collection &features) {
+            offsets.clear();
+            offsets.reserve(features.size() + 1);
             protozero::pbf_writer pbf_fc{pbf, 4};
             writeFeatureCollection(features, pbf_fc);
         },
@@ -387,10 +388,12 @@ void Encoder::writeFeatureCollection(
     const mapbox::geojson::feature_collection &geojson, Pbf &pbf)
 {
     for (auto &feature : geojson) {
+        offsets.push_back(data.size());
         protozero::pbf_writer pbf_f{pbf, 1};
         writeFeature(feature, pbf_f);
     }
     if (!geojson.custom_properties.empty()) {
+        offsets.push_back(data.size());
         writeProps(geojson.custom_properties, pbf, 15);
     }
 }

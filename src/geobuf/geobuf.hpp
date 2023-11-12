@@ -119,6 +119,7 @@ struct Encoder
     {
         return std::map<std::string, std::uint32_t>(keys.begin(), keys.end());
     }
+    auto __offsets() const { return offsets; }
 
   private:
     void analyze(const mapbox::geojson::geojson &geojson);
@@ -156,6 +157,9 @@ struct Encoder
     uint32_t dim = MAPBOX_GEOBUF_DEFAULT_DIM;
     uint32_t e = 1;
     std::unordered_map<std::string, std::uint32_t> keys;
+
+    std::string data;
+    std::vector<int> offsets;
 };
 
 struct Decoder
