@@ -1893,7 +1893,10 @@ if __name__ == "__main__":
     from pybind11_geobuf import GeobufPlus
 
     ipath = f"{__pwd}/../data/suzhoubeizhan.json"
-    print(GeobufPlus.encode(ipath, f"{__pwd}/../build/export.pbf"))
+    opath = f"{__pwd}/../build/export.pbf"
+    # print(GeobufPlus.encode(ipath, opath))
+    gbp = GeobufPlus()
+    print(gbp.mmap_init(opath))
 
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
