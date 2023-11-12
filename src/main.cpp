@@ -11,8 +11,8 @@
 #include <pybind11/stl_bind.h>
 
 #include "geobuf/geobuf.hpp"
-#include "geobuf/planet.hpp"
 #include "geobuf/geobuf_plus.hpp"
+#include "geobuf/planet.hpp"
 #include "geobuf/pybind11_helpers.hpp"
 
 #include <optional>
@@ -278,9 +278,11 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         ;
 
     using GeobufPlus = cubao::GeobufPlus;
-    py::class_<GeobufPlus>(m, "GeobufPlus", py::module_local())    //
+    py::class_<GeobufPlus>(m, "GeobufPlus", py::module_local()) //
         .def(py::init<>())
         .def("init", &GeobufPlus::init, "header_bytes"_a)
+        //
+        .def_static("encode", py::overload_cast<const std::string &, const std::string &>(&GeobufPlus::encode), "input_geojson_path"_a, "output_geobuf_plus_path"_a)
         //
         ;
 

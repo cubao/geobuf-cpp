@@ -132,6 +132,10 @@ struct Planet
         return fc;
     }
 
+    const FlatGeobuf::PackedRTree &packed_rtree() const {
+        return rtree();
+    }
+
   private:
     FeatureCollection features_;
 
