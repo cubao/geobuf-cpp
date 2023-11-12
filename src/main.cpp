@@ -12,6 +12,7 @@
 
 #include "geobuf/geobuf.hpp"
 #include "geobuf/planet.hpp"
+#include "geobuf/geobuf_plus.hpp"
 #include "geobuf/pybind11_helpers.hpp"
 
 #include <optional>
@@ -273,6 +274,13 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
              "clipping_mode"_a = "longest", //
              "strip_properties"_a = false,  //
              "is_wgs84"_a = true)
+        //
+        ;
+
+    using GeobufPlus = cubao::GeobufPlus;
+    py::class_<GeobufPlus>(m, "GeobufPlus", py::module_local())    //
+        .def(py::init<>())
+        .def("init", &GeobufPlus::init, "header_bytes"_a)
         //
         ;
 
