@@ -282,7 +282,12 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def(py::init<>())
         .def("init", &GeobufPlus::init, "header_bytes"_a)
         //
-        .def_static("encode", py::overload_cast<const std::string &, const std::string &>(&GeobufPlus::encode), "input_geojson_path"_a, "output_geobuf_plus_path"_a)
+        .def_static(
+            "encode",
+            py::overload_cast<const std::string &, const std::string &, uint8_t,
+                              bool, std::optional<int>>(&GeobufPlus::encode),
+            "input_geojson_path"_a, "output_geobuf_plus_path"_a, py::kw_only(),
+            "precision"_a = 8, "only_xy"_a = false, "round_z"_a = 3)
         //
         ;
 
