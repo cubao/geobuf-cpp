@@ -57,20 +57,33 @@ struct GeobufPlus
         cursor += sizeof(tree_size);
         spdlog::info("tree_size: {}", tree_size);
 
-        // auto xx = mmap[cursor];
-        // int num_features = *(const int *)(mmap.data() + cursor);
-        // spdlog::info("#features: {}", num_features);
+        rtree = FlatGeobuf::PackedRTree(data + cursor, num_items, node_size);
+        if (rtree.getNumNodes() != num_nodes || rtree.getExtent() != extent) {
+            spdlog::error("invalid rtree, #nodes:{} != {} (expected)", rtree.getNumNodes(), num_nodes);
+            return false;
+        }
+        cursor += tree_size;
 
-        // FlatGeobuf::NodeItem extent;
-        // int num_items;
-        // int num_nodes;
-        // int node_size;
+        int padding{0};
+        padding = *reinterpret_cast<const int *>(data + cursor);
+        cursor += sizeof(padding);
+        if (padding != 930604) {
+            spdlog::error("invalid padding: {} != 930604 (geobuf)", padding);
+            return false;
+        }
+
+        int num_offsets{0};
+        num_offsets = *reinterpret_cast<const int *>(data + cursor);
+        cursor += sizeof(num_offsets);
+        spdlog::info("num_offsets: {}", num_offsets);
+
+        std::vector<int> offsets;
+        offsets.resize(num_offsets);
+        memcpy(reinterpret_cast<void *>(offsets.data()), data + cursor, sizeof(offsets[0]) * num_offsets);
+        cursor += sizeof(sizeof(offsets[0]) * num_offsets);
+        spdlog::info("offsets: [{}, ..., {}", offsets.front(), offsets.back());
 
         // mmap = std::make_shared<mio::ummap_source>(path);
-        // if (std::string((const char *)mmap.data(), cursor) != "GeobufPlus") {
-        //     spdlog::error("invalid geobuf plus file, wrong magic");
-        //     return false;
-        // }
 
         // // return true;
         return false;
@@ -175,7 +188,7 @@ struct GeobufPlus
         spdlog::info("wrote index to {}", output_index_path);
 
         if (mapbox::geobuf::dump_bytes(output_geobuf_path, bytes)) {
-            spdlog::error("wrote geobuf to {}", output_geobuf_path);
+            spdlog::info("wrote geobuf to {}", output_geobuf_path);
             return true;
         } else {
             spdlog::error("failed to write to {}", output_geobuf_path);
