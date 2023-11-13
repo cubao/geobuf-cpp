@@ -8,24 +8,55 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "dbg.h"
+
 namespace cubao
 {
-
 struct GeobufPlus
 {
     GeobufPlus() = default;
-    // mio::shared_ummap_source mmap;
     int num_features;
-    // FlatGeobuf::PackedRTree rtree;
+    FlatGeobuf::PackedRTree rtree;
+    mio::shared_ummap_source mmap;
 
-    bool mmap_init(const std::string &path)
+    bool mmap_init(const std::string &index_path, const std::string &geobuf_path)
     {
-        // mmap = std::make_shared<mio::ummap_source>(path);
-        // int cursor = 10;
-        // if (std::string((const char *)mmap.data(), cursor) != "GeobufPlus") {
-        //     spdlog::error("invalid geobuf plus file, wrong magic");
-        //     return false;
-        // }
+        auto bytes = mapbox::geobuf::load_bytes(index_path);
+        int cursor = 10;
+        if (bytes.substr(0, cursor) != "GeobufIdx0") {
+            spdlog::error("invalid geobuf index file: {}", index_path);
+            return false;
+        }
+        const uint8_t *data = reinterpret_cast<const uint8_t*>(bytes.data());
+        num_features = *reinterpret_cast<const int *>(data + cursor);
+        cursor += sizeof(num_features);
+        spdlog::info("#features: {}", num_features);
+
+        FlatGeobuf::NodeItem extent;
+        memcpy((void *)&extent.minX, data + cursor, sizeof(extent));
+        cursor += sizeof(extent);
+        spdlog::info("extent: {},{},{},{}", extent.minX, extent.minY, extent.maxX, extent.maxY);
+
+        int num_items{0};
+        num_items = *reinterpret_cast<const int *>(data + cursor);
+        cursor += sizeof(num_items);
+        spdlog::info("num_items: {}", num_items);
+
+        int num_nodes{0};
+        num_nodes = *reinterpret_cast<const int *>(data + cursor);
+        cursor += sizeof(num_nodes);
+        spdlog::info("num_nodes: {}", num_nodes);
+
+        int node_size{0};
+        node_size = *reinterpret_cast<const int *>(data + cursor);
+        cursor += sizeof(node_size);
+        spdlog::info("node_size: {}", node_size);
+
+        int tree_size{0};
+        tree_size = *reinterpret_cast<const int *>(data + cursor);
+        cursor += sizeof(tree_size);
+        spdlog::info("tree_size: {}", tree_size);
+
         // auto xx = mmap[cursor];
         // int num_features = *(const int *)(mmap.data() + cursor);
         // spdlog::info("#features: {}", num_features);
@@ -35,11 +66,19 @@ struct GeobufPlus
         // int num_nodes;
         // int node_size;
 
-        // return true;
+        // mmap = std::make_shared<mio::ummap_source>(path);
+        // if (std::string((const char *)mmap.data(), cursor) != "GeobufPlus") {
+        //     spdlog::error("invalid geobuf plus file, wrong magic");
+        //     return false;
+        // }
+
+        // // return true;
         return false;
     }
 
-    void init(const std::string &header_bytes) {}
+    void init_index(const std::string &index_bytes) {
+    }
+
     mapbox::geojson::feature_collection decode(const std::string &bytes) const
     {
         return {};
@@ -95,7 +134,7 @@ struct GeobufPlus
             return false;
         }
         // magic
-        fwrite("GeobufPlus", 10, 1, fp);
+        fwrite("GeobufIdx0", 10, 1, fp);
         int num_features = fc.size();
         // #features
         fwrite(&num_features, sizeof(num_features), 1, fp);

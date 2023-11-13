@@ -281,8 +281,8 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
     using GeobufPlus = cubao::GeobufPlus;
     py::class_<GeobufPlus>(m, "GeobufPlus", py::module_local()) //
         .def(py::init<>())
-        .def("mmap_init", &GeobufPlus::mmap_init, "path"_a)
-        .def("init", &GeobufPlus::init, "header_bytes"_a)
+        .def("mmap_init", &GeobufPlus::mmap_init, "index_path"_a, "geobuf_path"_a)
+        .def("init_index", &GeobufPlus::init_index, "index_bytes"_a)
         //
         .def_static("encode",
                     py::overload_cast<const std::string &, const std::string &,
