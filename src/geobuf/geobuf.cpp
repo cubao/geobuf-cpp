@@ -652,6 +652,27 @@ mapbox::geojson::geojson Decoder::decode(const std::string &pbf_bytes)
     return mapbox::geojson::geojson{};
 }
 
+void Decoder::decode_header(const uint8_t *data, std::size_t size)
+{
+    auto pbf =
+        protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
+    dim = MAPBOX_GEOBUF_DEFAULT_DIM;
+    e = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION);
+    keys.clear();
+    while (pbf.next()) {
+        const auto tag = pbf.tag();
+        if (tag == 1) {
+            keys.push_back(pbf.get_string());
+        } else if (tag == 2) {
+            dim = pbf.get_uint32();
+        } else if (tag == 3) {
+            e = std::pow(10, pbf.get_uint32());
+        } else {
+            pbf.skip();
+        }
+    }
+}
+
 bool Decoder::decode(const std::string &input_path,
                      const std::string &output_path, //
                      bool indent, bool sort_keys)

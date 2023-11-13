@@ -169,6 +169,8 @@ struct Decoder
     static std::string to_printable(const std::string &pbf_bytes,
                                     const std::string &indent = "");
     mapbox::geojson::geojson decode(const std::string &pbf_bytes);
+    void decode_header(const uint8_t *data, std::size_t size);
+
     bool decode(const std::string &input_path, const std::string &output_path,
                 bool indent = false, bool sort_keys = false);
     int precision() const { return std::log10(e); }

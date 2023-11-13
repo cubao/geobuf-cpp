@@ -19,8 +19,10 @@ struct GeobufPlus
     FlatGeobuf::PackedRTree rtree;
     std::vector<int> offsets;
     mio::shared_ummap_source mmap;
+    mapbox::geobuf::Decoder decoder;
 
-    bool mmap_init(const std::string &index_path, const std::string &geobuf_path)
+    bool mmap_init(const std::string &index_path,
+                   const std::string &geobuf_path)
     {
         auto bytes = mapbox::geobuf::load_bytes(index_path);
         int cursor = 10;
@@ -28,7 +30,7 @@ struct GeobufPlus
             spdlog::error("invalid geobuf index file: {}", index_path);
             return false;
         }
-        const uint8_t *data = reinterpret_cast<const uint8_t*>(bytes.data());
+        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.data());
         num_features = *reinterpret_cast<const int *>(data + cursor);
         cursor += sizeof(num_features);
         spdlog::info("#features: {}", num_features);
@@ -36,7 +38,8 @@ struct GeobufPlus
         FlatGeobuf::NodeItem extent;
         memcpy((void *)&extent.minX, data + cursor, sizeof(extent));
         cursor += sizeof(extent);
-        spdlog::info("extent: {},{},{},{}", extent.minX, extent.minY, extent.maxX, extent.maxY);
+        spdlog::info("extent: {},{},{},{}", extent.minX, extent.minY,
+                     extent.maxX, extent.maxY);
 
         int num_items{0};
         num_items = *reinterpret_cast<const int *>(data + cursor);
@@ -60,7 +63,8 @@ struct GeobufPlus
 
         rtree = FlatGeobuf::PackedRTree(data + cursor, num_items, node_size);
         if (rtree.getNumNodes() != num_nodes || rtree.getExtent() != extent) {
-            spdlog::error("invalid rtree, #nodes:{} != {} (expected)", rtree.getNumNodes(), num_nodes);
+            spdlog::error("invalid rtree, #nodes:{} != {} (expected)",
+                          rtree.getNumNodes(), num_nodes);
             return false;
         }
         cursor += tree_size;
@@ -79,7 +83,8 @@ struct GeobufPlus
         spdlog::info("num_offsets: {}", num_offsets);
 
         offsets.resize(num_offsets);
-        memcpy(reinterpret_cast<void *>(offsets.data()), data + cursor, sizeof(offsets[0]) * num_offsets);
+        memcpy(reinterpret_cast<void *>(offsets.data()), data + cursor,
+               sizeof(offsets[0]) * num_offsets);
         cursor += sizeof(sizeof(offsets[0]) * num_offsets);
         spdlog::info("offsets: [{}, ..., {}]", offsets.front(), offsets.back());
 
@@ -90,11 +95,16 @@ struct GeobufPlus
             return false;
         }
 
+        mmap = std::make_shared<mio::ummap_source>(geobuf_path);
+        decoder.decode_header(mmap.data(), offsets[0]);
+        spdlog::info("decoded geobuf header, #keys={}, dim={}, precision: {}",
+                     decoder.__keys().size(), decoder.__dim(),
+                     decoder.precision());
+
         return true;
     }
 
-    void init_index(const std::string &index_bytes) {
-    }
+    void init_index(const std::string &index_bytes) {}
 
     mapbox::geojson::feature_collection decode(const std::string &bytes) const
     {
