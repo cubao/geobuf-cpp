@@ -1893,7 +1893,8 @@ if __name__ == "__main__":
     from pybind11_geobuf import GeobufPlus
 
     ipath = f"{__pwd}/../data/suzhoubeizhan.json"
-    opath = f"{__pwd}/../build/export.pbf"
+    opath_idx = f"{__pwd}/../build/export.idx"
+    opath_pbf = f"{__pwd}/../build/export.pbf"
     # print(GeobufPlus.encode(ipath, opath))
     gbp = GeobufPlus()
     print(gbp.mmap_init(opath))

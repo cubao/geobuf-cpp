@@ -64,14 +64,15 @@ struct GeobufPlus
     static std::string encode(const Planet &planet) { return ""; }
 
     static bool encode(const std::string &input_geojson_path,
-                       const std::string &output_geobuf_plus_path,
+                       const std::string &output_index_path,
+                       const std::string &output_geobuf_path,
                        uint8_t precision = 8, bool only_xy = false,
                        std::optional<int> round_z = 3)
     {
-        spdlog::info("Loading {} ...", input_geojson_path);
+        spdlog::info("loading {} ...", input_geojson_path);
         auto json = mapbox::geobuf::load_json(input_geojson_path);
         if (json.IsNull()) {
-            spdlog::error("Invalid input. Abort");
+            spdlog::error("invalid input, abort");
             return false;
         }
         auto geojson = mapbox::geojson::convert(json);
@@ -87,10 +88,10 @@ struct GeobufPlus
         spdlog::info("encoding {} features...", fc.size());
 
         auto planet = Planet(fc);
-        FILE *fp = fopen(output_geobuf_plus_path.c_str(), "wb");
+        FILE *fp = fopen(output_index_path.c_str(), "wb");
         if (!fp) {
             spdlog::error("failed to open {} for writing",
-                          output_geobuf_plus_path);
+                          output_index_path);
             return false;
         }
         // magic
@@ -101,46 +102,45 @@ struct GeobufPlus
 
         auto &rtree = planet.packed_rtree();
         auto extent = rtree.getExtent();
-        // spatial
-        //      extent/bbox
+        // extent/bbox
         fwrite(&extent, sizeof(extent), 1, fp);
-        //      num_items
+        // num_items
         int num_items = rtree.getNumItems();
         fwrite(&num_items, sizeof(num_items), 1, fp);
-        //      num_nodes
+        // num_nodes
         int num_nodes = rtree.getNumNodes();
         fwrite(&num_nodes, sizeof(num_nodes), 1, fp);
-        //      node_size
+        // node_size
         int node_size = rtree.getNodeSize();
         fwrite(&node_size, sizeof(node_size), 1, fp);
-        //      tree_size
+        // tree_size
         int tree_size = rtree.size();
         fwrite(&tree_size, sizeof(tree_size), 1, fp);
-        //      tree_bytes
+        // tree_bytes
         rtree.streamWrite([&](const uint8_t *data, size_t size) {
             fwrite(data, 1, size, fp);
         });
 
-        const int padding = 0;
+        const int padding = 930604; // geobuf
         fwrite(&padding, sizeof(padding), 1, fp);
 
-        mapbox::geobuf::Encoder encoder(std::pow(10, precision), only_xy,
-                                        round_z);
+        auto encoder = mapbox::geobuf::Encoder(std::pow(10, precision), only_xy, round_z);
         auto bytes = encoder.encode(geojson);
         std::vector<int> offsets = encoder.__offsets();
         int num_offsets = offsets.size();
         fwrite(&num_offsets, sizeof(num_offsets), 1, fp);
         fwrite(offsets.data(), sizeof(offsets[0]), offsets.size(), fp);
         fwrite(&padding, sizeof(padding), 1, fp);
-        fwrite(bytes.data(), 1, bytes.size(), fp);
-
         fclose(fp);
-        return true;
-        // write magic, geobuf_plus
-        // write num_features, bbox
-        // write num_tree_bytes, tree
-        // write num_offsets, tree
-        // geobuf
+        spdlog::info("wrote index to {}", output_index_path);
+
+        if (mapbox::geobuf::dump_bytes(output_geobuf_path, bytes)) {
+            spdlog::error("wrote geobuf to {}", output_geobuf_path);
+            return true;
+        } else {
+            spdlog::error("failed to write to {}", output_geobuf_path);
+            return false;
+        }
     }
 };
 } // namespace cubao
