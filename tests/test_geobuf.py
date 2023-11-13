@@ -1895,7 +1895,7 @@ if __name__ == "__main__":
     ipath = f"{__pwd}/../data/suzhoubeizhan.json"
     opath_idx = f"{__pwd}/../build/export.idx"
     opath_pbf = f"{__pwd}/../build/export.pbf"
-    # print(GeobufPlus.encode(ipath, opath_idx, opath_pbf))
+    print(GeobufPlus.encode(ipath, opath_idx, opath_pbf))
     gbp = GeobufPlus()
     print(gbp.mmap_init(opath_idx, opath_pbf))
 

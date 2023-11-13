@@ -85,7 +85,7 @@ struct GeobufPlus
         offsets.resize(num_offsets);
         memcpy(reinterpret_cast<void *>(offsets.data()), data + cursor,
                sizeof(offsets[0]) * num_offsets);
-        cursor += sizeof(sizeof(offsets[0]) * num_offsets);
+        cursor += sizeof(offsets[0]) * num_offsets;
         spdlog::info("offsets: [{}, ..., {}]", offsets.front(), offsets.back());
 
         padding = *reinterpret_cast<const int *>(data + cursor);
@@ -95,6 +95,7 @@ struct GeobufPlus
             return false;
         }
 
+        spdlog::info("decoding geobuf...");
         mmap = std::make_shared<mio::ummap_source>(geobuf_path);
         decoder.decode_header(mmap.data(), offsets[0]);
         spdlog::info("decoded geobuf header, #keys={}, dim={}, precision: {}",
