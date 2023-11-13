@@ -26,11 +26,12 @@ struct Planet
         return *this;
     }
 
-    void build(bool per_line_segment = false, bool force = false) const { 
+    void build(bool per_line_segment = false, bool force = false) const
+    {
         if (force) {
             rtree_.reset();
         }
-        this->rtree(per_line_segment); 
+        this->rtree(per_line_segment);
     }
 
     // TODO, query by style expression

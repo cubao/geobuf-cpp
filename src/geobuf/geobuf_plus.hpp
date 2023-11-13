@@ -90,8 +90,7 @@ struct GeobufPlus
         auto planet = Planet(fc);
         FILE *fp = fopen(output_index_path.c_str(), "wb");
         if (!fp) {
-            spdlog::error("failed to open {} for writing",
-                          output_index_path);
+            spdlog::error("failed to open {} for writing", output_index_path);
             return false;
         }
         // magic
@@ -124,7 +123,8 @@ struct GeobufPlus
         const int padding = 930604; // geobuf
         fwrite(&padding, sizeof(padding), 1, fp);
 
-        auto encoder = mapbox::geobuf::Encoder(std::pow(10, precision), only_xy, round_z);
+        auto encoder =
+            mapbox::geobuf::Encoder(std::pow(10, precision), only_xy, round_z);
         auto bytes = encoder.encode(geojson);
         std::vector<int> offsets = encoder.__offsets();
         int num_offsets = offsets.size();

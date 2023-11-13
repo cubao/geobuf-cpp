@@ -267,7 +267,8 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def("features",
              py::overload_cast<const mapbox::geojson::feature_collection &>(
                  &Planet::features))
-        .def("build", &Planet::build, py::kw_only(), "per_line_segment"_a = false, "force"_a = false)
+        .def("build", &Planet::build, py::kw_only(),
+             "per_line_segment"_a = false, "force"_a = false)
         .def("query", &Planet::query, "min"_a, "max"_a)
         .def("copy", &Planet::copy)
         .def("crop", &Planet::crop, "polygon"_a, py::kw_only(),
@@ -283,14 +284,13 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def("mmap_init", &GeobufPlus::mmap_init, "path"_a)
         .def("init", &GeobufPlus::init, "header_bytes"_a)
         //
-        .def_static(
-            "encode",
-            py::overload_cast<const std::string &, const std::string &, const std::string &, uint8_t,
-                              bool, std::optional<int>>(&GeobufPlus::encode),
-            "input_geojson_path"_a, 
-            "output_index_path"_a,
-            "output_geobuf_path"_a, py::kw_only(),
-            "precision"_a = 8, "only_xy"_a = false, "round_z"_a = 3)
+        .def_static("encode",
+                    py::overload_cast<const std::string &, const std::string &,
+                                      const std::string &, uint8_t, bool,
+                                      std::optional<int>>(&GeobufPlus::encode),
+                    "input_geojson_path"_a, "output_index_path"_a,
+                    "output_geobuf_path"_a, py::kw_only(), "precision"_a = 8,
+                    "only_xy"_a = false, "round_z"_a = 3)
         //
         ;
 
