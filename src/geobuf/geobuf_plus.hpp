@@ -17,6 +17,7 @@ struct GeobufPlus
     GeobufPlus() = default;
     int num_features;
     FlatGeobuf::PackedRTree rtree;
+    std::vector<int> offsets;
     mio::shared_ummap_source mmap;
 
     bool mmap_init(const std::string &index_path, const std::string &geobuf_path)
@@ -77,16 +78,19 @@ struct GeobufPlus
         cursor += sizeof(num_offsets);
         spdlog::info("num_offsets: {}", num_offsets);
 
-        std::vector<int> offsets;
         offsets.resize(num_offsets);
         memcpy(reinterpret_cast<void *>(offsets.data()), data + cursor, sizeof(offsets[0]) * num_offsets);
         cursor += sizeof(sizeof(offsets[0]) * num_offsets);
-        spdlog::info("offsets: [{}, ..., {}", offsets.front(), offsets.back());
+        spdlog::info("offsets: [{}, ..., {}]", offsets.front(), offsets.back());
 
-        // mmap = std::make_shared<mio::ummap_source>(path);
+        padding = *reinterpret_cast<const int *>(data + cursor);
+        cursor += sizeof(padding);
+        if (padding != 930604) {
+            spdlog::error("invalid padding: {} != 930604 (geobuf)", padding);
+            return false;
+        }
 
-        // // return true;
-        return false;
+        return true;
     }
 
     void init_index(const std::string &index_bytes) {
