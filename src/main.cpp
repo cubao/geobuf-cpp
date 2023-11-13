@@ -284,6 +284,8 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def("mmap_init", &GeobufPlus::mmap_init, "index_path"_a,
              "geobuf_path"_a)
         .def("init_index", &GeobufPlus::init_index, "index_bytes"_a)
+        .def("decode_feature",
+             py::overload_cast<int>(&GeobufPlus::decode_feature), "index"_a)
         //
         .def_static("encode",
                     py::overload_cast<const std::string &, const std::string &,

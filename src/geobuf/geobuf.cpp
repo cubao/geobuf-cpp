@@ -247,7 +247,7 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
     geojson.match(
         [&](const mapbox::geojson::feature_collection &features) {
             offsets.clear();
-            offsets.reserve(features.size() + 1);
+            offsets.reserve(features.size() + 2);
             protozero::pbf_writer pbf_fc{pbf, 4};
             writeFeatureCollection(features, pbf_fc);
         },
@@ -392,10 +392,11 @@ void Encoder::writeFeatureCollection(
         protozero::pbf_writer pbf_f{pbf, 1};
         writeFeature(feature, pbf_f);
     }
+    offsets.push_back(data.size());
     if (!geojson.custom_properties.empty()) {
-        offsets.push_back(data.size());
         writeProps(geojson.custom_properties, pbf, 15);
     }
+    offsets.push_back(data.size());
 }
 
 void Encoder::writeFeature(const mapbox::geojson::feature &feature, Pbf &pbf)
@@ -671,6 +672,23 @@ void Decoder::decode_header(const uint8_t *data, std::size_t size)
             return;
         }
     }
+}
+
+mapbox::geojson::feature Decoder::decode_feature(const uint8_t *data,
+                                                 std::size_t size)
+{
+    auto pbf =
+        protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
+    if (!pbf.next() || pbf.tag() != 1) {
+        return {};
+    }
+    protozero::pbf_reader pbf_f = pbf.get_message();
+    return readFeature(pbf_f);
+}
+mapbox::feature::property_map Decoder::decode_non_features(const uint8_t *data,
+                                                           std::size_t size)
+{
+    return {};
 }
 
 bool Decoder::decode(const std::string &input_path,

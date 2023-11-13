@@ -112,15 +112,27 @@ struct GeobufPlus
         return {};
     }
 
-    mapbox::geojson::feature decode_one_feature(const char *ptr) const
+    mapbox::geojson::feature decode_feature(int index)
     {
-        return mapbox::geojson::feature{};
+        return decode_feature(mmap.data() + offsets[index],
+                              offsets[index + 1] - offsets[index]);
+    }
+
+    mapbox::geojson::feature decode_feature(const uint8_t *data, size_t size)
+    {
+        return decoder.decode_feature(data, size);
     }
 
     mapbox::geojson::feature_collection
-    decode(const void *data, const std::vector<int> &offsets) const
+    decode_feature(const uint8_t *data,
+                   const std::vector<std::array<int, 2>> &index)
     {
-        return {};
+        mapbox::geojson::feature_collection fc;
+        fc.reserve(index.size());
+        for (auto &pair : index) {
+            fc.push_back(decode_feature(data + pair[0], pair[1]));
+        }
+        return fc;
     }
 
     mapbox::feature::property_map
