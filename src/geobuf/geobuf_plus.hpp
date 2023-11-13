@@ -87,6 +87,7 @@ struct GeobufPlus
                sizeof(offsets[0]) * num_offsets);
         cursor += sizeof(offsets[0]) * num_offsets;
         spdlog::info("offsets: [{}, ..., {}]", offsets.front(), offsets.back());
+        dbg(offsets);
 
         padding = *reinterpret_cast<const int *>(data + cursor);
         cursor += sizeof(padding);
@@ -114,12 +115,13 @@ struct GeobufPlus
 
     mapbox::geojson::feature decode_feature(int index)
     {
-        return decode_feature(mmap.data() + offsets[index],
-                              offsets[index + 1] - offsets[index]);
+        return decode_feature(mmap.data() + dbg(offsets[index]),
+                              dbg(offsets[index + 1] - offsets[index]));
     }
 
     mapbox::geojson::feature decode_feature(const uint8_t *data, size_t size)
     {
+        dbg(size);
         return decoder.decode_feature(data, size);
     }
 

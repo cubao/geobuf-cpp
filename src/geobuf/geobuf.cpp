@@ -677,11 +677,15 @@ void Decoder::decode_header(const uint8_t *data, std::size_t size)
 mapbox::geojson::feature Decoder::decode_feature(const uint8_t *data,
                                                  std::size_t size)
 {
+    dbg("here");
+    std::cout << std::endl;
     auto pbf =
         protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
-    if (!pbf.next() || pbf.tag() != 1) {
+    dbg("not ready");
+    if (dbg(pbf.tag()) != 1) {
         return {};
     }
+    dbg("??");
     protozero::pbf_reader pbf_f = pbf.get_message();
     return readFeature(pbf_f);
 }

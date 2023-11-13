@@ -1898,6 +1898,7 @@ if __name__ == "__main__":
     print(GeobufPlus.encode(ipath, opath_idx, opath_pbf))
     gbp = GeobufPlus()
     print(gbp.mmap_init(opath_idx, opath_pbf))
+    f = gbp.decode_feature(0)
 
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
