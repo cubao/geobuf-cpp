@@ -158,6 +158,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def("dim", &Encoder::__dim)
         .def("e", &Encoder::__e)
         .def("keys", &Encoder::__keys)
+        .def("offsets", &Encoder::__offsets)
         .def(
             "encode",
             [](Encoder &self, const mapbox::geojson::geojson &geojson) {
@@ -252,6 +253,10 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             "indent"_a = false, //
             "sort_keys"_a = false)
         .def("keys", &Decoder::__keys)
+        //
+        .def("decode_header", py::overload_cast<const std::string &>(&Decoder::decode_header))
+        .def("decode_feature", py::overload_cast<const std::string &>(&Decoder::decode_feature))
+        .def("decode_none_features", py::overload_cast<const std::string &>(&Decoder::decode_non_features))
         //
         ;
 

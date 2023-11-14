@@ -171,16 +171,26 @@ struct Decoder
                                     const std::string &indent = "");
     mapbox::geojson::geojson decode(const std::string &pbf_bytes);
     void decode_header(const uint8_t *data, std::size_t size);
+    void decode_header(const std::string &bytes) {
+        decode_header((const uint8_t *)bytes.data(), bytes.size());
+    }
     mapbox::geojson::feature decode_feature(const uint8_t *data,
                                             std::size_t size);
+    mapbox::geojson::feature decode_feature(const std::string &bytes) {
+        return decode_feature((const uint8_t *)bytes.data(), bytes.size());
+    }
     mapbox::feature::property_map decode_non_features(const uint8_t *data,
                                                       std::size_t size);
+    mapbox::feature::property_map decode_non_features(const std::string &bytes) {
+        return decode_non_features((const uint8_t *)bytes.data(), bytes.size());
+    }
 
     bool decode(const std::string &input_path, const std::string &output_path,
                 bool indent = false, bool sort_keys = false);
     int precision() const { return std::log10(e); }
     int __dim() const { return dim; }
     std::vector<std::string> __keys() const { return keys; }
+    std::vector<int> __offsets() const { return offsets; }
 
   private:
     mapbox::geojson::feature_collection readFeatureCollection(Pbf &pbf);
@@ -191,6 +201,9 @@ struct Decoder
     uint32_t dim = MAPBOX_GEOBUF_DEFAULT_DIM;
     uint32_t e = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION);
     std::vector<std::string> keys;
+
+    const char *head = nullptr;
+    std::vector<int> offsets;
 };
 
 } // namespace geobuf

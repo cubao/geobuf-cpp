@@ -661,6 +661,7 @@ std::string Decoder::to_printable(const std::string &pbf_bytes,
 
 mapbox::geojson::geojson Decoder::decode(const std::string &pbf_bytes)
 {
+    head = pbf_bytes.data();
     auto pbf = protozero::pbf_reader{pbf_bytes};
     dim = MAPBOX_GEOBUF_DEFAULT_DIM;
     e = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION);
@@ -713,23 +714,16 @@ void Decoder::decode_header(const uint8_t *data, std::size_t size)
 mapbox::geojson::feature Decoder::decode_feature(const uint8_t *data,
                                                  std::size_t size)
 {
-    dbg("here");
-    // shit
-    std::cout << std::endl;
     auto pbf =
         protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
-    // dbg("not ready");
-    // if (!dbg(pbf.next()) || dbg(pbf.tag()) != 1) {
-    //     dbg("no good");
-    //     return {};
-    // }
-    // dbg("??");
-    // protozero::pbf_reader pbf_f = pbf.get_message();
     return readFeature(pbf);
 }
 mapbox::feature::property_map Decoder::decode_non_features(const uint8_t *data,
                                                            std::size_t size)
 {
+    auto pbf =
+        protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
+    // return readFeature(pbf);
     return {};
 }
 
@@ -759,11 +753,15 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
 {
     mapbox::geojson::feature_collection fc;
     std::vector<mapbox::geojson::value> values;
+    offsets.clear();
+    const char *tail = nullptr;
     while (pbf.next()) {
         const auto tag = pbf.tag();
         if (tag == 1) {
             protozero::pbf_reader pbf_f = pbf.get_message();
+            offsets.push_back(pbf_f.data().data() - head);
             fc.push_back(readFeature(pbf_f));
+            tail = pbf_f.data().data();
         } else if (tag == 13) {
             protozero::pbf_reader pbf_v = pbf.get_message();
             values.push_back(readValue(pbf_v));
@@ -781,6 +779,8 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
             pbf.skip();
         }
     }
+    offsets.push_back(tail - head); // props
+    offsets.push_back(pbf.data().data() - head);
     return fc;
 }
 mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
