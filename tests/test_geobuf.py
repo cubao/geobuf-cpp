@@ -1902,14 +1902,14 @@ if __name__ == "__main__":
     decoder = Decoder()
     ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
     # ipath = f"{__pwd}/../build/f3/export.pbf"
-    fc = decoder.decode(geobuf=ipath, geojson='test.json')
+    fc = decoder.decode(geobuf=ipath, geojson="test.json")
     offsets = decoder.offsets()
 
-    with open(ipath, 'rb') as f:
+    with open(ipath, "rb") as f:
         data = f.read()
 
     decoder2 = Decoder()
-    decoder2.decode_header(data[:offsets[0]])
+    decoder2.decode_header(data[: offsets[0]])
     print(decoder2.keys())
 
     # 59, 318
@@ -1920,11 +1920,10 @@ if __name__ == "__main__":
     o1, o2 = offsets[2:4]
     f2 = decoder2.decode_feature(data[o1:o2])
     for i in range(10, 50):
-        o1, o2 = offsets[2*i:2*i +2]
+        o1, o2 = offsets[2 * i : 2 * i + 2]
         f3 = decoder2.decode_feature(data[o1:o2])
         print(f3())
     print()
-
 
     # features = GeobufPlus.encode(ipath, opath_idx, opath_pbf)
     # print()
