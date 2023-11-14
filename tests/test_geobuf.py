@@ -1896,18 +1896,44 @@ if __name__ == "__main__":
     opath_idx = f"{__pwd}/../build/export.idx"
     opath_pbf = f"{__pwd}/../build/export.pbf"
 
-    fc1 = geojson.FeatureCollection().load(ipath)
-    fc2 = geojson.FeatureCollection().load(opath_pbf)
-    assert fc1[0] == fc2[0]
+    # fc1 = geojson.FeatureCollection().load(ipath)
+    # fc2 = geojson.FeatureCollection().load(opath_pbf)
+    # assert fc1[0] == fc2[0]
+    decoder = Decoder()
+    ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
+    # ipath = f"{__pwd}/../build/f3/export.pbf"
+    fc = decoder.decode(geobuf=ipath, geojson='test.json')
+    offsets = decoder.offsets()
 
-    features = GeobufPlus.encode(ipath, opath_idx, opath_pbf)
+    with open(ipath, 'rb') as f:
+        data = f.read()
+
+    decoder2 = Decoder()
+    decoder2.decode_header(data[:offsets[0]])
+    print(decoder2.keys())
+
+    # 59, 318
+    o1, o2 = offsets[:2]
+
+    f1 = decoder2.decode_feature(data[o1:o2])
+
+    o1, o2 = offsets[2:4]
+    f2 = decoder2.decode_feature(data[o1:o2])
+    for i in range(10, 50):
+        o1, o2 = offsets[2*i:2*i +2]
+        f3 = decoder2.decode_feature(data[o1:o2])
+        print(f3())
     print()
-    gbp = GeobufPlus()
-    print(gbp.mmap_init(opath_idx, opath_pbf))
-    f = gbp.decode_feature(features[0])
-    print(f())
-    print("done")
 
-    # np.set_printoptions(suppress=True)
-    # pwd = os.path.abspath(os.path.dirname(__file__))
-    # pytest_main(pwd, test_file=os.path.basename(__file__))
+
+    # features = GeobufPlus.encode(ipath, opath_idx, opath_pbf)
+    # print()
+    # gbp = GeobufPlus()
+    # print(gbp.mmap_init(opath_idx, opath_pbf))
+    # f = gbp.decode_feature(features[0])
+    # print(f())
+    # print("done")
+
+    # # np.set_printoptions(suppress=True)
+    # # pwd = os.path.abspath(os.path.dirname(__file__))
+    # # pytest_main(pwd, test_file=os.path.basename(__file__))

@@ -254,9 +254,13 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             "sort_keys"_a = false)
         .def("keys", &Decoder::__keys)
         //
-        .def("decode_header", py::overload_cast<const std::string &>(&Decoder::decode_header))
-        .def("decode_feature", py::overload_cast<const std::string &>(&Decoder::decode_feature))
-        .def("decode_none_features", py::overload_cast<const std::string &>(&Decoder::decode_non_features))
+        .def("decode_header",
+             py::overload_cast<const std::string &>(&Decoder::decode_header))
+        .def("decode_feature",
+             py::overload_cast<const std::string &>(&Decoder::decode_feature))
+        .def("decode_none_features", py::overload_cast<const std::string &>(
+                                         &Decoder::decode_non_features))
+        .def("offsets", &Decoder::__offsets)
         //
         ;
 

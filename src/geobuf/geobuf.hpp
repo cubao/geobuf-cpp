@@ -171,17 +171,20 @@ struct Decoder
                                     const std::string &indent = "");
     mapbox::geojson::geojson decode(const std::string &pbf_bytes);
     void decode_header(const uint8_t *data, std::size_t size);
-    void decode_header(const std::string &bytes) {
+    void decode_header(const std::string &bytes)
+    {
         decode_header((const uint8_t *)bytes.data(), bytes.size());
     }
     mapbox::geojson::feature decode_feature(const uint8_t *data,
                                             std::size_t size);
-    mapbox::geojson::feature decode_feature(const std::string &bytes) {
+    mapbox::geojson::feature decode_feature(const std::string &bytes)
+    {
         return decode_feature((const uint8_t *)bytes.data(), bytes.size());
     }
     mapbox::feature::property_map decode_non_features(const uint8_t *data,
                                                       std::size_t size);
-    mapbox::feature::property_map decode_non_features(const std::string &bytes) {
+    mapbox::feature::property_map decode_non_features(const std::string &bytes)
+    {
         return decode_non_features((const uint8_t *)bytes.data(), bytes.size());
     }
 

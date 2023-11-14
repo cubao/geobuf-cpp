@@ -26,10 +26,10 @@
 // https://github.com/mapbox/geobuf/blob/master/decode.js
 
 // #ifdef NDEBUG
-#define dbg(x) x
+// #define dbg(x) x
 // #else
-// #define DBG_MACRO_NO_WARNING
-// #include "dbg.h"
+#define DBG_MACRO_NO_WARNING
+#include "dbg.h"
 // #endif
 
 constexpr const auto RJFLAGS = rapidjson::kParseDefaultFlags |      //
@@ -760,7 +760,12 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
         if (tag == 1) {
             protozero::pbf_reader pbf_f = pbf.get_message();
             offsets.push_back(pbf_f.data().data() - head);
+            offsets.push_back(pbf_f.data().data() - head + pbf_f.data().size());
+            dbg(pbf_f.data().data() - head);
+            dbg(pbf_f.data().data() - head + pbf_f.data().size());
             fc.push_back(readFeature(pbf_f));
+            dbg(pbf_f.data().data() - head);
+            dbg(pbf_f.data().data() - head + pbf_f.data().size());
             tail = pbf_f.data().data();
         } else if (tag == 13) {
             protozero::pbf_reader pbf_v = pbf.get_message();
