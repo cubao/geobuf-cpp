@@ -1895,11 +1895,19 @@ if __name__ == "__main__":
     ipath = f"{__pwd}/../data/suzhoubeizhan.json"
     opath_idx = f"{__pwd}/../build/export.idx"
     opath_pbf = f"{__pwd}/../build/export.pbf"
-    print(GeobufPlus.encode(ipath, opath_idx, opath_pbf))
+
+    fc1 = geojson.FeatureCollection().load(ipath)
+    fc2 = geojson.FeatureCollection().load(opath_pbf)
+    assert fc1[0] == fc2[0]
+
+    features = GeobufPlus.encode(ipath, opath_idx, opath_pbf)
+    print()
     gbp = GeobufPlus()
     print(gbp.mmap_init(opath_idx, opath_pbf))
-    f = gbp.decode_feature(0)
+    f = gbp.decode_feature(features[0])
+    print(f())
+    print("done")
 
-    np.set_printoptions(suppress=True)
-    pwd = os.path.abspath(os.path.dirname(__file__))
-    pytest_main(pwd, test_file=os.path.basename(__file__))
+    # np.set_printoptions(suppress=True)
+    # pwd = os.path.abspath(os.path.dirname(__file__))
+    # pytest_main(pwd, test_file=os.path.basename(__file__))

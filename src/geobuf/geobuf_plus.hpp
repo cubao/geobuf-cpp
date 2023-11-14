@@ -10,8 +10,26 @@
 
 #include "dbg.h"
 
+#include <iomanip>
+#include <sstream>
+
+#include "spdlog/spdlog.h"
+
 namespace cubao
 {
+inline std::string to_hex(const std::string &s, bool upper_case = true)
+{
+    std::ostringstream ret;
+
+    for (std::string::size_type i = 0; i < s.length(); ++i) {
+        int z = s[i] & 0xff;
+        ret << std::hex << std::setfill('0') << std::setw(2)
+            << (upper_case ? std::uppercase : std::nouppercase) << z;
+    }
+
+    return ret.str();
+}
+
 struct GeobufPlus
 {
     GeobufPlus() = default;
@@ -102,6 +120,7 @@ struct GeobufPlus
         spdlog::info("decoded geobuf header, #keys={}, dim={}, precision: {}",
                      decoder.__keys().size(), decoder.__dim(),
                      decoder.precision());
+        dbg(decoder.__keys());
 
         return true;
     }
@@ -115,8 +134,19 @@ struct GeobufPlus
 
     mapbox::geojson::feature decode_feature(int index)
     {
-        return decode_feature(mmap.data() + dbg(offsets[index]),
-                              dbg(offsets[index + 1] - offsets[index]));
+        // auto bytes = std::string((const char *)mmap.data() +
+        // dbg(offsets[index]), dbg(offsets[index + 1] - offsets[index]));
+        // spdlog::info("bytes: {}", to_hex(bytes));
+        // return decode_feature((const uint8_t *)bytes.data(),
+        // dbg(bytes.size()));
+        return {};
+    }
+
+    mapbox::geojson::feature decode_feature(const std::string &bytes)
+    {
+        dbg(bytes.size());
+        return decoder.decode_feature((const uint8_t *)bytes.data(),
+                                      bytes.size());
     }
 
     mapbox::geojson::feature decode_feature(const uint8_t *data, size_t size)
@@ -145,17 +175,18 @@ struct GeobufPlus
 
     static std::string encode(const Planet &planet) { return ""; }
 
-    static bool encode(const std::string &input_geojson_path,
-                       const std::string &output_index_path,
-                       const std::string &output_geobuf_path,
-                       uint8_t precision = 8, bool only_xy = false,
-                       std::optional<int> round_z = 3)
+    static std::vector<std::string>
+    encode(const std::string &input_geojson_path,
+           const std::string &output_index_path,
+           const std::string &output_geobuf_path, uint8_t precision = 8,
+           bool only_xy = false, std::optional<int> round_z = 3, int N = 0)
     {
         spdlog::info("loading {} ...", input_geojson_path);
         auto json = mapbox::geobuf::load_json(input_geojson_path);
         if (json.IsNull()) {
             spdlog::error("invalid input, abort");
-            return false;
+            // return false;
+            return {};
         }
         auto geojson = mapbox::geojson::convert(json);
         if (geojson.is<mapbox::geojson::geometry>()) {
@@ -167,13 +198,16 @@ struct GeobufPlus
                 geojson.get<mapbox::geojson::feature>()};
         }
         auto &fc = geojson.get<mapbox::geojson::feature_collection>();
+        if (N > 0 && fc.size() > N) {
+            fc.resize(N);
+        }
         spdlog::info("encoding {} features...", fc.size());
 
         auto planet = Planet(fc);
         FILE *fp = fopen(output_index_path.c_str(), "wb");
         if (!fp) {
             spdlog::error("failed to open {} for writing", output_index_path);
-            return false;
+            return {};
         }
         // magic
         fwrite("GeobufIdx0", 10, 1, fp);
@@ -218,11 +252,15 @@ struct GeobufPlus
 
         if (mapbox::geobuf::dump_bytes(output_geobuf_path, bytes)) {
             spdlog::info("wrote geobuf to {}", output_geobuf_path);
-            return true;
+            // return true;
         } else {
             spdlog::error("failed to write to {}", output_geobuf_path);
-            return false;
+            // return false;
         }
+        for (int i = 0; i < N; ++i) {
+            dbg(i, encoder.features[i].size());
+        }
+        return encoder.features;
     }
 };
 } // namespace cubao

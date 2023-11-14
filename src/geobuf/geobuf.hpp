@@ -120,6 +120,7 @@ struct Encoder
         return std::map<std::string, std::uint32_t>(keys.begin(), keys.end());
     }
     auto __offsets() const { return offsets; }
+    std::vector<std::string> features;
 
   private:
     void analyze(const mapbox::geojson::geojson &geojson);

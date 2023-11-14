@@ -12,7 +12,11 @@
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+
+#include "spdlog/spdlog.h"
 
 #include <cmath>
 #include <protozero/pbf_builder.hpp>
@@ -21,12 +25,12 @@
 // https://github.com/mapbox/geobuf/blob/master/encode.js
 // https://github.com/mapbox/geobuf/blob/master/decode.js
 
-#ifdef NDEBUG
+// #ifdef NDEBUG
 #define dbg(x) x
-#else
-#define DBG_MACRO_NO_WARNING
-#include "dbg.h"
-#endif
+// #else
+// #define DBG_MACRO_NO_WARNING
+// #include "dbg.h"
+// #endif
 
 constexpr const auto RJFLAGS = rapidjson::kParseDefaultFlags |      //
                                rapidjson::kParseCommentsFlag |      //
@@ -246,8 +250,6 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
     }
     geojson.match(
         [&](const mapbox::geojson::feature_collection &features) {
-            offsets.clear();
-            offsets.reserve(features.size() + 2);
             protozero::pbf_writer pbf_fc{pbf, 4};
             writeFeatureCollection(features, pbf_fc);
         },
@@ -384,19 +386,53 @@ void Encoder::saveKey(const mapbox::feature::property_map &props)
     }
 }
 
+inline std::string to_hex(const std::string &s, bool upper_case = true)
+{
+    std::ostringstream ret;
+    ret << s.size() << " bytes\n";
+
+    for (std::string::size_type i = 0; i < s.length(); ++i) {
+        if (i % 80 == 0) {
+            ret << fmt::format("\n\t#{:4d}: ", i);
+        }
+        int z = s[i] & 0xff;
+        ret << std::hex << std::setfill('0') << std::setw(2)
+            << (upper_case ? std::uppercase : std::nouppercase) << z;
+    }
+
+    return ret.str();
+}
+
 void Encoder::writeFeatureCollection(
     const mapbox::geojson::feature_collection &geojson, Pbf &pbf)
 {
+    // shit
+    offsets.clear();
+    offsets.reserve(geojson.size() + 2);
+    std::vector<std::string> toprint;
     for (auto &feature : geojson) {
-        offsets.push_back(data.size());
+        offsets.push_back(dbg(data.size()));
+        // int cursor = data.size();
         protozero::pbf_writer pbf_f{pbf, 1};
+        int cursor = data.size();
+        dbg(data.size());
         writeFeature(feature, pbf_f);
+        this->features.push_back(data.substr(cursor));
+        if (offsets.size() < 4) {
+            toprint.push_back(to_hex(data));
+        }
+        dbg(data.size());
     }
     offsets.push_back(data.size());
     if (!geojson.custom_properties.empty()) {
         writeProps(geojson.custom_properties, pbf, 15);
     }
     offsets.push_back(data.size());
+
+    dbg(offsets.size());
+    for (auto &bb : toprint) {
+        spdlog::info("\n\nbytes:{}", bb);
+    }
 }
 
 void Encoder::writeFeature(const mapbox::geojson::feature &feature, Pbf &pbf)
@@ -678,16 +714,18 @@ mapbox::geojson::feature Decoder::decode_feature(const uint8_t *data,
                                                  std::size_t size)
 {
     dbg("here");
+    // shit
     std::cout << std::endl;
     auto pbf =
         protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
-    dbg("not ready");
-    if (dbg(pbf.tag()) != 1) {
-        return {};
-    }
-    dbg("??");
-    protozero::pbf_reader pbf_f = pbf.get_message();
-    return readFeature(pbf_f);
+    // dbg("not ready");
+    // if (!dbg(pbf.next()) || dbg(pbf.tag()) != 1) {
+    //     dbg("no good");
+    //     return {};
+    // }
+    // dbg("??");
+    // protozero::pbf_reader pbf_f = pbf.get_message();
+    return readFeature(pbf);
 }
 mapbox::feature::property_map Decoder::decode_non_features(const uint8_t *data,
                                                            std::size_t size)
