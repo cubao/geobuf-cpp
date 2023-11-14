@@ -716,7 +716,10 @@ mapbox::geojson::feature Decoder::decode_feature(const uint8_t *data,
 {
     auto pbf =
         protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
-    return readFeature(pbf);
+    dbg(pbf.next());
+    dbg(pbf.tag());
+    auto msg = pbf.get_message();
+    return readFeature(msg);
 }
 mapbox::feature::property_map Decoder::decode_non_features(const uint8_t *data,
                                                            std::size_t size)
@@ -755,18 +758,15 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
     std::vector<mapbox::geojson::value> values;
     offsets.clear();
     const char *tail = nullptr;
-    while (pbf.next()) {
+    while (true) {
+        offsets.push_back(pbf.data().data() - head);
+        if (!pbf.next()) {
+            break;
+        }
         const auto tag = pbf.tag();
         if (tag == 1) {
             protozero::pbf_reader pbf_f = pbf.get_message();
-            offsets.push_back(pbf_f.data().data() - head);
-            offsets.push_back(pbf_f.data().data() - head + pbf_f.data().size());
-            dbg(pbf_f.data().data() - head);
-            dbg(pbf_f.data().data() - head + pbf_f.data().size());
             fc.push_back(readFeature(pbf_f));
-            dbg(pbf_f.data().data() - head);
-            dbg(pbf_f.data().data() - head + pbf_f.data().size());
-            tail = pbf_f.data().data();
         } else if (tag == 13) {
             protozero::pbf_reader pbf_v = pbf.get_message();
             values.push_back(readValue(pbf_v));
@@ -784,7 +784,6 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
             pbf.skip();
         }
     }
-    offsets.push_back(tail - head); // props
     offsets.push_back(pbf.data().data() - head);
     return fc;
 }

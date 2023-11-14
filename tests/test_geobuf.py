@@ -1913,6 +1913,8 @@ if __name__ == "__main__":
     print(decoder2.keys())
 
     # 59, 318
+    # [59, 318, 321, 817, 820, 999, 1002, 1174, 1177, 1471]
+
     o1, o2 = offsets[:2]
 
     f1 = decoder2.decode_feature(data[o1:o2])
