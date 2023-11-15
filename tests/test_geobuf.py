@@ -1898,7 +1898,7 @@ if __name__ == "__main__":
     assert GeobufPlus.indexing(ipath, opath)
     indexer = GeobufPlus()
     assert indexer.mmap_init(opath, ipath)
-    assert indexer.decode_feature(0)() == {
+    expected = {
         "type": "Feature",
         "geometry": {
             "type": "LineString",
@@ -1919,7 +1919,7 @@ if __name__ == "__main__":
         "properties": {
             "stroke": "#48fd6d",
             "folds": [
-                ["24", "1870", "40", "1318", "0", "39", "93", "26", "1224", "2"],
+                ["24", "1870", "40", "1318", "0", "39", "93", "26", "1224", "2",],
                 [
                     151.228,
                     6.069,
@@ -1939,43 +1939,6 @@ if __name__ == "__main__":
             "nexts": ["23"],
         },
     }
-
-    decoder = Decoder()
-    ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
-    # ipath = f"{__pwd}/../build/f3/export.pbf"
-    fc = decoder.decode(geobuf=ipath, geojson="test.json")
-    offsets = decoder.offsets()
-
-    with open(ipath, "rb") as f:
-        data = f.read()
-
-    decoder2 = Decoder()
-    decoder2.decode_header(data[: offsets[0]])
-    print(decoder2.keys())
-
-    # 59, 318
-    # [59, 318, 321, 817, 820, 999, 1002, 1174, 1177, 1471]
-
-    o1, o2 = offsets[:2]
-
-    f1 = decoder2.decode_feature(data[o1:o2])
-
-    o1, o2 = offsets[2:4]
-    f2 = decoder2.decode_feature(data[o1:o2])
-    for i in range(10, 50):
-        o1, o2 = offsets[2 * i : 2 * i + 2]
-        f3 = decoder2.decode_feature(data[o1:o2])
-        print(f3())
-    print()
-
-    # features = GeobufPlus.encode(ipath, opath_idx, opath_pbf)
-    # print()
-    # gbp = GeobufPlus()
-    # print(gbp.mmap_init(opath_idx, opath_pbf))
-    # f = gbp.decode_feature(features[0])
-    # print(f())
-    # print("done")
-
-    # # np.set_printoptions(suppress=True)
-    # # pwd = os.path.abspath(os.path.dirname(__file__))
-    # # pytest_main(pwd, test_file=os.path.basename(__file__))
+    assert indexer.decode_feature(0)() == expected
+    assert indexer.decode_feature(0, only_geometry=True)()['properties'] == {}
+    assert indexer.decode_feature(0, only_properties=True)()['geometry'] is None

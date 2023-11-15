@@ -735,7 +735,8 @@ void Decoder::decode_header(const uint8_t *data, std::size_t size)
 }
 
 std::optional<mapbox::geojson::feature>
-Decoder::decode_feature(const uint8_t *data, std::size_t size)
+Decoder::decode_feature(const uint8_t *data, std::size_t size,
+                        bool only_geometry, bool only_properties)
 {
     try {
         auto pbf =
@@ -744,7 +745,7 @@ Decoder::decode_feature(const uint8_t *data, std::size_t size)
             return {};
         }
         auto pbf_f = pbf.get_message();
-        return readFeature(pbf_f);
+        return readFeature(pbf_f, only_geometry, only_properties);
     } catch (...) {
         return {};
     }
@@ -901,7 +902,8 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
     return f;
 }
 
-mapbox::geojson::feature Decoder::readFeature(Pbf &pbf, bool only_geometry,
+mapbox::geojson::feature Decoder::readFeature(Pbf &pbf, //
+                                              bool only_geometry,
                                               bool only_properties)
 {
     if (!only_geometry && !only_properties) {

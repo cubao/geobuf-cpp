@@ -254,9 +254,12 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def("keys", &Decoder::__keys)
         //
         .def("decode_header",
-             py::overload_cast<const std::string &>(&Decoder::decode_header))
+             py::overload_cast<const std::string &>(&Decoder::decode_header),
+             "bytes"_a)
         .def("decode_feature",
-             py::overload_cast<const std::string &>(&Decoder::decode_feature))
+             py::overload_cast<const std::string &, bool, bool>(
+                 &Decoder::decode_feature),
+             "bytes"_a, "only_geometry"_a = false, "only_properties"_a = false)
         .def("decode_none_features", py::overload_cast<const std::string &>(
                                          &Decoder::decode_non_features))
         .def("offsets", &Decoder::__offsets)
@@ -312,15 +315,19 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             "offset"_a, "length"_a)
         //
         .def("decode_feature",
-             py::overload_cast<int>(&GeobufPlus::decode_feature), "index"_a)
-        .def(
-            "decode_feature",
-            py::overload_cast<const std::string &>(&GeobufPlus::decode_feature),
-            "bytes"_a)
+             py::overload_cast<int, bool, bool>(&GeobufPlus::decode_feature),
+             "index"_a, py::kw_only(), "only_geometry"_a = false,
+             "only_properties"_a = false)
+        .def("decode_feature",
+             py::overload_cast<const std::string &, bool, bool>(
+                 &GeobufPlus::decode_feature),
+             "bytes"_a, py::kw_only(), "only_geometry"_a = false,
+             "only_properties"_a = false)
         .def("decode_features",
-             py::overload_cast<const std::vector<int> &>(
+             py::overload_cast<const std::vector<int> &, bool, bool>(
                  &GeobufPlus::decode_features),
-             "index"_a)
+             "index"_a, py::kw_only(), "only_geometry"_a = false,
+             "only_properties"_a = false)
         //
         .def("decode_non_features", py::overload_cast<const std::string &>(
                                         &GeobufPlus::decode_non_features))

@@ -173,12 +173,15 @@ struct Decoder
     {
         decode_header((const uint8_t *)bytes.data(), bytes.size());
     }
-    std::optional<mapbox::geojson::feature> decode_feature(const uint8_t *data,
-                                                           std::size_t size);
     std::optional<mapbox::geojson::feature>
-    decode_feature(const std::string &bytes)
+    decode_feature(const uint8_t *data, std::size_t size,
+                   bool only_geometry = false, bool only_properties = false);
+    std::optional<mapbox::geojson::feature>
+    decode_feature(const std::string &bytes, bool only_geometry = false,
+                   bool only_properties = false)
     {
-        return decode_feature((const uint8_t *)bytes.data(), bytes.size());
+        return decode_feature((const uint8_t *)bytes.data(), bytes.size(),
+                              only_geometry, only_properties);
     }
     mapbox::feature::property_map decode_non_features(const uint8_t *data,
                                                       std::size_t size);

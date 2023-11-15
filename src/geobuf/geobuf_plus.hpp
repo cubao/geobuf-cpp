@@ -132,6 +132,7 @@ struct GeobufPlus
         spdlog::info("decoded geobuf header, #keys={}, dim={}, precision: {}",
                      decoder.__keys().size(), decoder.__dim(),
                      decoder.precision());
+        return true;
     }
 
     std::optional<std::string> mmap_bytes(size_t offset, size_t length) const
@@ -142,17 +143,23 @@ struct GeobufPlus
         return {};
     }
 
-    std::optional<mapbox::geojson::feature> decode_feature(const uint8_t *data,
-                                                           size_t size)
+    std::optional<mapbox::geojson::feature>
+    decode_feature(const uint8_t *data, size_t size, bool only_geometry = false,
+                   bool only_properties = false)
     {
-        return decoder.decode_feature(data, size);
+        return decoder.decode_feature(data, size, only_geometry,
+                                      only_properties);
     }
     std::optional<mapbox::geojson::feature>
-    decode_feature(const std::string &bytes)
+    decode_feature(const std::string &bytes, bool only_geometry,
+                   bool only_properties)
     {
-        return decode_feature((const uint8_t *)bytes.data(), bytes.size());
+        return decode_feature((const uint8_t *)bytes.data(), bytes.size(),
+                              only_geometry, only_properties);
     }
-    std::optional<mapbox::geojson::feature> decode_feature(int index)
+    std::optional<mapbox::geojson::feature>
+    decode_feature(int index, bool only_geometry = false,
+                   bool only_properties = false)
     {
         bool valid_index =
             0 <= index && index < num_features && index + 1 < offsets.size();
@@ -165,7 +172,8 @@ struct GeobufPlus
         try {
             int cursor = offsets[index];
             int length = offsets[index + 1] - cursor;
-            return decode_feature(mmap.data() + cursor, length);
+            return decode_feature(mmap.data() + cursor, length, only_geometry,
+                                  only_properties);
         } catch (...) {
         }
         return {};
@@ -173,12 +181,14 @@ struct GeobufPlus
 
     mapbox::geojson::feature_collection
     decode_features(const uint8_t *data,
-                    const std::vector<std::array<int, 2>> &index)
+                    const std::vector<std::array<int, 2>> &index,
+                    bool only_geometry = false, bool only_properties = false)
     {
         auto fc = mapbox::geojson::feature_collection{};
         fc.reserve(index.size());
         for (auto &pair : index) {
-            auto f = decode_feature(data + pair[0], pair[1]);
+            auto f = decode_feature(data + pair[0], pair[1], only_geometry,
+                                    only_properties);
             if (f) {
                 fc.push_back(std::move(*f));
             }
@@ -186,12 +196,13 @@ struct GeobufPlus
         return fc;
     }
     mapbox::geojson::feature_collection
-    decode_features(const std::vector<int> &index)
+    decode_features(const std::vector<int> &index, bool only_geometry = false,
+                    bool only_properties = false)
     {
         auto fc = mapbox::geojson::feature_collection{};
         fc.reserve(index.size());
         for (auto &idx : index) {
-            auto f = decode_feature(idx);
+            auto f = decode_feature(idx, only_geometry, only_properties);
             if (f) {
                 fc.push_back(std::move(*f));
             }
