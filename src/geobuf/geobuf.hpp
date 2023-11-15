@@ -90,10 +90,7 @@ struct Encoder
     {
     }
     std::string encode(const mapbox::geojson::geojson &geojson);
-    std::string encode(const mapbox::geojson::feature_collection &features)
-    {
-        return encode(mapbox::geojson::geojson{features});
-    }
+    std::string encode(const mapbox::geojson::feature_collection &features);
     std::string encode(const mapbox::geojson::feature &feature)
     {
         return encode(mapbox::geojson::geojson{feature});
@@ -119,11 +116,11 @@ struct Encoder
     {
         return std::map<std::string, std::uint32_t>(keys.begin(), keys.end());
     }
-    auto __offsets() const { return offsets; }
-    std::vector<std::string> features;
 
   private:
     void analyze(const mapbox::geojson::geojson &geojson);
+    void analyze(const mapbox::geojson::feature_collection &features);
+    void analyzeFeature(const mapbox::geojson::feature &feature);
     void analyzeGeometry(const mapbox::geojson::geometry &geometry);
     void analyzeMultiLine(const LinesType &lines);
     void analyzePoints(const PointsType &points);
@@ -158,9 +155,6 @@ struct Encoder
     uint32_t dim = MAPBOX_GEOBUF_DEFAULT_DIM;
     uint32_t e = 1;
     std::unordered_map<std::string, std::uint32_t> keys;
-
-    std::string data;
-    std::vector<int> offsets;
 };
 
 struct Decoder
@@ -169,15 +163,20 @@ struct Decoder
     Decoder() {}
     static std::string to_printable(const std::string &pbf_bytes,
                                     const std::string &indent = "");
-    mapbox::geojson::geojson decode(const std::string &pbf_bytes);
+    mapbox::geojson::geojson decode(const uint8_t *data, size_t size);
+    mapbox::geojson::geojson decode(const std::string &pbf_bytes)
+    {
+        return decode((const uint8_t *)pbf_bytes.data(), pbf_bytes.size());
+    }
     void decode_header(const uint8_t *data, std::size_t size);
     void decode_header(const std::string &bytes)
     {
         decode_header((const uint8_t *)bytes.data(), bytes.size());
     }
-    mapbox::geojson::feature decode_feature(const uint8_t *data,
-                                            std::size_t size);
-    mapbox::geojson::feature decode_feature(const std::string &bytes)
+    std::optional<mapbox::geojson::feature> decode_feature(const uint8_t *data,
+                                                           std::size_t size);
+    std::optional<mapbox::geojson::feature>
+    decode_feature(const std::string &bytes)
     {
         return decode_feature((const uint8_t *)bytes.data(), bytes.size());
     }
@@ -198,6 +197,8 @@ struct Decoder
   private:
     mapbox::geojson::feature_collection readFeatureCollection(Pbf &pbf);
     mapbox::geojson::feature readFeature(Pbf &pbf);
+    mapbox::geojson::feature readFeature(Pbf &pbf, bool only_geometry,
+                                         bool only_properties);
     mapbox::geojson::geometry readGeometry(Pbf &pbf);
     mapbox::geojson::value readValue(Pbf &pbf);
 
