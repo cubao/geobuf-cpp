@@ -1608,13 +1608,15 @@ def test_geojson_feature():
     text = pbf_decode(pbf)
     assert '11: "3.14"' in text
 
-    assert feature['no_such_key'] is None
-    feature['no_such_key'] = ['oops', {'it': 'has'}]
-    assert feature['no_such_key'] is not None
-    assert feature['no_such_key']() == ['oops', {'it': 'has'}]
-    assert feature.custom_properties()() == {'no_such_key': ['oops', {'it': 'has'}],}
-    del feature['no_such_key']
-    assert feature['no_such_key'] is None
+    assert feature["no_such_key"] is None
+    feature["no_such_key"] = ["oops", {"it": "has"}]
+    assert feature["no_such_key"] is not None
+    assert feature["no_such_key"]() == ["oops", {"it": "has"}]
+    assert feature.custom_properties()() == {
+        "no_such_key": ["oops", {"it": "has"}],
+    }
+    del feature["no_such_key"]
+    assert feature["no_such_key"] is None
 
 
 def test_geojson_load_dump():
@@ -1968,11 +1970,16 @@ def test_geobuf_index():
     fc = geojson.GeoJSON().load(ipath)
     build_dir = os.path.abspath(f"{__pwd}/../build")
     opath = f"{build_dir}/suzhoubeizhan.pbf"
-    fc.as_feature_collection()['number'] = 42
-    fc.as_feature_collection()['string'] = 'string'
-    fc.as_feature_collection()['list'] = ['l', 1, 's', 't']
-    fc.as_feature_collection()['dict'] = {'d': 'ict'}
-    assert fc.as_feature_collection().custom_properties()() == {'dict': {'d': 'ict'}, 'list': ['l', 1, 's', 't'], 'string': 'string', 'number': 42,}
+    fc.as_feature_collection()["number"] = 42
+    fc.as_feature_collection()["string"] = "string"
+    fc.as_feature_collection()["list"] = ["l", 1, "s", "t"]
+    fc.as_feature_collection()["dict"] = {"d": "ict"}
+    assert fc.as_feature_collection().custom_properties()() == {
+        "dict": {"d": "ict"},
+        "list": ["l", 1, "s", "t"],
+        "string": "string",
+        "number": 42,
+    }
     assert fc.dump(opath) and os.path.isfile(opath)
 
     ipath = opath
