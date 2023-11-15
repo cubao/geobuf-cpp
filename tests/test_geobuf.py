@@ -1965,6 +1965,7 @@ def test_geobuf_index():
     f = indexer.decode_feature(0, only_properties=True)()
     assert f["geometry"] is None
     assert not indexer.decode_non_features()
+    assert indexer.decode_non_features()() is None
 
     ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
     fc = geojson.GeoJSON().load(ipath)
@@ -1974,12 +1975,14 @@ def test_geobuf_index():
     fc.as_feature_collection()["string"] = "string"
     fc.as_feature_collection()["list"] = ["l", 1, "s", "t"]
     fc.as_feature_collection()["dict"] = {"d": "ict"}
-    assert fc.as_feature_collection().custom_properties()() == {
+    expected_custom_props = {
         "dict": {"d": "ict"},
         "list": ["l", 1, "s", "t"],
         "string": "string",
         "number": 42,
     }
+    custom_props = fc.as_feature_collection().custom_properties()()
+    assert custom_props == expected_custom_props
     assert fc.dump(opath) and os.path.isfile(opath)
 
     ipath = opath
@@ -1989,12 +1992,10 @@ def test_geobuf_index():
     assert indexer.mmap_init(opath, ipath)
     assert indexer.decode_feature(0)() == expected
     assert indexer.decode_non_features()
-    print()
+    assert indexer.decode_non_features()() == expected_custom_props
 
 
 if __name__ == "__main__":
-    test_geobuf_index()
-
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
     pytest_main(pwd, test_file=os.path.basename(__file__))
