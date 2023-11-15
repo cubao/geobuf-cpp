@@ -1608,6 +1608,14 @@ def test_geojson_feature():
     text = pbf_decode(pbf)
     assert '11: "3.14"' in text
 
+    assert feature['no_such_key'] is None
+    feature['no_such_key'] = ['oops', {'it': 'has'}]
+    assert feature['no_such_key'] is not None
+    assert feature['no_such_key']() == ['oops', {'it': 'has'}]
+    assert feature.custom_properties()() == {'no_such_key': ['oops', {'it': 'has'}],}
+    del feature['no_such_key']
+    assert feature['no_such_key'] is None
+
 
 def test_geojson_load_dump():
     dirname = os.path.abspath(f"{__pwd}/../data")
@@ -1891,7 +1899,8 @@ def test_query():
 
 def test_geobuf_index():
     ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
-    opath = f"{__pwd}/../data/suzhoubeizhan.idx"
+    build_dir = os.path.abspath(f"{__pwd}/../build")
+    opath = f"{build_dir}/suzhoubeizhan.idx"
 
     assert GeobufIndex.indexing(ipath, opath)
     indexer = GeobufIndex()
@@ -1953,9 +1962,32 @@ def test_geobuf_index():
     assert f["properties"] == {}
     f = indexer.decode_feature(0, only_properties=True)()
     assert f["geometry"] is None
+    assert not indexer.decode_non_features()
+
+    ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
+    fc = geojson.GeoJSON().load(ipath)
+    build_dir = os.path.abspath(f"{__pwd}/../build")
+    opath = f"{build_dir}/suzhoubeizhan.pbf"
+    fc.as_feature_collection()['number'] = 42
+    fc.as_feature_collection()['string'] = 'string'
+    fc.as_feature_collection()['list'] = ['l', 1, 's', 't']
+    fc.as_feature_collection()['dict'] = {'d': 'ict'}
+    assert fc.as_feature_collection().custom_properties()() == {'dict': {'d': 'ict'}, 'list': ['l', 1, 's', 't'], 'string': 'string', 'number': 42,}
+    assert fc.dump(opath) and os.path.isfile(opath)
+
+    ipath = opath
+    opath = f"{build_dir}/suzhoubeizhan.idx"
+    assert GeobufIndex.indexing(ipath, opath)
+    indexer = GeobufIndex()
+    assert indexer.mmap_init(opath, ipath)
+    assert indexer.decode_feature(0)() == expected
+    assert indexer.decode_non_features()
+    print()
 
 
 if __name__ == "__main__":
+    test_geobuf_index()
+
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
     pytest_main(pwd, test_file=os.path.basename(__file__))

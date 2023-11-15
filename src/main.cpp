@@ -260,8 +260,8 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
              py::overload_cast<const std::string &, bool, bool>(
                  &Decoder::decode_feature),
              "bytes"_a, "only_geometry"_a = false, "only_properties"_a = false)
-        .def("decode_none_features", py::overload_cast<const std::string &>(
-                                         &Decoder::decode_non_features))
+        .def("decode_non_features", py::overload_cast<const std::string &>(
+                                        &Decoder::decode_non_features))
         .def("offsets", &Decoder::__offsets)
         //
         ;
@@ -329,10 +329,12 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
              "index"_a, py::kw_only(), "only_geometry"_a = false,
              "only_properties"_a = false)
         //
-        .def("decode_non_features", py::overload_cast<const std::string &>(
-                                        &GeobufIndex::decode_non_features))
-        .def("decode_non_features", py::overload_cast<const std::string &>(
-                                        &GeobufIndex::decode_non_features))
+        .def("decode_non_features",
+             py::overload_cast<const std::string &>(
+                 &GeobufIndex::decode_non_features),
+             "bytes"_a)
+        .def("decode_non_features",
+             py::overload_cast<>(&GeobufIndex::decode_non_features))
         //
         .def_static("indexing", &GeobufIndex::indexing, "input_geobuf_path"_a,
                     "output_index_path"_a)

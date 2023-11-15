@@ -219,6 +219,22 @@ struct GeobufIndex
     {
         return decode_non_features((const uint8_t *)bytes.data(), bytes.size());
     }
+    mapbox::feature::property_map decode_non_features()
+    {
+        if (num_features <= 0 || offsets.size() < num_features + 2) {
+            return {};
+        }
+        try {
+            int cursor = offsets[num_features];
+            int length = offsets[num_features + 1] - cursor;
+            if (length <= 0 || !mmap.is_open()) {
+                return {};
+            }
+            return decode_non_features(mmap.data() + cursor, length);
+        } catch (...) {
+        }
+        return {};
+    }
 
     static bool indexing(const std::string &input_geobuf_path,
                          const std::string &output_index_path)

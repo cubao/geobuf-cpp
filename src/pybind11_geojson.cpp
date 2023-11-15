@@ -358,6 +358,10 @@ void bind_geojson(py::module &geojson)
                  self.custom_properties[key] = to_geojson_value(value);
                  return value;
              })
+        .def("__delitem__",
+             [](mapbox::geojson::geometry &self, const std::string &key) {
+                 return self.custom_properties.erase(key);
+             })
         .def("__len__",
              [](mapbox::geojson::geometry &self) { return __len__(self); })
         .def(
@@ -1762,6 +1766,10 @@ void bind_geojson(py::module &geojson)
                  self.custom_properties[key] = to_geojson_value(value);
                  return value;
              })
+        .def("__delitem__",
+             [](mapbox::geojson::feature &self, const std::string &key) {
+                 return self.custom_properties.erase(key);
+             })
         .def(
             "keys",
             [](mapbox::geojson::feature &self) {
@@ -2040,7 +2048,52 @@ void bind_geojson(py::module &geojson)
         //
         copy_deepcopy_clone(mapbox::geojson::feature_collection)
         //
-
-        ;
+        BIND_PY_FLUENT_ATTRIBUTE(mapbox::geojson::feature_collection, //
+                                 PropertyMap,                         //
+                                 custom_properties)                   //
+        .def(
+            "keys",
+            [](mapbox::geojson::feature_collection &self) {
+                return py::make_key_iterator(self.custom_properties);
+            },
+            py::keep_alive<0, 1>())
+        .def(
+            "values",
+            [](mapbox::geojson::feature_collection &self) {
+                return py::make_value_iterator(self.custom_properties);
+            },
+            py::keep_alive<0, 1>())
+        .def(
+            "items",
+            [](mapbox::geojson::feature_collection &self) {
+                return py::make_iterator(self.custom_properties);
+            },
+            py::keep_alive<0, 1>())
+        .def(
+            "__getitem__",
+            [](mapbox::geojson::feature_collection &self,
+               const std::string &key) -> mapbox::geojson::value * {
+                // don't try "type", "features"
+                auto &props = self.custom_properties;
+                auto itr = props.find(key);
+                if (itr == props.end()) {
+                    return nullptr;
+                }
+                return &itr->second;
+            },
+            rvp::reference_internal)
+        .def("__setitem__",
+             [](mapbox::geojson::feature_collection &self,
+                const std::string &key, const py::object &value) {
+                 if (key == "type" || key == "features") {
+                     throw pybind11::key_error(key);
+                 }
+                 self.custom_properties[key] = to_geojson_value(value);
+                 return value;
+             })
+        .def("__delitem__", [](mapbox::geojson::feature_collection &self,
+                               const std::string &key) {
+            return self.custom_properties.erase(key);
+        });
 }
 } // namespace cubao

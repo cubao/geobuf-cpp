@@ -752,9 +752,9 @@ Decoder::decode_feature(const uint8_t *data, std::size_t size,
 }
 
 inline void unpack_properties(mapbox::geojson::prop_map &properties,
-                       const std::vector<uint32_t> &indexes,
-                       const std::vector<std::string> &keys,
-                       const std::vector<mapbox::geojson::value> &values)
+                              const std::vector<uint32_t> &indexes,
+                              const std::vector<std::string> &keys,
+                              const std::vector<mapbox::geojson::value> &values)
 {
     for (auto it = indexes.begin(); it != indexes.end();) {
         auto &key = keys[*it++];
