@@ -3,7 +3,7 @@ project(geobuf)
 
 set(CUBAO_INCLUDE ${PROJECT_SOURCE_DIR}/headers/include)
 include(${CUBAO_INCLUDE}/utils.cmake)
-set(CMAKE_BUILD_TYPE Debug)
+# set(CMAKE_BUILD_TYPE Debug)
 
 activate_common_configuration()
 auto_build_type_and_compile_flags()

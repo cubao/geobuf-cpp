@@ -750,14 +750,47 @@ Decoder::decode_feature(const uint8_t *data, std::size_t size,
         return {};
     }
 }
+
+inline void unpack_properties(mapbox::geojson::prop_map &properties,
+                       const std::vector<uint32_t> &indexes,
+                       const std::vector<std::string> &keys,
+                       const std::vector<mapbox::geojson::value> &values)
+{
+    for (auto it = indexes.begin(); it != indexes.end();) {
+        auto &key = keys[*it++];
+        auto &value = values[*it++];
+        properties[key] = value;
+    }
+}
+
 mapbox::feature::property_map Decoder::decode_non_features(const uint8_t *data,
                                                            std::size_t size)
 {
     try {
         auto pbf =
             protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
-        // return readFeature(pbf);
-
+        std::vector<mapbox::geojson::value> values;
+        auto props = mapbox::feature::property_map{};
+        while (pbf.next()) {
+            const auto tag = pbf.tag();
+            if (tag == 13) {
+                protozero::pbf_reader pbf_v = pbf.get_message();
+                values.push_back(readValue(pbf_v));
+            } else if (tag == 15) {
+                auto indexes = pbf.get_packed_uint32();
+                if (indexes.size() % 2 != 0) {
+                    continue;
+                }
+                unpack_properties(
+                    props,                                                 //
+                    std::vector<uint32_t>(indexes.begin(), indexes.end()), //
+                    keys, values);
+                values.clear();
+            } else {
+                pbf.skip();
+            }
+        }
+        return props;
     } catch (...) {
     }
     return {};
@@ -777,18 +810,6 @@ bool Decoder::decode(const std::string &input_path,
     auto geojson = decode((const uint8_t *)bytes.data(), bytes.size());
     auto json = geojson2json(geojson, sort_keys);
     return dump_json(output_path, json, indent);
-}
-
-void unpack_properties(mapbox::geojson::prop_map &properties,
-                       const std::vector<uint32_t> &indexes,
-                       const std::vector<std::string> &keys,
-                       const std::vector<mapbox::geojson::value> &values)
-{
-    for (auto it = indexes.begin(); it != indexes.end();) {
-        auto &key = keys[*it++];
-        auto &value = values[*it++];
-        properties[key] = value;
-    }
 }
 
 mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)

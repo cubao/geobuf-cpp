@@ -225,12 +225,12 @@ if __name__ == "__main__":
     fire.Fire(
         {
             "geobuf2json": geobuf2json,
+            "index_geobuf": index_geobuf,
             "is_subset_of": is_subset_of,
             "json2geobuf": json2geobuf,
             "normalize_geobuf": normalize_geobuf,
             "normalize_json": normalize_json,
             "pbf_decode": pbf_decode,
             "round_trip": round_trip,
-            "index_geobuf": index_geobuf,
         }
     )
