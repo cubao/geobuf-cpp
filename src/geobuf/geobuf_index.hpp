@@ -210,16 +210,15 @@ struct GeobufIndex
         return fc;
     }
 
-    mapbox::feature::property_map decode_non_features(const uint8_t *data,
-                                                      size_t size)
+    mapbox::feature::value decode_non_features(const uint8_t *data, size_t size)
     {
         return decoder.decode_non_features(data, size);
     }
-    mapbox::feature::property_map decode_non_features(const std::string &bytes)
+    mapbox::feature::value decode_non_features(const std::string &bytes)
     {
         return decode_non_features((const uint8_t *)bytes.data(), bytes.size());
     }
-    mapbox::feature::property_map decode_non_features()
+    mapbox::feature::value decode_non_features()
     {
         if (num_features <= 0 || offsets.size() < num_features + 2) {
             return {};

@@ -183,9 +183,9 @@ struct Decoder
         return decode_feature((const uint8_t *)bytes.data(), bytes.size(),
                               only_geometry, only_properties);
     }
-    mapbox::feature::property_map decode_non_features(const uint8_t *data,
-                                                      std::size_t size);
-    mapbox::feature::property_map decode_non_features(const std::string &bytes)
+    mapbox::feature::value decode_non_features(const uint8_t *data,
+                                               std::size_t size);
+    mapbox::feature::value decode_non_features(const std::string &bytes)
     {
         return decode_non_features((const uint8_t *)bytes.data(), bytes.size());
     }

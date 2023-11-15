@@ -763,8 +763,8 @@ inline void unpack_properties(mapbox::geojson::prop_map &properties,
     }
 }
 
-mapbox::feature::property_map Decoder::decode_non_features(const uint8_t *data,
-                                                           std::size_t size)
+mapbox::feature::value Decoder::decode_non_features(const uint8_t *data,
+                                                    std::size_t size)
 {
     try {
         auto pbf =
