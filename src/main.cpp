@@ -289,15 +289,43 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
     using GeobufPlus = cubao::GeobufPlus;
     py::class_<GeobufPlus>(m, "GeobufPlus", py::module_local()) //
         .def(py::init<>())
-        .def("mmap_init", &GeobufPlus::mmap_init, "index_path"_a,
+        .def("init", &GeobufPlus::init, "index_bytes"_a)
+        //
+        .def("mmap_init",
+             py::overload_cast<const std::string &, const std::string &>(
+                 &GeobufPlus::mmap_init),
+             "index_path"_a, "geobuf_path"_a)
+        .def("mmap_init",
+             py::overload_cast<const std::string &>(&GeobufPlus::mmap_init),
              "geobuf_path"_a)
-        .def("init_index", &GeobufPlus::init_index, "index_bytes"_a)
+        //
+        .def(
+            "mmap_bytes",
+            [](const GeobufPlus &self, size_t offset,
+               size_t length) -> std::optional<py::bytes> {
+                auto bytes = self.mmap_bytes(offset, length);
+                if (!bytes) {
+                    return {};
+                }
+                return py::bytes(*bytes);
+            },
+            "offset"_a, "length"_a)
+        //
         .def("decode_feature",
              py::overload_cast<int>(&GeobufPlus::decode_feature), "index"_a)
         .def(
             "decode_feature",
             py::overload_cast<const std::string &>(&GeobufPlus::decode_feature),
             "bytes"_a)
+        .def("decode_features",
+             py::overload_cast<const std::vector<int> &>(
+                 &GeobufPlus::decode_features),
+             "index"_a)
+        //
+        .def("decode_non_features", py::overload_cast<const std::string &>(
+                                        &GeobufPlus::decode_non_features))
+        .def("decode_non_features", py::overload_cast<const std::string &>(
+                                        &GeobufPlus::decode_non_features))
         //
         .def_static("indexing", &GeobufPlus::indexing, "input_geobuf_path"_a,
                     "output_index_path"_a)

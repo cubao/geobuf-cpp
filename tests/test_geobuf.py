@@ -1892,13 +1892,54 @@ if __name__ == "__main__":
 
     from pybind11_geobuf import GeobufPlus
 
-    ipath = f"{__pwd}/../data/suzhoubeizhan.json"
-    opath_idx = f"{__pwd}/../build/export.idx"
-    opath_pbf = f"{__pwd}/../build/export.pbf"
+    ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
+    opath = f"{__pwd}/../data/suzhoubeizhan.idx"
 
-    # fc1 = geojson.FeatureCollection().load(ipath)
-    # fc2 = geojson.FeatureCollection().load(opath_pbf)
-    # assert fc1[0] == fc2[0]
+    assert GeobufPlus.indexing(ipath, opath)
+    indexer = GeobufPlus()
+    assert indexer.mmap_init(opath, ipath)
+    assert indexer.decode_feature(0)() == {
+        "type": "Feature",
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [
+                [120.660822, 31.4001743, 0.0],
+                [120.6610982, 31.4015175, 0.0],
+                [120.6611093, 31.4015714, 0.0],
+                [120.6612461, 31.4023039, 0.0],
+                [120.661284, 31.4025068, 0.0],
+                [120.6616616, 31.4042817, 0.0],
+                [120.6618224, 31.4052508, 0.0],
+                [120.6620808, 31.406731, 0.0],
+                [120.6622092, 31.4073066, 0.0],
+                [120.6623891, 31.4081988, 0.0],
+                [120.6626607, 31.4095945, 0.0],
+            ],
+        },
+        "properties": {
+            "stroke": "#48fd6d",
+            "folds": [
+                ["24", "1870", "40", "1318", "0", "39", "93", "26", "1224", "2"],
+                [
+                    151.228,
+                    6.069,
+                    82.252,
+                    22.784,
+                    200.044,
+                    108.533,
+                    165.949,
+                    64.978,
+                    100.392,
+                    156.891,
+                ],
+            ],
+            "highlight_group": ["23"],
+            "prevs": [],
+            "id": "24",
+            "nexts": ["23"],
+        },
+    }
+
     decoder = Decoder()
     ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
     # ipath = f"{__pwd}/../build/f3/export.pbf"

@@ -32,18 +32,16 @@ struct GeobufPlus
 {
     GeobufPlus() = default;
     int num_features = -1;
-    FlatGeobuf::PackedRTree rtree;
     std::vector<int> offsets;
+    FlatGeobuf::PackedRTree rtree;
     mio::shared_ummap_source mmap;
     mapbox::geobuf::Decoder decoder;
 
-    bool mmap_init(const std::string &index_path,
-                   const std::string &geobuf_path)
+    bool init(const std::string &bytes)
     {
-        auto bytes = mapbox::geobuf::load_bytes(index_path);
         int cursor = 10;
         if (bytes.substr(0, cursor) != "GeobufIdx0") {
-            spdlog::error("invalid geobuf index file: {}", index_path);
+            spdlog::error("invalid geobuf index");
             return false;
         }
         const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.data());
@@ -110,18 +108,39 @@ struct GeobufPlus
             spdlog::error("invalid padding: {} != 930604 (geobuf)", padding);
             return false;
         }
+        return true;
+    }
 
-        spdlog::info("decoding geobuf...");
+    bool mmap_init(const std::string &index_path,
+                   const std::string &geobuf_path)
+    {
+        spdlog::info("initiating geobuf index from {}", index_path);
+        auto bytes = mapbox::geobuf::load_bytes(index_path);
+        if (!init(bytes)) {
+            return false;
+        }
+        return mmap_init(geobuf_path);
+    }
+    bool mmap_init(const std::string &geobuf_path)
+    {
+        if (num_features < 0 || offsets.empty()) {
+            throw std::invalid_argument("should init index first!!!");
+        }
+        spdlog::info("lazy decoding geobuf with mmap");
         mmap = std::make_shared<mio::ummap_source>(geobuf_path);
         decoder.decode_header(mmap.data(), offsets[0]);
         spdlog::info("decoded geobuf header, #keys={}, dim={}, precision: {}",
                      decoder.__keys().size(), decoder.__dim(),
                      decoder.precision());
-
-        return true;
     }
 
-    void init_index(const std::string &index_bytes) {}
+    std::optional<std::string> mmap_bytes(size_t offset, size_t length) const
+    {
+        if (mmap.is_open() && offset + length < mmap.size()) {
+            return std::string((const char *)mmap.data() + offset, length);
+        }
+        return {};
+    }
 
     std::optional<mapbox::geojson::feature> decode_feature(const uint8_t *data,
                                                            size_t size)
@@ -135,7 +154,8 @@ struct GeobufPlus
     }
     std::optional<mapbox::geojson::feature> decode_feature(int index)
     {
-        bool valid_index = 0 <= index && index < num_features && index + 1< offsets.size();
+        bool valid_index =
+            0 <= index && index < num_features && index + 1 < offsets.size();
         if (!valid_index) {
             return {};
         }
@@ -153,7 +173,7 @@ struct GeobufPlus
 
     mapbox::geojson::feature_collection
     decode_features(const uint8_t *data,
-                   const std::vector<std::array<int, 2>> &index)
+                    const std::vector<std::array<int, 2>> &index)
     {
         auto fc = mapbox::geojson::feature_collection{};
         fc.reserve(index.size());
@@ -166,7 +186,8 @@ struct GeobufPlus
         return fc;
     }
     mapbox::geojson::feature_collection
-    decode_features(const std::vector<int> &index) {
+    decode_features(const std::vector<int> &index)
+    {
         auto fc = mapbox::geojson::feature_collection{};
         fc.reserve(index.size());
         for (auto &idx : index) {
@@ -178,13 +199,12 @@ struct GeobufPlus
         return fc;
     }
 
-    mapbox::feature::property_map
-    decode_non_features(const uint8_t *data, size_t size)
+    mapbox::feature::property_map decode_non_features(const uint8_t *data,
+                                                      size_t size)
     {
         return decoder.decode_non_features(data, size);
     }
-    mapbox::feature::property_map
-    decode_non_features(const std::string &bytes)
+    mapbox::feature::property_map decode_non_features(const std::string &bytes)
     {
         return decode_non_features((const uint8_t *)bytes.data(), bytes.size());
     }

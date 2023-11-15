@@ -729,7 +729,7 @@ void Decoder::decode_header(const uint8_t *data, std::size_t size)
         } else if (tag == 3) {
             e = std::pow(10, pbf.get_uint32());
         } else {
-            pbf.skip();
+            return;
         }
     }
 }
