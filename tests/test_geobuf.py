@@ -15,6 +15,7 @@ import pybind11_geobuf
 from pybind11_geobuf import (  # noqa
     Decoder,
     Encoder,
+    GeobufIndex,
     Planet,
     geojson,
     normalize_json,
@@ -1888,10 +1889,7 @@ def test_query():
     # assert fc[977] == cropped1[-1]
 
 
-if __name__ == "__main__":
-
-    from pybind11_geobuf import GeobufIndex
-
+def test_geobuf_index():
     ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
     opath = f"{__pwd}/../data/suzhoubeizhan.idx"
 
@@ -1919,7 +1917,18 @@ if __name__ == "__main__":
         "properties": {
             "stroke": "#48fd6d",
             "folds": [
-                ["24", "1870", "40", "1318", "0", "39", "93", "26", "1224", "2",],
+                [
+                    "24",
+                    "1870",
+                    "40",
+                    "1318",
+                    "0",
+                    "39",
+                    "93",
+                    "26",
+                    "1224",
+                    "2",
+                ],
                 [
                     151.228,
                     6.069,
@@ -1940,5 +1949,13 @@ if __name__ == "__main__":
         },
     }
     assert indexer.decode_feature(0)() == expected
-    assert indexer.decode_feature(0, only_geometry=True)()['properties'] == {}
-    assert indexer.decode_feature(0, only_properties=True)()['geometry'] is None
+    f = indexer.decode_feature(0, only_geometry=True)()
+    assert f["properties"] == {}
+    f = indexer.decode_feature(0, only_properties=True)()
+    assert f["geometry"] is None
+
+
+if __name__ == "__main__":
+    np.set_printoptions(suppress=True)
+    pwd = os.path.abspath(os.path.dirname(__file__))
+    pytest_main(pwd, test_file=os.path.basename(__file__))
