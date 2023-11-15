@@ -25,12 +25,12 @@
 // https://github.com/mapbox/geobuf/blob/master/encode.js
 // https://github.com/mapbox/geobuf/blob/master/decode.js
 
-// #ifdef NDEBUG
-// #define dbg(x) x
-// #else
+#ifdef NDEBUG
+#define dbg(x) x
+#else
 #define DBG_MACRO_NO_WARNING
 #include "dbg.h"
-// #endif
+#endif
 
 constexpr const auto RJFLAGS = rapidjson::kParseDefaultFlags |      //
                                rapidjson::kParseCommentsFlag |      //
@@ -452,21 +452,9 @@ void Encoder::writeFeatureCollection(
     for (auto &feature : geojson) {
         protozero::pbf_writer pbf_f{pbf, 1};
         writeFeature(feature, pbf_f);
-        this->features.push_back(data.substr(cursor));
-        if (offsets.size() < 4) {
-            toprint.push_back(to_hex(data));
-        }
-        dbg(data.size());
     }
-    offsets.push_back(data.size());
     if (!geojson.custom_properties.empty()) {
         writeProps(geojson.custom_properties, pbf, 15);
-    }
-    offsets.push_back(data.size());
-
-    dbg(offsets.size());
-    for (auto &bb : toprint) {
-        spdlog::info("\n\nbytes:{}", bb);
     }
 }
 
@@ -770,6 +758,12 @@ mapbox::feature::property_map Decoder::decode_non_features(const uint8_t *data,
     return {};
 }
 
+mapbox::geojson::geojson Decoder::decode_file(const std::string &geobuf_path)
+{
+    auto bytes = load_bytes(geobuf_path);
+    return decode((const uint8_t *)bytes.data(), bytes.size());
+}
+
 bool Decoder::decode(const std::string &input_path,
                      const std::string &output_path, //
                      bool indent, bool sort_keys)
@@ -936,6 +930,7 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf, bool only_geometry,
                 pbf.skip();
             }
         }
+        return f;
     }
     return {};
 }

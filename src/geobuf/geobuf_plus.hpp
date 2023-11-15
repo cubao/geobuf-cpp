@@ -142,24 +142,22 @@ struct GeobufPlus
         return {};
     }
 
-    mapbox::geojson::feature decode_feature(const std::string &bytes)
+    std::optional<mapbox::geojson::feature> decode_feature(const uint8_t *data,
+                                                           size_t size)
     {
-        dbg(bytes.size());
-        return decoder.decode_feature((const uint8_t *)bytes.data(),
-                                      bytes.size());
-    }
-
-    mapbox::geojson::feature decode_feature(const uint8_t *data, size_t size)
-    {
-        dbg(size);
         return decoder.decode_feature(data, size);
+    }
+    std::optional<mapbox::geojson::feature>
+    decode_feature(const std::string &bytes)
+    {
+        return decode_feature((const uint8_t *)bytes.data(), bytes.size());
     }
 
     mapbox::geojson::feature_collection
     decode_feature(const uint8_t *data,
                    const std::vector<std::array<int, 2>> &index)
     {
-        mapbox::geojson::feature_collection fc;
+        auto fc = mapbox::geojson::feature_collection{};
         fc.reserve(index.size());
         for (auto &pair : index) {
             fc.push_back(decode_feature(data + pair[0], pair[1]));
@@ -175,40 +173,24 @@ struct GeobufPlus
 
     static std::string encode(const Planet &planet) { return ""; }
 
-    static std::vector<std::string>
-    encode(const std::string &input_geojson_path,
-           const std::string &output_index_path,
-           const std::string &output_geobuf_path, uint8_t precision = 8,
-           bool only_xy = false, std::optional<int> round_z = 3, int N = 0)
+    static bool indexing(const std::string &input_geobuf_path,
+                         const std::string &output_index_path)
     {
-        spdlog::info("loading {} ...", input_geojson_path);
-        auto json = mapbox::geobuf::load_json(input_geojson_path);
-        if (json.IsNull()) {
-            spdlog::error("invalid input, abort");
-            // return false;
-            return {};
-        }
-        auto geojson = mapbox::geojson::convert(json);
-        if (geojson.is<mapbox::geojson::geometry>()) {
-            geojson =
-                mapbox::geojson::feature_collection{mapbox::geojson::feature{
-                    geojson.get<mapbox::geojson::geometry>()}};
-        } else if (geojson.is<mapbox::geojson::feature>()) {
-            geojson = mapbox::geojson::feature_collection{
-                geojson.get<mapbox::geojson::feature>()};
+        spdlog::info("indexing {} ...", input_geobuf_path);
+        auto decoder = mapbox::geobuf::Decoder();
+        auto geojson = decoder.decode_file(input_geobuf_path);
+        if (geojson.is<mapbox::geojson::feature_collection>()) {
+            throw std::invalid_argument(
+                "invalid GeoJSON type, should be FeatureCollection");
         }
         auto &fc = geojson.get<mapbox::geojson::feature_collection>();
-        if (N > 0 && fc.size() > N) {
-            fc.resize(N);
-        }
-        spdlog::info("encoding {} features...", fc.size());
 
-        auto planet = Planet(fc);
         FILE *fp = fopen(output_index_path.c_str(), "wb");
         if (!fp) {
             spdlog::error("failed to open {} for writing", output_index_path);
             return {};
         }
+        auto planet = Planet(fc);
         // magic
         fwrite("GeobufIdx0", 10, 1, fp);
         int num_features = fc.size();
@@ -239,28 +221,14 @@ struct GeobufPlus
         const int padding = 930604; // geobuf
         fwrite(&padding, sizeof(padding), 1, fp);
 
-        auto encoder =
-            mapbox::geobuf::Encoder(std::pow(10, precision), only_xy, round_z);
-        auto bytes = encoder.encode(geojson);
-        std::vector<int> offsets = encoder.__offsets();
+        std::vector<int> offsets = decoder.__offsets();
         int num_offsets = offsets.size();
         fwrite(&num_offsets, sizeof(num_offsets), 1, fp);
         fwrite(offsets.data(), sizeof(offsets[0]), offsets.size(), fp);
         fwrite(&padding, sizeof(padding), 1, fp);
         fclose(fp);
         spdlog::info("wrote index to {}", output_index_path);
-
-        if (mapbox::geobuf::dump_bytes(output_geobuf_path, bytes)) {
-            spdlog::info("wrote geobuf to {}", output_geobuf_path);
-            // return true;
-        } else {
-            spdlog::error("failed to write to {}", output_geobuf_path);
-            // return false;
-        }
-        for (int i = 0; i < N; ++i) {
-            dbg(i, encoder.features[i].size());
-        }
-        return encoder.features;
+        return true;
     }
 };
 } // namespace cubao

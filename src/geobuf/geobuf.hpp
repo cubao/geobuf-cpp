@@ -187,6 +187,7 @@ struct Decoder
         return decode_non_features((const uint8_t *)bytes.data(), bytes.size());
     }
 
+    mapbox::geojson::geojson decode_file(const std::string &geobuf_path);
     bool decode(const std::string &input_path, const std::string &output_path,
                 bool indent = false, bool sort_keys = false);
     int precision() const { return std::log10(e); }
