@@ -158,7 +158,6 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def("dim", &Encoder::__dim)
         .def("e", &Encoder::__e)
         .def("keys", &Encoder::__keys)
-        .def("offsets", &Encoder::__offsets)
         .def(
             "encode",
             [](Encoder &self, const mapbox::geojson::geojson &geojson) {
@@ -300,24 +299,8 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             py::overload_cast<const std::string &>(&GeobufPlus::decode_feature),
             "bytes"_a)
         //
-        .def_static(
-            "encode",
-            [](const std::string &ipath, const std::string &oidx,
-               const std::string &opbf, uint8_t precision, bool only_xy,
-               std::optional<int> round_z, int N) {
-                auto features = GeobufPlus::encode(ipath, oidx, opbf, precision,
-                                                   only_xy, round_z, N);
-                std::vector<py::bytes> bytes_list;
-                bytes_list.reserve(features.size());
-                for (auto &f : features) {
-                    bytes_list.push_back(py::bytes(f));
-                }
-                return bytes_list;
-                // return py::bytes(features[idx]);
-            },
-            "input_geojson_path"_a, "output_index_path"_a,
-            "output_geobuf_path"_a, py::kw_only(), "precision"_a = 8,
-            "only_xy"_a = false, "round_z"_a = 3, "N"_a = 0)
+        .def_static("indexing", &GeobufPlus::indexing, "input_geobuf_path"_a,
+                    "output_index_path"_a)
         //
         ;
 

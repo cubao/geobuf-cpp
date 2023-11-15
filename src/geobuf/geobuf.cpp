@@ -752,9 +752,13 @@ Decoder::decode_feature(const uint8_t *data, std::size_t size)
 mapbox::feature::property_map Decoder::decode_non_features(const uint8_t *data,
                                                            std::size_t size)
 {
-    auto pbf =
-        protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
-    // return readFeature(pbf);
+    try {
+        auto pbf =
+            protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
+        // return readFeature(pbf);
+
+    } catch (...) {
+    }
     return {};
 }
 
