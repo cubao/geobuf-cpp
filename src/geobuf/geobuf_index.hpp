@@ -28,9 +28,9 @@ inline std::string to_hex(const std::string &s, bool upper_case = true)
     return ret.str();
 }
 
-struct GeobufPlus
+struct GeobufIndex
 {
-    GeobufPlus() = default;
+    GeobufIndex() = default;
     int num_features = -1;
     std::vector<int> offsets;
     FlatGeobuf::PackedRTree rtree;

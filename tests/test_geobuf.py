@@ -1890,13 +1890,13 @@ def test_query():
 
 if __name__ == "__main__":
 
-    from pybind11_geobuf import GeobufPlus
+    from pybind11_geobuf import GeobufIndex
 
     ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
     opath = f"{__pwd}/../data/suzhoubeizhan.idx"
 
-    assert GeobufPlus.indexing(ipath, opath)
-    indexer = GeobufPlus()
+    assert GeobufIndex.indexing(ipath, opath)
+    indexer = GeobufIndex()
     assert indexer.mmap_init(opath, ipath)
     expected = {
         "type": "Feature",
