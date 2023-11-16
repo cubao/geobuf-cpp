@@ -17,6 +17,11 @@
 #include <sstream>
 
 #include "spdlog/spdlog.h"
+// fix exposed macro 'GetObject' from wingdi.h (included by spdlog.h) under
+// windows, see https://github.com/Tencent/rapidjson/issues/1448
+#ifdef GetObject
+#undef GetObject
+#endif
 
 #include <cmath>
 #include <protozero/pbf_builder.hpp>
