@@ -1921,10 +1921,10 @@ void bind_geojson(py::module &geojson)
         .def("__call__", [](const std::vector<mapbox::geojson::feature> &self) {
             return to_python(self);
         });
-    py::class_<mapbox::geojson::feature_collection,
-               std::vector<mapbox::geojson::feature>>(
-        geojson, "FeatureCollection", py::module_local())
-        .def(py::init<>())
+    auto fc_binding = py::class_<mapbox::geojson::feature_collection,
+                                 std::vector<mapbox::geojson::feature>>(
+        geojson, "FeatureCollection", py::module_local());
+    fc_binding.def(py::init<>())
         .def(py::init(
             [](const mapbox::geojson::feature_collection &g) { return g; }))
         .def(py::init([](int N) {
@@ -2095,5 +2095,104 @@ void bind_geojson(py::module &geojson)
                                const std::string &key) {
             return self.custom_properties.erase(key);
         });
+    //
+    ;
+
+    // copied from stl_bind.h
+    using Vector = mapbox::geojson::feature_collection;
+    using T = typename Vector::value_type;
+    using SizeType = typename Vector::size_type;
+    using DiffType = typename Vector::difference_type;
+
+    auto wrap_i = [](DiffType i, SizeType n) {
+        if (i < 0) {
+            i += n;
+        }
+        if (i < 0 || (SizeType)i >= n) {
+            throw py::index_error();
+        }
+        return i;
+    };
+
+    auto cl = fc_binding;
+    cl.def(
+        "__getitem__",
+        [wrap_i](Vector &v, DiffType i) -> T & {
+            i = wrap_i(i, v.size());
+            return v[(SizeType)i];
+        },
+        rvp::reference_internal); // ref + keepalive
+    cl.def("__setitem__", [wrap_i](Vector &v, DiffType i, const T &t) {
+        i = wrap_i(i, v.size());
+        v[(SizeType)i] = t;
+    });
+    cl.def(
+        "__getitem__",
+        [](const Vector &v, const py::slice &slice) -> Vector * {
+            size_t start = 0, stop = 0, step = 0, slicelength = 0;
+
+            if (!slice.compute(v.size(), &start, &stop, &step, &slicelength)) {
+                throw py::error_already_set();
+            }
+
+            auto *seq = new Vector();
+            seq->reserve((size_t)slicelength);
+
+            for (size_t i = 0; i < slicelength; ++i) {
+                seq->push_back(v[start]);
+                start += step;
+            }
+            return seq;
+        },
+        py::arg("s"), "Retrieve list elements using a slice object");
+
+    fc_binding.def(
+        "__setitem__",
+        [](Vector &v, const py::slice &slice, const Vector &value) {
+            size_t start = 0, stop = 0, step = 0, slicelength = 0;
+            if (!slice.compute(v.size(), &start, &stop, &step, &slicelength)) {
+                throw py::error_already_set();
+            }
+
+            if (slicelength != value.size()) {
+                throw std::runtime_error("Left and right hand size of slice "
+                                         "assignment have different sizes!");
+            }
+
+            for (size_t i = 0; i < slicelength; ++i) {
+                v[start] = value[i];
+                start += step;
+            }
+        },
+        "Assign list elements using a slice object");
+
+    cl.def(
+        "__delitem__",
+        [wrap_i](Vector &v, DiffType i) {
+            i = wrap_i(i, v.size());
+            v.erase(v.begin() + i);
+        },
+        "Delete the list elements at index ``i``");
+
+    cl.def(
+        "__delitem__",
+        [](Vector &v, const py::slice &slice) {
+            size_t start = 0, stop = 0, step = 0, slicelength = 0;
+
+            if (!slice.compute(v.size(), &start, &stop, &step, &slicelength)) {
+                throw py::error_already_set();
+            }
+
+            if (step == 1 && false) {
+                v.erase(v.begin() + (DiffType)start,
+                        v.begin() + DiffType(start + slicelength));
+            } else {
+                for (size_t i = 0; i < slicelength; ++i) {
+                    v.erase(v.begin() + DiffType(start));
+                    start += step - 1;
+                }
+            }
+        },
+        "Delete list elements using a slice object");
 }
 } // namespace cubao
