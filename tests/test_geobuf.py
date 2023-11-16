@@ -1758,6 +1758,22 @@ def test_geojson_load_dump():
         assert np.fabs(llas1[:, 2]).max() != 0.0
         assert np.fabs(llas2[:, 2]).max() == 0.0
 
+    fc = geojson.FeatureCollection().from_rapidjson(json3)
+    assert len(fc) == 1
+    fc.append(fc[0])
+    assert len(fc) == 2
+    fc.append(fc[0])
+    assert len(fc) == 3
+    for i, f in enumerate(fc):
+        f.properties()["int"] = f.properties()["int"]() * 100 + i
+    fc["key"] = "value"
+    assert fc.custom_properties()() == {"key": "value", "my_key": "this is fc"}
+    del fc["my_key"]
+    assert fc.custom_properties()() == {"key": "value"}
+    assert [f.properties()["int"]() for f in fc] == [4200, 4201, 4202]
+    del fc[:2]
+    assert [f.properties()["int"]() for f in fc] == [4202]
+
 
 def pytest_main(dir: str, *, test_file: str = None):
 
