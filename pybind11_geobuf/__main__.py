@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 from loguru import logger
 
 from pybind11_geobuf import rapidjson  # noqa
-from pybind11_geobuf import Decoder, Encoder  # noqa
+from pybind11_geobuf import Decoder, Encoder, GeobufIndex  # noqa
 from pybind11_geobuf import is_subset_of as is_subset_of_impl  # noqa
 from pybind11_geobuf import normalize_json as normalize_json_impl  # noqa
 from pybind11_geobuf import pbf_decode as pbf_decode_impl  # noqa
@@ -210,6 +210,14 @@ def is_subset_of(path1: str, path2: str):
     assert is_subset_of_impl(path1, path2)
 
 
+def index_geobuf(input_geobuf_path: str, output_index_path: str):
+    os.makedirs(
+        os.path.dirname(os.path.abspath(output_index_path)),
+        exist_ok=True,
+    )
+    return GeobufIndex.indexing(input_geobuf_path, output_index_path)
+
+
 if __name__ == "__main__":
     import fire
 
@@ -217,6 +225,7 @@ if __name__ == "__main__":
     fire.Fire(
         {
             "geobuf2json": geobuf2json,
+            "index_geobuf": index_geobuf,
             "is_subset_of": is_subset_of,
             "json2geobuf": json2geobuf,
             "normalize_geobuf": normalize_geobuf,

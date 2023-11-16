@@ -12,7 +12,16 @@
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
+
+#include "spdlog/spdlog.h"
+// fix exposed macro 'GetObject' from wingdi.h (included by spdlog.h) under
+// windows, see https://github.com/Tencent/rapidjson/issues/1448
+#ifdef GetObject
+#undef GetObject
+#endif
 
 #include <cmath>
 #include <protozero/pbf_builder.hpp>
@@ -214,9 +223,6 @@ std::string dump(const mapbox::geojson::geojson &geojson, //
 
 std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
 {
-    std::string data;
-    Encoder::Pbf pbf{data};
-
     dim = MAPBOX_GEOBUF_DEFAULT_DIM;
     e = 1;
     keys.clear();
@@ -224,7 +230,8 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
     if (onlyXY) {
         dim = dimXY;
     }
-
+    std::string data;
+    Encoder::Pbf pbf{data};
     {
         auto kk = std::set<std::string>();
         for (auto &pair : keys) {
@@ -244,7 +251,6 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
         MAPBOX_GEOBUF_DEFAULT_PRECISION) { // assumed default precision in proto
         pbf.add_uint32(3, precision);
     }
-
     geojson.match(
         [&](const mapbox::geojson::feature_collection &features) {
             protozero::pbf_writer pbf_fc{pbf, 4};
@@ -258,7 +264,41 @@ std::string Encoder::encode(const mapbox::geojson::geojson &geojson)
             protozero::pbf_writer pbf_g{pbf, 6};
             writeGeometry(geometry, pbf_g);
         });
-    // keys.clear(); // we leave it there for debugging purpose
+    return data;
+}
+
+std::string Encoder::encode(const mapbox::geojson::feature_collection &features)
+{
+    dim = MAPBOX_GEOBUF_DEFAULT_DIM;
+    e = 1;
+    keys.clear();
+    analyze(features);
+    if (onlyXY) {
+        dim = dimXY;
+    }
+    std::string data;
+    Encoder::Pbf pbf{data};
+    {
+        auto kk = std::set<std::string>();
+        for (auto &pair : keys) {
+            kk.insert(pair.first);
+        }
+        int idx = -1;
+        for (auto &k : kk) {
+            pbf.add_string(1, k);
+            keys[k] = ++idx;
+        }
+    }
+    if (dim != MAPBOX_GEOBUF_DEFAULT_DIM) {
+        pbf.add_uint32(2, dim);
+    }
+    const uint32_t precision = std::log10(std::min(e, maxPrecision));
+    if (precision !=
+        MAPBOX_GEOBUF_DEFAULT_PRECISION) { // assumed default precision in proto
+        pbf.add_uint32(3, precision);
+    }
+    protozero::pbf_writer pbf_fc{pbf, 4};
+    writeFeatureCollection(features, pbf_fc);
     return data;
 }
 
@@ -291,20 +331,30 @@ bool Encoder::encode(const std::string &input_path,
 
 void Encoder::analyze(const mapbox::geojson::geojson &geojson)
 {
-    auto analyze_feature = [&](const mapbox::geojson::feature &f) {
-        saveKey(f.properties);
-        saveKey(f.custom_properties);
-        analyzeGeometry(f.geometry);
-    };
     geojson.match(
-        [&](const mapbox::geojson::feature &f) { analyze_feature(f); },
+        [&](const mapbox::geojson::feature &f) { analyzeFeature(f); },
         [&](const mapbox::geojson::geometry &g) { analyzeGeometry(g); },
         [&](const mapbox::geojson::feature_collection &fc) {
             for (auto &f : fc) {
-                analyze_feature(f);
+                analyzeFeature(f);
             }
             saveKey(fc.custom_properties);
         });
+}
+
+void Encoder::analyze(const mapbox::geojson::feature_collection &features)
+{
+    for (auto &f : features) {
+        analyzeFeature(f);
+    }
+    saveKey(features.custom_properties);
+}
+
+void Encoder::analyzeFeature(const mapbox::geojson::feature &f)
+{
+    saveKey(f.properties);
+    saveKey(f.custom_properties);
+    analyzeGeometry(f.geometry);
 }
 
 void Encoder::analyzeGeometry(const mapbox::geojson::geometry &geometry)
@@ -383,9 +433,27 @@ void Encoder::saveKey(const mapbox::feature::property_map &props)
     }
 }
 
+inline std::string to_hex(const std::string &s, bool upper_case = true)
+{
+    std::ostringstream ret;
+    ret << s.size() << " bytes\n";
+
+    for (std::string::size_type i = 0; i < s.length(); ++i) {
+        if (i % 80 == 0) {
+            ret << fmt::format("\n\t#{:4d}: ", i);
+        }
+        int z = s[i] & 0xff;
+        ret << std::hex << std::setfill('0') << std::setw(2)
+            << (upper_case ? std::uppercase : std::nouppercase) << z;
+    }
+
+    return ret.str();
+}
+
 void Encoder::writeFeatureCollection(
     const mapbox::geojson::feature_collection &geojson, Pbf &pbf)
 {
+    std::vector<std::string> toprint;
     for (auto &feature : geojson) {
         protozero::pbf_writer pbf_f{pbf, 1};
         writeFeature(feature, pbf_f);
@@ -619,12 +687,13 @@ std::string Decoder::to_printable(const std::string &pbf_bytes,
     return ::decode(pbf_bytes.data(), pbf_bytes.size(), indent);
 }
 
-mapbox::geojson::geojson Decoder::decode(const std::string &pbf_bytes)
+mapbox::geojson::geojson Decoder::decode(const uint8_t *data, size_t size)
 {
-    auto pbf = protozero::pbf_reader{pbf_bytes};
     dim = MAPBOX_GEOBUF_DEFAULT_DIM;
     e = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION);
     keys.clear();
+    head = (const char *)data;
+    auto pbf = protozero::pbf_reader{head, size};
     while (pbf.next()) {
         const auto tag = pbf.tag();
         if (tag == 1) {
@@ -649,20 +718,48 @@ mapbox::geojson::geojson Decoder::decode(const std::string &pbf_bytes)
     return mapbox::geojson::geojson{};
 }
 
-bool Decoder::decode(const std::string &input_path,
-                     const std::string &output_path, //
-                     bool indent, bool sort_keys)
+void Decoder::decode_header(const uint8_t *data, std::size_t size)
 {
-    auto bytes = load_bytes(input_path);
-    auto geojson = decode(bytes);
-    auto json = geojson2json(geojson, sort_keys);
-    return dump_json(output_path, json, indent);
+    dim = MAPBOX_GEOBUF_DEFAULT_DIM;
+    e = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION);
+    keys.clear();
+    auto pbf =
+        protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
+    while (pbf.next()) {
+        const auto tag = pbf.tag();
+        if (tag == 1) {
+            keys.push_back(pbf.get_string());
+        } else if (tag == 2) {
+            dim = pbf.get_uint32();
+        } else if (tag == 3) {
+            e = std::pow(10, pbf.get_uint32());
+        } else {
+            return;
+        }
+    }
 }
 
-void unpack_properties(mapbox::geojson::prop_map &properties,
-                       const std::vector<uint32_t> &indexes,
-                       const std::vector<std::string> &keys,
-                       const std::vector<mapbox::geojson::value> &values)
+std::optional<mapbox::geojson::feature>
+Decoder::decode_feature(const uint8_t *data, std::size_t size,
+                        bool only_geometry, bool only_properties)
+{
+    try {
+        auto pbf =
+            protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
+        if (!pbf.next() || pbf.tag() != 1) {
+            return {};
+        }
+        auto pbf_f = pbf.get_message();
+        return readFeature(pbf_f, only_geometry, only_properties);
+    } catch (...) {
+        return {};
+    }
+}
+
+inline void unpack_properties(mapbox::geojson::prop_map &properties,
+                              const std::vector<uint32_t> &indexes,
+                              const std::vector<std::string> &keys,
+                              const std::vector<mapbox::geojson::value> &values)
 {
     for (auto it = indexes.begin(); it != indexes.end();) {
         auto &key = keys[*it++];
@@ -671,16 +768,77 @@ void unpack_properties(mapbox::geojson::prop_map &properties,
     }
 }
 
+mapbox::feature::value Decoder::decode_non_features(const uint8_t *data,
+                                                    std::size_t size)
+{
+    try {
+        auto pbf =
+            protozero::pbf_reader{reinterpret_cast<const char *>(data), size};
+        std::vector<mapbox::geojson::value> values;
+        auto props = mapbox::feature::property_map{};
+        while (pbf.next()) {
+            const auto tag = pbf.tag();
+            if (tag == 13) {
+                protozero::pbf_reader pbf_v = pbf.get_message();
+                values.push_back(readValue(pbf_v));
+            } else if (tag == 15) {
+                auto indexes = pbf.get_packed_uint32();
+                if (indexes.size() % 2 != 0) {
+                    continue;
+                }
+                unpack_properties(
+                    props,                                                 //
+                    std::vector<uint32_t>(indexes.begin(), indexes.end()), //
+                    keys, values);
+                values.clear();
+            } else {
+                pbf.skip();
+            }
+        }
+        return props;
+    } catch (...) {
+    }
+    return {};
+}
+
+mapbox::geojson::geojson Decoder::decode_file(const std::string &geobuf_path)
+{
+    auto bytes = load_bytes(geobuf_path);
+    return decode((const uint8_t *)bytes.data(), bytes.size());
+}
+
+bool Decoder::decode(const std::string &input_path,
+                     const std::string &output_path, //
+                     bool indent, bool sort_keys)
+{
+    auto bytes = load_bytes(input_path);
+    auto geojson = decode((const uint8_t *)bytes.data(), bytes.size());
+    auto json = geojson2json(geojson, sort_keys);
+    return dump_json(output_path, json, indent);
+}
+
 mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
 {
     mapbox::geojson::feature_collection fc;
     std::vector<mapbox::geojson::value> values;
-    while (pbf.next()) {
+    offsets.clear();
+    int props_cursor = -1;
+    while (true) {
+        int cursor = pbf.data().data() - head;
+        if (!pbf.next()) {
+            break;
+        }
         const auto tag = pbf.tag();
         if (tag == 1) {
             protozero::pbf_reader pbf_f = pbf.get_message();
             fc.push_back(readFeature(pbf_f));
-        } else if (tag == 13) {
+            offsets.push_back(cursor);
+            continue;
+        }
+        if (props_cursor < 0) {
+            props_cursor = cursor;
+        }
+        if (tag == 13) {
             protozero::pbf_reader pbf_v = pbf.get_message();
             values.push_back(readValue(pbf_v));
         } else if (tag == 15) {
@@ -697,8 +855,18 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
             pbf.skip();
         }
     }
+    // props start
+    int tail = pbf.data().data() - head;
+    if (props_cursor > 0 && !offsets.empty() && props_cursor > offsets.back()) {
+        offsets.push_back(props_cursor);
+    } else {
+        offsets.push_back(tail);
+    }
+    // final tail
+    offsets.push_back(tail);
     return fc;
 }
+
 mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
 {
     mapbox::geojson::feature f;
@@ -758,6 +926,45 @@ mapbox::geojson::feature Decoder::readFeature(Pbf &pbf)
         }
     }
     return f;
+}
+
+mapbox::geojson::feature Decoder::readFeature(Pbf &pbf, //
+                                              bool only_geometry,
+                                              bool only_properties)
+{
+    if (!only_geometry && !only_properties) {
+        return readFeature(pbf);
+    } else if (only_geometry) {
+        while (pbf.next(1)) {
+            protozero::pbf_reader pbf_g = pbf.get_message();
+            return mapbox::geojson::feature{readGeometry(pbf_g)};
+        }
+        return {};
+    } else if (only_properties) {
+        mapbox::geojson::feature f;
+        std::vector<mapbox::geojson::value> values;
+        while (pbf.next()) {
+            const auto tag = pbf.tag();
+            if (tag == 13) {
+                protozero::pbf_reader pbf_v = pbf.get_message();
+                values.push_back(readValue(pbf_v));
+            } else if (tag == 14) {
+                auto indexes = pbf.get_packed_uint32();
+                if (indexes.size() % 2 != 0) {
+                    continue;
+                }
+                unpack_properties(
+                    f.properties,                                          //
+                    std::vector<uint32_t>(indexes.begin(), indexes.end()), //
+                    keys, values);
+                values.clear();
+            } else {
+                pbf.skip();
+            }
+        }
+        return f;
+    }
+    return {};
 }
 
 std::vector<mapbox::geojson::point>

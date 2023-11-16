@@ -9,3 +9,4 @@ benchmarks/*.pbf*
 # https://github.com/cubao/nano-fmm/blob/master/data/Makefile
 data/suzhoubeizhan.json
 tests/*.json
+data/suzhoubeizhan.idx

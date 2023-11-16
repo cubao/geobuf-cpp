@@ -11,6 +11,7 @@
 #include <pybind11/stl_bind.h>
 
 #include "geobuf/geobuf.hpp"
+#include "geobuf/geobuf_index.hpp"
 #include "geobuf/planet.hpp"
 #include "geobuf/pybind11_helpers.hpp"
 
@@ -252,6 +253,17 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             "sort_keys"_a = false)
         .def("keys", &Decoder::__keys)
         //
+        .def("decode_header",
+             py::overload_cast<const std::string &>(&Decoder::decode_header),
+             "bytes"_a)
+        .def("decode_feature",
+             py::overload_cast<const std::string &, bool, bool>(
+                 &Decoder::decode_feature),
+             "bytes"_a, "only_geometry"_a = false, "only_properties"_a = false)
+        .def("decode_non_features", py::overload_cast<const std::string &>(
+                                        &Decoder::decode_non_features))
+        .def("offsets", &Decoder::__offsets)
+        //
         ;
 
     auto geojson = m.def_submodule("geojson");
@@ -266,13 +278,66 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def("features",
              py::overload_cast<const mapbox::geojson::feature_collection &>(
                  &Planet::features))
-        .def("build", &Planet::build)
+        .def("build", &Planet::build, py::kw_only(),
+             "per_line_segment"_a = false, "force"_a = false)
         .def("query", &Planet::query, "min"_a, "max"_a)
         .def("copy", &Planet::copy)
         .def("crop", &Planet::crop, "polygon"_a, py::kw_only(),
              "clipping_mode"_a = "longest", //
              "strip_properties"_a = false,  //
              "is_wgs84"_a = true)
+        //
+        ;
+
+    using GeobufIndex = cubao::GeobufIndex;
+    py::class_<GeobufIndex>(m, "GeobufIndex", py::module_local()) //
+        .def(py::init<>())
+        .def("init", &GeobufIndex::init, "index_bytes"_a)
+        //
+        .def("mmap_init",
+             py::overload_cast<const std::string &, const std::string &>(
+                 &GeobufIndex::mmap_init),
+             "index_path"_a, "geobuf_path"_a)
+        .def("mmap_init",
+             py::overload_cast<const std::string &>(&GeobufIndex::mmap_init),
+             "geobuf_path"_a)
+        //
+        .def(
+            "mmap_bytes",
+            [](const GeobufIndex &self, size_t offset,
+               size_t length) -> std::optional<py::bytes> {
+                auto bytes = self.mmap_bytes(offset, length);
+                if (!bytes) {
+                    return {};
+                }
+                return py::bytes(*bytes);
+            },
+            "offset"_a, "length"_a)
+        //
+        .def("decode_feature",
+             py::overload_cast<int, bool, bool>(&GeobufIndex::decode_feature),
+             "index"_a, py::kw_only(), "only_geometry"_a = false,
+             "only_properties"_a = false)
+        .def("decode_feature",
+             py::overload_cast<const std::string &, bool, bool>(
+                 &GeobufIndex::decode_feature),
+             "bytes"_a, py::kw_only(), "only_geometry"_a = false,
+             "only_properties"_a = false)
+        .def("decode_features",
+             py::overload_cast<const std::vector<int> &, bool, bool>(
+                 &GeobufIndex::decode_features),
+             "index"_a, py::kw_only(), "only_geometry"_a = false,
+             "only_properties"_a = false)
+        //
+        .def("decode_non_features",
+             py::overload_cast<const std::string &>(
+                 &GeobufIndex::decode_non_features),
+             "bytes"_a)
+        .def("decode_non_features",
+             py::overload_cast<>(&GeobufIndex::decode_non_features))
+        //
+        .def_static("indexing", &GeobufIndex::indexing, "input_geobuf_path"_a,
+                    "output_index_path"_a)
         //
         ;
 

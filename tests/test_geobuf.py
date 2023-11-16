@@ -15,6 +15,7 @@ import pybind11_geobuf
 from pybind11_geobuf import (  # noqa
     Decoder,
     Encoder,
+    GeobufIndex,
     Planet,
     geojson,
     normalize_json,
@@ -1607,6 +1608,16 @@ def test_geojson_feature():
     text = pbf_decode(pbf)
     assert '11: "3.14"' in text
 
+    assert feature["no_such_key"] is None
+    feature["no_such_key"] = ["oops", {"it": "has"}]
+    assert feature["no_such_key"] is not None
+    assert feature["no_such_key"]() == ["oops", {"it": "has"}]
+    assert feature.custom_properties()() == {
+        "no_such_key": ["oops", {"it": "has"}],
+    }
+    del feature["no_such_key"]
+    assert feature["no_such_key"] is None
+
 
 def test_geojson_load_dump():
     dirname = os.path.abspath(f"{__pwd}/../data")
@@ -1747,6 +1758,22 @@ def test_geojson_load_dump():
         assert np.fabs(llas1[:, 2]).max() != 0.0
         assert np.fabs(llas2[:, 2]).max() == 0.0
 
+    fc = geojson.FeatureCollection().from_rapidjson(json3)
+    assert len(fc) == 1
+    fc.append(fc[0])
+    assert len(fc) == 2
+    fc.append(fc[0])
+    assert len(fc) == 3
+    for i, f in enumerate(fc):
+        f.properties()["int"] = f.properties()["int"]() * 100 + i
+    fc["key"] = "value"
+    assert fc.custom_properties()() == {"key": "value", "my_key": "this is fc"}
+    del fc["my_key"]
+    assert fc.custom_properties()() == {"key": "value"}
+    assert [f.properties()["int"]() for f in fc] == [4200, 4201, 4202]
+    del fc[:2]
+    assert [f.properties()["int"]() for f in fc] == [4202]
+
 
 def pytest_main(dir: str, *, test_file: str = None):
 
@@ -1886,6 +1913,102 @@ def test_query():
     assert cropped2[-1].properties()["index"]() == 977
     hits = [f.properties()["index"]() for f in cropped2]
     # assert fc[977] == cropped1[-1]
+
+
+def test_geobuf_index():
+    ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
+    build_dir = os.path.abspath(f"{__pwd}/../build")
+    opath = f"{build_dir}/suzhoubeizhan.idx"
+
+    assert GeobufIndex.indexing(ipath, opath)
+    indexer = GeobufIndex()
+    assert indexer.mmap_init(opath, ipath)
+    expected = {
+        "type": "Feature",
+        "geometry": {
+            "type": "LineString",
+            "coordinates": [
+                [120.660822, 31.4001743, 0.0],
+                [120.6610982, 31.4015175, 0.0],
+                [120.6611093, 31.4015714, 0.0],
+                [120.6612461, 31.4023039, 0.0],
+                [120.661284, 31.4025068, 0.0],
+                [120.6616616, 31.4042817, 0.0],
+                [120.6618224, 31.4052508, 0.0],
+                [120.6620808, 31.406731, 0.0],
+                [120.6622092, 31.4073066, 0.0],
+                [120.6623891, 31.4081988, 0.0],
+                [120.6626607, 31.4095945, 0.0],
+            ],
+        },
+        "properties": {
+            "stroke": "#48fd6d",
+            "folds": [
+                [
+                    "24",
+                    "1870",
+                    "40",
+                    "1318",
+                    "0",
+                    "39",
+                    "93",
+                    "26",
+                    "1224",
+                    "2",
+                ],
+                [
+                    151.228,
+                    6.069,
+                    82.252,
+                    22.784,
+                    200.044,
+                    108.533,
+                    165.949,
+                    64.978,
+                    100.392,
+                    156.891,
+                ],
+            ],
+            "highlight_group": ["23"],
+            "prevs": [],
+            "id": "24",
+            "nexts": ["23"],
+        },
+    }
+    assert indexer.decode_feature(0)() == expected
+    f = indexer.decode_feature(0, only_geometry=True)()
+    assert f["properties"] == {}
+    f = indexer.decode_feature(0, only_properties=True)()
+    assert f["geometry"] is None
+    assert not indexer.decode_non_features()
+    assert indexer.decode_non_features()() is None
+
+    ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
+    fc = geojson.GeoJSON().load(ipath)
+    build_dir = os.path.abspath(f"{__pwd}/../build")
+    opath = f"{build_dir}/suzhoubeizhan.pbf"
+    fc.as_feature_collection()["number"] = 42
+    fc.as_feature_collection()["string"] = "string"
+    fc.as_feature_collection()["list"] = ["l", 1, "s", "t"]
+    fc.as_feature_collection()["dict"] = {"d": "ict"}
+    expected_custom_props = {
+        "dict": {"d": "ict"},
+        "list": ["l", 1, "s", "t"],
+        "string": "string",
+        "number": 42,
+    }
+    custom_props = fc.as_feature_collection().custom_properties()()
+    assert custom_props == expected_custom_props
+    assert fc.dump(opath) and os.path.isfile(opath)
+
+    ipath = opath
+    opath = f"{build_dir}/suzhoubeizhan.idx"
+    assert GeobufIndex.indexing(ipath, opath)
+    indexer = GeobufIndex()
+    assert indexer.mmap_init(opath, ipath)
+    assert indexer.decode_feature(0)() == expected
+    assert indexer.decode_non_features()
+    assert indexer.decode_non_features()() == expected_custom_props
 
 
 if __name__ == "__main__":

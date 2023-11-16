@@ -90,10 +90,7 @@ struct Encoder
     {
     }
     std::string encode(const mapbox::geojson::geojson &geojson);
-    std::string encode(const mapbox::geojson::feature_collection &features)
-    {
-        return encode(mapbox::geojson::geojson{features});
-    }
+    std::string encode(const mapbox::geojson::feature_collection &features);
     std::string encode(const mapbox::geojson::feature &feature)
     {
         return encode(mapbox::geojson::geojson{feature});
@@ -122,6 +119,8 @@ struct Encoder
 
   private:
     void analyze(const mapbox::geojson::geojson &geojson);
+    void analyze(const mapbox::geojson::feature_collection &features);
+    void analyzeFeature(const mapbox::geojson::feature &feature);
     void analyzeGeometry(const mapbox::geojson::geometry &geometry);
     void analyzeMultiLine(const LinesType &lines);
     void analyzePoints(const PointsType &points);
@@ -164,22 +163,55 @@ struct Decoder
     Decoder() {}
     static std::string to_printable(const std::string &pbf_bytes,
                                     const std::string &indent = "");
-    mapbox::geojson::geojson decode(const std::string &pbf_bytes);
+    mapbox::geojson::geojson decode(const uint8_t *data, size_t size);
+    mapbox::geojson::geojson decode(const std::string &pbf_bytes)
+    {
+        return decode((const uint8_t *)pbf_bytes.data(), pbf_bytes.size());
+    }
+    void decode_header(const uint8_t *data, std::size_t size);
+    void decode_header(const std::string &bytes)
+    {
+        decode_header((const uint8_t *)bytes.data(), bytes.size());
+    }
+    std::optional<mapbox::geojson::feature>
+    decode_feature(const uint8_t *data, std::size_t size,
+                   bool only_geometry = false, bool only_properties = false);
+    std::optional<mapbox::geojson::feature>
+    decode_feature(const std::string &bytes, bool only_geometry = false,
+                   bool only_properties = false)
+    {
+        return decode_feature((const uint8_t *)bytes.data(), bytes.size(),
+                              only_geometry, only_properties);
+    }
+    mapbox::feature::value decode_non_features(const uint8_t *data,
+                                               std::size_t size);
+    mapbox::feature::value decode_non_features(const std::string &bytes)
+    {
+        return decode_non_features((const uint8_t *)bytes.data(), bytes.size());
+    }
+
+    mapbox::geojson::geojson decode_file(const std::string &geobuf_path);
     bool decode(const std::string &input_path, const std::string &output_path,
                 bool indent = false, bool sort_keys = false);
     int precision() const { return std::log10(e); }
     int __dim() const { return dim; }
     std::vector<std::string> __keys() const { return keys; }
+    std::vector<int> __offsets() const { return offsets; }
 
   private:
     mapbox::geojson::feature_collection readFeatureCollection(Pbf &pbf);
     mapbox::geojson::feature readFeature(Pbf &pbf);
+    mapbox::geojson::feature readFeature(Pbf &pbf, bool only_geometry,
+                                         bool only_properties);
     mapbox::geojson::geometry readGeometry(Pbf &pbf);
     mapbox::geojson::value readValue(Pbf &pbf);
 
     uint32_t dim = MAPBOX_GEOBUF_DEFAULT_DIM;
     uint32_t e = std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION);
     std::vector<std::string> keys;
+
+    const char *head = nullptr;
+    std::vector<int> offsets;
 };
 
 } // namespace geobuf
