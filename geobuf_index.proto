@@ -1,0 +1,21 @@
+option optimize_for = LITE_RUNTIME;
+
+message Index {
+    uint32 header_size = 1;                         // can parse Data[0:header_size] to init keys/dim/e
+    uint32 num_features = 2;
+    repeated uint64 offsets = 3 [packed = true];    // can parse Data[offsets[i]:offsets[i+1]] to get ith feature
+    // len(offsets) == num_features + 2, can parse data[offsets[-2]:offsets[-1]] to get feature_collection.custom_properties
+
+    optional map<string, uint32> ids = 5;
+    optional PackedRTree packed_rtree = 6;          // spatial index
+    message PackedRTree {
+        double left = 0;
+        double bottom = 1;
+        double right = 2;
+        double top = 3;
+        uint32 num_items = 4;
+        uint32 num_nodes = 5;
+        uint32 node_size = 6 [default = 16];
+        bytes serialized = 7;
+    }
+}
