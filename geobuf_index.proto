@@ -15,7 +15,7 @@ message Index {
         double top = 3;
         uint32 num_items = 4;
         uint32 num_nodes = 5;
-        uint32 node_size = 6 [default = 16];
+        uint32 node_size = 6;
         bytes serialized = 7;
     }
 }
