@@ -196,6 +196,7 @@ struct Decoder
     int precision() const { return std::log10(e); }
     int __dim() const { return dim; }
     std::vector<std::string> __keys() const { return keys; }
+    int __header_size() const { return header_size; }
     std::vector<int> __offsets() const { return offsets; }
 
   private:
@@ -211,6 +212,7 @@ struct Decoder
     std::vector<std::string> keys;
 
     const char *head = nullptr;
+    int header_size = -1;
     std::vector<int> offsets;
 };
 

@@ -698,10 +698,13 @@ mapbox::geojson::geojson Decoder::decode(const uint8_t *data, size_t size)
         const auto tag = pbf.tag();
         if (tag == 1) {
             keys.push_back(pbf.get_string());
+            header_size = pbf.data().data() - head;
         } else if (tag == 2) {
             dim = pbf.get_uint32();
+            header_size = pbf.data().data() - head;
         } else if (tag == 3) {
             e = std::pow(10, pbf.get_uint32());
+            header_size = pbf.data().data() - head;
         } else if (tag == 4) {
             protozero::pbf_reader pbf_fc = pbf.get_message();
             return readFeatureCollection(pbf_fc);

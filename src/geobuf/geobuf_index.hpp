@@ -19,23 +19,11 @@
 
 namespace cubao
 {
-inline std::string to_hex(const std::string &s, bool upper_case = true)
-{
-    std::ostringstream ret;
-
-    for (std::string::size_type i = 0; i < s.length(); ++i) {
-        int z = s[i] & 0xff;
-        ret << std::hex << std::setfill('0') << std::setw(2)
-            << (upper_case ? std::uppercase : std::nouppercase) << z;
-    }
-
-    return ret.str();
-}
-
 struct GeobufIndex
 {
     GeobufIndex() = default;
     int num_features = -1;
+    int header_size = -1;
     std::vector<int> offsets;
     FlatGeobuf::PackedRTree rtree;
     mio::shared_ummap_source mmap;
@@ -95,6 +83,10 @@ struct GeobufIndex
             return false;
         }
 
+        header_size = *reinterpret_cast<const int *>(data + cursor);
+        cursor += sizeof(header_size);
+        spdlog::info("header_size: {}", header_size);
+
         int num_offsets{0};
         num_offsets = *reinterpret_cast<const int *>(data + cursor);
         cursor += sizeof(num_offsets);
@@ -127,12 +119,14 @@ struct GeobufIndex
     }
     bool mmap_init(const std::string &geobuf_path)
     {
-        if (num_features < 0 || offsets.empty()) {
+        if (num_features < 0 || offsets.empty() || header_size < 0) {
             throw std::invalid_argument("should init index first!!!");
         }
-        spdlog::info("lazy decoding geobuf with mmap");
+        spdlog::info(
+            "decoding geobuf with mmap, only parse {} bytes header for now",
+            header_size);
         mmap = std::make_shared<mio::ummap_source>(geobuf_path);
-        decoder.decode_header(mmap.data(), offsets[0]);
+        decoder.decode_header(mmap.data(), header_size);
         spdlog::info("decoded geobuf header, #keys={}, dim={}, precision: {}",
                      decoder.__keys().size(), decoder.__dim(),
                      decoder.precision());
@@ -287,6 +281,8 @@ struct GeobufIndex
         const int padding = 930604; // geobuf
         fwrite(&padding, sizeof(padding), 1, fp);
 
+        int header_size = decoder.__header_size();
+        fwrite(&header_size, sizeof(header_size), 1, fp);
         std::vector<int> offsets = decoder.__offsets();
         int num_offsets = offsets.size();
         fwrite(&num_offsets, sizeof(num_offsets), 1, fp);
