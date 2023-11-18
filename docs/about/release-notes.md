@@ -10,6 +10,10 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.2.0 (2023-11-18)
+
+*   Indexing geobuf in protobuf format; Spec: geobuf_index.proto
+
 ## Version 0.1.9 (2023-11-15)
 
 *   Indexing geobuf (like flatgeobuf, but more general), making it random accessible

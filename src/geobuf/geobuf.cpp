@@ -16,7 +16,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "spdlog/spdlog.h"
+#include "spdlog/spdlog.h" // fmt::format
 // fix exposed macro 'GetObject' from wingdi.h (included by spdlog.h) under
 // windows, see https://github.com/Tencent/rapidjson/issues/1448
 #ifdef GetObject
@@ -698,10 +698,13 @@ mapbox::geojson::geojson Decoder::decode(const uint8_t *data, size_t size)
         const auto tag = pbf.tag();
         if (tag == 1) {
             keys.push_back(pbf.get_string());
+            header_size = pbf.data().data() - head;
         } else if (tag == 2) {
             dim = pbf.get_uint32();
+            header_size = pbf.data().data() - head;
         } else if (tag == 3) {
             e = std::pow(10, pbf.get_uint32());
+            header_size = pbf.data().data() - head;
         } else if (tag == 4) {
             protozero::pbf_reader pbf_fc = pbf.get_message();
             return readFeatureCollection(pbf_fc);
@@ -822,9 +825,9 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
     mapbox::geojson::feature_collection fc;
     std::vector<mapbox::geojson::value> values;
     offsets.clear();
-    int props_cursor = -1;
+    std::optional<uint64_t> props_cursor;
     while (true) {
-        int cursor = pbf.data().data() - head;
+        uint64_t cursor = pbf.data().data() - head;
         if (!pbf.next()) {
             break;
         }
@@ -835,7 +838,7 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
             offsets.push_back(cursor);
             continue;
         }
-        if (props_cursor < 0) {
+        if (!props_cursor) {
             props_cursor = cursor;
         }
         if (tag == 13) {
@@ -856,9 +859,9 @@ mapbox::geojson::feature_collection Decoder::readFeatureCollection(Pbf &pbf)
         }
     }
     // props start
-    int tail = pbf.data().data() - head;
-    if (props_cursor > 0 && !offsets.empty() && props_cursor > offsets.back()) {
-        offsets.push_back(props_cursor);
+    uint64_t tail = pbf.data().data() - head;
+    if (props_cursor && !offsets.empty() && *props_cursor > offsets.back()) {
+        offsets.push_back(*props_cursor);
     } else {
         offsets.push_back(tail);
     }

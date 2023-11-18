@@ -146,6 +146,9 @@ cli_test4:
 
 .PHONY: cli_test cli_test1 cli_test2 cli_test3
 
+geobuf_index.js: geobuf_index.proto
+	pbf $< > $@
+
 # conda create -y -n py36 python=3.6
 # conda create -y -n py37 python=3.7
 # conda create -y -n py38 python=3.8

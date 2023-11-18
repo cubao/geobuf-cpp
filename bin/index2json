@@ -1,0 +1,15 @@
+#!/usr/bin/env node
+
+var Index = require('../geobuf_index.js').Index,
+    Pbf = require('pbf'),
+    fs = require('fs')
+    concat = require('concat-stream');
+
+var input = process.stdin.isTTY ? fs.createReadStream(process.argv[2]) : process.stdin;
+
+input.pipe(concat(function(buf) {
+    var pbf = new Pbf(buf);
+    var obj = Index.read(pbf);
+    var data = JSON.stringify(obj);
+    process.stdout.write(Buffer.allocUnsafe ? Buffer.from(data) : new Buffer(data));
+}));

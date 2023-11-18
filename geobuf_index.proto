@@ -1,0 +1,38 @@
+option optimize_for = LITE_RUNTIME;
+
+message Index {
+    uint32 header_size = 1;                         // can parse Data[0:header_size] to init keys/dim/e
+    uint32 num_features = 2;
+    repeated uint64 offsets = 3 [packed = true];    // can parse Data[offsets[i]:offsets[i+1]] to get ith feature
+    // len(offsets) == num_features + 2, can parse data[offsets[-2]:offsets[-1]] to get feature_collection.custom_properties
+
+    // feature id?
+    //  -   feature.id
+    //  -   feature.properties.id
+    //  -   feature.properties.fid
+    //  -   feature.properties.feature_id
+    // related docs:
+    //  -   https://docs.mapbox.com/mapbox-gl-js/api/map/#instance-members-feature-state
+    //  -   https://github.com/mapbox/mapbox-gl-js/pull/8987
+    repeated string fids = 4;
+    repeated uint32 idxs = 5 [packed = true];
+
+    optional PackedRTree packed_rtree = 8;          // spatial index
+    message PackedRTree {
+        double left = 1;
+        double bottom = 2;
+        double right = 3;
+        double top = 4;
+        uint32 num_items = 5;
+        uint32 num_nodes = 6;
+        uint32 node_size = 7;
+        bytes serialized = 8;
+    }
+
+    // Tools
+    //  -   encoding
+    //      python3 -m pybind11_geobuf index_geobuf path/to/geobuf.pbf output/geobuf.idx
+    //  -   inspect index
+    //      python3 -m pybind11_geobuf pbf_decode geobuf.idx
+    //      node bin/index2json geobuf.idx                  # need `npm i pbf concat-stream`
+}

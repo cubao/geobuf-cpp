@@ -196,7 +196,8 @@ struct Decoder
     int precision() const { return std::log10(e); }
     int __dim() const { return dim; }
     std::vector<std::string> __keys() const { return keys; }
-    std::vector<int> __offsets() const { return offsets; }
+    uint32_t __header_size() const { return header_size; }
+    std::vector<uint64_t> __offsets() const { return offsets; }
 
   private:
     mapbox::geojson::feature_collection readFeatureCollection(Pbf &pbf);
@@ -211,7 +212,8 @@ struct Decoder
     std::vector<std::string> keys;
 
     const char *head = nullptr;
-    std::vector<int> offsets;
+    uint32_t header_size = -1;
+    std::vector<uint64_t> offsets;
 };
 
 } // namespace geobuf

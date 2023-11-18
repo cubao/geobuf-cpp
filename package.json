@@ -1,0 +1,32 @@
+{
+  "name": "geobuf_index",
+  "version": "0.0.1",
+  "description": "index for geobuf",
+  "main": "index.js",
+  "bin": {
+    "debug_index": "bin/json2geobuf"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:cubao/geobuf_cpp.git"
+  },
+  "files": [
+    "index.js",
+    "bin",
+    "geobuf_index.proto"
+  ],
+  "keywords": [
+    "geobuf",
+    "index"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cubao/geobuf_cpp/issues"
+  },
+  "homepage": "https://github.com/cubao/geobuf_cpp",
+  "dependencies": {
+    "concat-stream": "^2.0.0",
+    "pbf": "^3.2.1"
+  }
+}

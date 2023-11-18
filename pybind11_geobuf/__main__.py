@@ -210,12 +210,23 @@ def is_subset_of(path1: str, path2: str):
     assert is_subset_of_impl(path1, path2)
 
 
-def index_geobuf(input_geobuf_path: str, output_index_path: str):
+def index_geobuf(
+    input_geobuf_path: str,
+    output_index_path: str,
+    *,
+    feature_id: Optional[str] = "@",
+    packed_rtree: Optional[str] = "@",
+):
     os.makedirs(
         os.path.dirname(os.path.abspath(output_index_path)),
         exist_ok=True,
     )
-    return GeobufIndex.indexing(input_geobuf_path, output_index_path)
+    return GeobufIndex.indexing(
+        input_geobuf_path,
+        output_index_path,
+        feature_id=feature_id,
+        packed_rtree=packed_rtree,
+    )
 
 
 if __name__ == "__main__":

@@ -19,100 +19,154 @@
 
 namespace cubao
 {
-inline std::string to_hex(const std::string &s, bool upper_case = true)
+inline std::optional<std::string>
+value2string(const mapbox::geojson::value &value)
 {
-    std::ostringstream ret;
+    return value.match(
+        [](uint64_t v) { return std::to_string(v); },
+        [](int64_t v) { return std::to_string(v); },
+        [](const std::string &v) { return v; },
+        [](const auto &) -> std::optional<std::string> { return {}; });
+}
 
-    for (std::string::size_type i = 0; i < s.length(); ++i) {
-        int z = s[i] & 0xff;
-        ret << std::hex << std::setfill('0') << std::setw(2)
-            << (upper_case ? std::uppercase : std::nouppercase) << z;
+inline std::optional<std::string>
+fn_feature_id_default(const mapbox::geojson::feature &feature)
+{
+    if (!feature.id.is<mapbox::feature::null_value_t>()) {
+        return feature.id.match(
+            [](uint64_t v) { return std::to_string(v); },
+            [](int64_t v) { return std::to_string(v); },
+            [](const std::string &v) { return v; },
+            [](const auto &) -> std::optional<std::string> { return {}; });
     }
-
-    return ret.str();
+    for (const auto &key : {"id", "feature_id", "fid"}) {
+        auto itr = feature.properties.find(key);
+        if (itr == feature.properties.end()) {
+            continue;
+        }
+        auto id = value2string(itr->second);
+        if (id) {
+            return id;
+        }
+    }
+    return {};
 }
 
 struct GeobufIndex
 {
     GeobufIndex() = default;
-    int num_features = -1;
-    std::vector<int> offsets;
-    FlatGeobuf::PackedRTree rtree;
+
+    uint32_t header_size = 0;
+    uint32_t num_features = 0;
+    std::vector<uint64_t> offsets;
+    std::optional<std::unordered_map<std::string, uint32_t>> ids;
+    std::optional<FlatGeobuf::PackedRTree> packed_rtree;
+
+    using Encoder = mapbox::geobuf::Encoder;
+    using Decoder = mapbox::geobuf::Decoder;
+    Decoder decoder;
     mio::shared_ummap_source mmap;
-    mapbox::geobuf::Decoder decoder;
+
+    bool init(const uint8_t *data, size_t size)
+    {
+        auto pbf = protozero::pbf_reader{(const char *)data, size};
+        std::vector<std::string> fids;
+        std::vector<uint32_t> idxs;
+        while (pbf.next()) {
+            const auto tag = pbf.tag();
+            if (tag == 1) {
+                header_size = pbf.get_uint32();
+                spdlog::info("header_size: {}", header_size);
+            } else if (tag == 2) {
+                num_features = pbf.get_uint32();
+                spdlog::info("num_features: {}", num_features);
+            } else if (tag == 3) {
+                auto iter = pbf.get_packed_uint64();
+                offsets = std::vector<uint64_t>(iter.begin(), iter.end());
+                if (offsets.size() == num_features + 2u) {
+                    spdlog::info("#offsets: {}, values: [{},{}, ..., {}, {}]",
+                                 offsets.size(), offsets[0], offsets[1],
+                                 offsets[num_features],
+                                 offsets[num_features + 1]);
+                } else {
+                    spdlog::error("#offsets:{} != 2 + num_features:{}",
+                                  offsets.size(), num_features);
+                }
+            } else if (tag == 4) {
+                fids.push_back(pbf.get_string());
+            } else if (tag == 5) {
+                auto iter = pbf.get_packed_uint32();
+                idxs = std::vector<uint32_t>(iter.begin(), iter.end());
+            } else if (tag == 8) {
+                FlatGeobuf::NodeItem extent;
+                uint32_t num_items{0};
+                uint32_t num_nodes{0};
+                uint32_t node_size{0};
+                std::string rtree_bytes;
+                protozero::pbf_reader pbf_rtree = pbf.get_message();
+                while (pbf_rtree.next()) {
+                    const auto tag = pbf_rtree.tag();
+                    if (tag == 1) {
+                        extent.minX = pbf_rtree.get_double();
+                    } else if (tag == 2) {
+                        extent.minY = pbf_rtree.get_double();
+                    } else if (tag == 3) {
+                        extent.maxX = pbf_rtree.get_double();
+                    } else if (tag == 4) {
+                        extent.maxY = pbf_rtree.get_double();
+                    } else if (tag == 5) {
+                        num_items = pbf_rtree.get_uint32();
+                    } else if (tag == 6) {
+                        num_nodes = pbf_rtree.get_uint32();
+                    } else if (tag == 7) {
+                        node_size = pbf_rtree.get_uint32();
+                    } else if (tag == 8) {
+                        rtree_bytes = pbf_rtree.get_bytes();
+                    } else {
+                        pbf_rtree.skip();
+                    }
+                }
+                spdlog::info("PackedRTree num_items={}, num_nodes={}, "
+                             "node_size={}, bbox=[{},{},{},{}], #bytes={}",
+                             num_items, num_nodes, node_size, extent.minX,
+                             extent.minY, extent.maxX, extent.maxY,
+                             rtree_bytes.size());
+                if (num_items > 0 && num_nodes > 0 && node_size > 0 &&
+                    extent.width() >= 0 && extent.height() >= 0 &&
+                    rtree_bytes.size() ==
+                        num_nodes * sizeof(FlatGeobuf::NodeItem)) {
+                    packed_rtree = FlatGeobuf::PackedRTree(
+                        (const uint8_t *)rtree_bytes.data(), num_items,
+                        node_size);
+                    if (packed_rtree->getExtent() != extent) {
+                        extent = packed_rtree->getExtent();
+                        spdlog::error(
+                            "extent mismatch, from RTree: {},{},{},{}",
+                            extent.minX, extent.minY, extent.maxX, extent.maxY);
+                    }
+                } else {
+                    spdlog::error("invalid PackedRTree");
+                }
+            } else {
+                pbf.skip();
+            }
+        }
+        if (fids.size() != idxs.size()) {
+            spdlog::error("bad feature ids, #fids:{} != #idxs:{}", fids.size(),
+                          idxs.size());
+        } else {
+            ids = std::unordered_map<std::string, uint32_t>{};
+            for (size_t i = 0, N = idxs.size(); i < N; ++i) {
+                ids->emplace(fids[i], idxs[i]);
+            }
+            spdlog::info("#feature_ids: {}", ids->size());
+        }
+        return true;
+    }
 
     bool init(const std::string &bytes)
     {
-        int cursor = 10;
-        if (bytes.substr(0, cursor) != "GeobufIdx0") {
-            spdlog::error("invalid geobuf index");
-            return false;
-        }
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.data());
-        num_features = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(num_features);
-        spdlog::info("#features: {}", num_features);
-
-        FlatGeobuf::NodeItem extent;
-        memcpy((void *)&extent.minX, data + cursor, sizeof(extent));
-        cursor += sizeof(extent);
-        spdlog::info("extent: {},{},{},{}", extent.minX, extent.minY,
-                     extent.maxX, extent.maxY);
-
-        int num_items{0};
-        num_items = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(num_items);
-        spdlog::info("num_items: {}", num_items);
-
-        int num_nodes{0};
-        num_nodes = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(num_nodes);
-        spdlog::info("num_nodes: {}", num_nodes);
-
-        int node_size{0};
-        node_size = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(node_size);
-        spdlog::info("node_size: {}", node_size);
-
-        int tree_size{0};
-        tree_size = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(tree_size);
-        spdlog::info("tree_size: {}", tree_size);
-
-        rtree = FlatGeobuf::PackedRTree(data + cursor, num_items, node_size);
-        if (rtree.getNumNodes() != num_nodes || rtree.getExtent() != extent) {
-            spdlog::error("invalid rtree, #nodes:{} != {} (expected)",
-                          rtree.getNumNodes(), num_nodes);
-            return false;
-        }
-        cursor += tree_size;
-
-        int padding{0};
-        padding = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(padding);
-        if (padding != 930604) {
-            spdlog::error("invalid padding: {} != 930604 (geobuf)", padding);
-            return false;
-        }
-
-        int num_offsets{0};
-        num_offsets = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(num_offsets);
-        spdlog::info("num_offsets: {}", num_offsets);
-
-        offsets.resize(num_offsets);
-        memcpy(reinterpret_cast<void *>(offsets.data()), data + cursor,
-               sizeof(offsets[0]) * num_offsets);
-        cursor += sizeof(offsets[0]) * num_offsets;
-        spdlog::info("offsets: [{}, ..., {}]", offsets.front(), offsets.back());
-
-        padding = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(padding);
-        if (padding != 930604) {
-            spdlog::error("invalid padding: {} != 930604 (geobuf)", padding);
-            return false;
-        }
-        return true;
+        return init((const uint8_t *)bytes.data(), bytes.size());
     }
 
     bool mmap_init(const std::string &index_path,
@@ -127,12 +181,14 @@ struct GeobufIndex
     }
     bool mmap_init(const std::string &geobuf_path)
     {
-        if (num_features < 0 || offsets.empty()) {
+        if (offsets.size() != num_features + 2u || header_size == 0) {
             throw std::invalid_argument("should init index first!!!");
         }
-        spdlog::info("lazy decoding geobuf with mmap");
+        spdlog::info(
+            "decoding geobuf with mmap, only parse {} bytes header for now",
+            header_size);
         mmap = std::make_shared<mio::ummap_source>(geobuf_path);
-        decoder.decode_header(mmap.data(), offsets[0]);
+        decoder.decode_header(mmap.data(), header_size);
         spdlog::info("decoded geobuf header, #keys={}, dim={}, precision: {}",
                      decoder.__keys().size(), decoder.__dim(),
                      decoder.precision());
@@ -162,11 +218,10 @@ struct GeobufIndex
                               only_geometry, only_properties);
     }
     std::optional<mapbox::geojson::feature>
-    decode_feature(int index, bool only_geometry = false,
+    decode_feature(uint32_t index, bool only_geometry = false,
                    bool only_properties = false)
     {
-        bool valid_index =
-            0 <= index && index < num_features && index + 1 < offsets.size();
+        bool valid_index = index < num_features && index + 1 < offsets.size();
         if (!valid_index) {
             return {};
         }
@@ -181,6 +236,20 @@ struct GeobufIndex
         } catch (...) {
         }
         return {};
+    }
+
+    std::optional<mapbox::geojson::feature>
+    decode_feature_of_id(const std::string &id, bool only_geometry = false,
+                         bool only_properties = false)
+    {
+        if (!ids) {
+            return {};
+        }
+        auto itr = ids->find(id);
+        if (itr == ids->end()) {
+            return {};
+        }
+        return decode_feature(itr->second, only_geometry, only_properties);
     }
 
     mapbox::geojson::feature_collection
@@ -224,23 +293,38 @@ struct GeobufIndex
     }
     mapbox::feature::value decode_non_features()
     {
-        if (num_features <= 0 || offsets.size() < num_features + 2) {
+        if (num_features <= 0 || offsets.size() < num_features + 2u) {
             return {};
         }
         try {
-            int cursor = offsets[num_features];
-            int length = offsets[num_features + 1] - cursor;
-            if (length <= 0 || !mmap.is_open()) {
+            size_t begin = offsets[num_features];
+            size_t end = offsets[num_features + 1u];
+            if (begin >= end || !mmap.is_open()) {
                 return {};
             }
-            return decode_non_features(mmap.data() + cursor, length);
+            return decode_non_features(mmap.data() + begin, end - begin);
         } catch (...) {
         }
         return {};
     }
 
+    std::set<uint32_t> query(const Eigen::Vector2d &min,
+                             const Eigen::Vector2d &max) const
+    {
+        if (!packed_rtree) {
+            return {};
+        }
+        std::set<uint32_t> hits;
+        for (auto h : packed_rtree->search(min[0], min[1], max[0], max[1])) {
+            hits.insert(h.offset);
+        }
+        return hits;
+    }
+
     static bool indexing(const std::string &input_geobuf_path,
-                         const std::string &output_index_path)
+                         const std::string &output_index_path,
+                         const std::optional<std::string> feature_id = "@",
+                         const std::optional<std::string> packed_rtree = "@")
     {
         spdlog::info("indexing {} ...", input_geobuf_path);
         auto decoder = mapbox::geobuf::Decoder();
@@ -250,51 +334,74 @@ struct GeobufIndex
                 "invalid GeoJSON type, should be FeatureCollection");
         }
         auto &fc = geojson.get<mapbox::geojson::feature_collection>();
-
-        FILE *fp = fopen(output_index_path.c_str(), "wb");
-        if (!fp) {
-            spdlog::error("failed to open {} for writing", output_index_path);
-            return {};
+        auto header_size = decoder.__header_size();
+        auto offsets = decoder.__offsets();
+        spdlog::info("#features: {}", fc.size());
+        spdlog::info("header_size: {}", header_size);
+        if (offsets.size() == fc.size() + 2u) {
+            spdlog::info("#offsets: {}, values: [{},{}, ..., {}, {}]",
+                         offsets.size(), offsets[0], offsets[1],
+                         offsets[fc.size()], offsets[fc.size() + 1]);
+        } else {
+            spdlog::error("#offsets:{} != 2 + num_features:{}", offsets.size(),
+                          fc.size());
         }
-        auto planet = Planet(fc);
-        // magic
-        fwrite("GeobufIdx0", 10, 1, fp);
-        int num_features = fc.size();
-        // #features
-        fwrite(&num_features, sizeof(num_features), 1, fp);
 
-        auto rtree = planet.packed_rtree();
-        auto extent = rtree.getExtent();
-        // extent/bbox
-        fwrite(&extent, sizeof(extent), 1, fp);
-        // num_items
-        int num_items = rtree.getNumItems();
-        fwrite(&num_items, sizeof(num_items), 1, fp);
-        // num_nodes
-        int num_nodes = rtree.getNumNodes();
-        fwrite(&num_nodes, sizeof(num_nodes), 1, fp);
-        // node_size
-        int node_size = rtree.getNodeSize();
-        fwrite(&node_size, sizeof(node_size), 1, fp);
-        // tree_size
-        int tree_size = rtree.size();
-        fwrite(&tree_size, sizeof(tree_size), 1, fp);
-        // tree_bytes
-        rtree.streamWrite([&](const uint8_t *data, size_t size) {
-            fwrite(data, 1, size, fp);
-        });
+        std::string data;
+        Encoder::Pbf pbf{data};
+        pbf.add_uint32(1, header_size);
+        pbf.add_uint32(2, fc.size());
+        pbf.add_packed_uint64(3, offsets.begin(), offsets.end());
 
-        const int padding = 930604; // geobuf
-        fwrite(&padding, sizeof(padding), 1, fp);
+        if (feature_id) {
+            std::map<std::string, uint32_t> ids;
+            for (size_t i = 0; i < fc.size(); ++i) {
+                auto id = fn_feature_id_default(fc[i]);
+                if (id) {
+                    ids.emplace(*id, static_cast<uint32_t>(i));
+                }
+            }
+            if (!ids.empty()) {
+                spdlog::info("#feature_ids: {}", ids.size());
+                std::vector<uint32_t> idxs;
+                idxs.reserve(ids.size());
+                for (auto &pair : ids) {
+                    pbf.add_string(4, pair.first);
+                    idxs.push_back(pair.second);
+                }
+                pbf.add_packed_uint32(5, idxs.begin(), idxs.end());
+            }
+        }
 
-        std::vector<int> offsets = decoder.__offsets();
-        int num_offsets = offsets.size();
-        fwrite(&num_offsets, sizeof(num_offsets), 1, fp);
-        fwrite(offsets.data(), sizeof(offsets[0]), offsets.size(), fp);
-        fwrite(&padding, sizeof(padding), 1, fp);
-        fclose(fp);
-        spdlog::info("wrote index to {}", output_index_path);
-        return true;
+        if (packed_rtree) {
+            auto planet = Planet(fc);
+            if (*packed_rtree == "per_line_segment") {
+                planet.build(true);
+            }
+            auto rtree = planet.packed_rtree();
+            auto extent = rtree.getExtent();
+            spdlog::info("PackedRTree num_items={}, num_nodes={}, "
+                         "node_size={}, bbox=[{},{},{},{}], #bytes={}",
+                         rtree.getNumItems(), rtree.getNumNodes(),
+                         rtree.getNodeSize(), extent.minX, extent.minY,
+                         extent.maxX, extent.maxY, rtree.size());
+            if (extent.width() >= 0 && extent.height() >= 0) {
+                protozero::pbf_writer pbf_rtree{pbf, 8};
+                pbf_rtree.add_double(1, extent.minX);
+                pbf_rtree.add_double(2, extent.minY);
+                pbf_rtree.add_double(3, extent.maxX);
+                pbf_rtree.add_double(4, extent.maxY);
+                pbf_rtree.add_uint32(5, rtree.getNumItems());
+                pbf_rtree.add_uint32(6, rtree.getNumNodes());
+                pbf_rtree.add_uint32(7, rtree.getNodeSize());
+                rtree.streamWrite([&](const uint8_t *data, size_t size) {
+                    pbf_rtree.add_bytes(8, (const char *)data, size);
+                });
+            } else {
+                spdlog::error("invalid PackedRTree");
+            }
+        }
+        return mapbox::geobuf::dump_bytes(output_index_path, data);
     }
 };
 } // namespace cubao
