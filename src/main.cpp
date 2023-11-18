@@ -336,8 +336,12 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def("decode_non_features",
              py::overload_cast<>(&GeobufIndex::decode_non_features))
         //
-        .def_static("indexing", &GeobufIndex::indexing, "input_geobuf_path"_a,
-                    "output_index_path"_a)
+        .def_static("indexing", &GeobufIndex::indexing, //
+                    "input_geobuf_path"_a,              //
+                    "output_index_path"_a,              //
+                    py::kw_only(),                      //
+                    "feature_id"_a = "@",               //
+                    "packed_rtree"_a = "@")
         //
         ;
 
