@@ -316,13 +316,19 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             "offset"_a, "length"_a)
         //
         .def("decode_feature",
-             py::overload_cast<int, bool, bool>(&GeobufIndex::decode_feature),
+             py::overload_cast<uint32_t, bool, bool>(
+                 &GeobufIndex::decode_feature),
              "index"_a, py::kw_only(), "only_geometry"_a = false,
              "only_properties"_a = false)
         .def("decode_feature",
              py::overload_cast<const std::string &, bool, bool>(
                  &GeobufIndex::decode_feature),
              "bytes"_a, py::kw_only(), "only_geometry"_a = false,
+             "only_properties"_a = false)
+        .def("decode_feature_of_id",
+             py::overload_cast<const std::string &, bool, bool>(
+                 &GeobufIndex::decode_feature),
+             "id"_a, py::kw_only(), "only_geometry"_a = false,
              "only_properties"_a = false)
         .def("decode_features",
              py::overload_cast<const std::vector<int> &, bool, bool>(

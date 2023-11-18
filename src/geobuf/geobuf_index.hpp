@@ -160,7 +160,7 @@ struct GeobufIndex
             for (size_t i = 0, N = idxs.size(); i < N; ++i) {
                 ids->emplace(fids[i], idxs[i]);
             }
-            spdlog::error("#feature_ids: {}", ids->size());
+            spdlog::info("#feature_ids: {}", ids->size());
         }
         return true;
     }
@@ -219,11 +219,10 @@ struct GeobufIndex
                               only_geometry, only_properties);
     }
     std::optional<mapbox::geojson::feature>
-    decode_feature(int index, bool only_geometry = false,
+    decode_feature(uint32_t index, bool only_geometry = false,
                    bool only_properties = false)
     {
-        bool valid_index =
-            0 <= index && index < num_features && index + 1 < offsets.size();
+        bool valid_index = index < num_features && index + 1 < offsets.size();
         if (!valid_index) {
             return {};
         }
@@ -238,6 +237,20 @@ struct GeobufIndex
         } catch (...) {
         }
         return {};
+    }
+
+    std::optional<mapbox::geojson::feature>
+    decode_feature_of_id(const std::string &id, bool only_geometry = false,
+                         bool only_properties = false)
+    {
+        if (!ids) {
+            return {};
+        }
+        auto itr = ids->find(id);
+        if (itr == ids->end()) {
+            return {};
+        }
+        return decode_feature(itr->second, only_geometry, only_properties);
     }
 
     mapbox::geojson::feature_collection
