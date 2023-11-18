@@ -1926,6 +1926,8 @@ def test_geobuf_index():
     assert indexer.ids is None
 
     assert GeobufIndex.indexing(ipath, opath)
+
+    # node bin/index2json build/suzhoubeizhan.idx > idx.json
     assert indexer.mmap_init(opath, ipath)
     assert indexer.header_size == 52
     assert indexer.num_features == 1016

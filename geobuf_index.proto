@@ -28,4 +28,11 @@ message Index {
         uint32 node_size = 7;
         bytes serialized = 8;
     }
+
+    // Tools
+    //  -   encoding
+    //      python3 -m pybind11_geobuf index_geobuf path/to/geobuf.pbf output/geobuf.idx
+    //  -   inspect index
+    //      python3 -m pybind11_geobuf pbf_decode geobuf.idx
+    //      node bin/index2json geobuf.idx                  # need `npm i pbf concat-stream`
 }
