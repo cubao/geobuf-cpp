@@ -303,21 +303,6 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             "offsets", [](const GeobufIndex &self) { return self.offsets; })
         .def_property_readonly("ids",
                                [](const GeobufIndex &self) { return self.ids; })
-        .def_property_readonly(
-            "packed_rtree",
-            [](GeobufIndex &self) -> FlatGeobuf::PackedRTree * {
-                if (!self.packed_rtree) {
-                    return nullptr;
-                }
-                return &(*self.packed_rtree);
-            },
-            rvp::reference_internal)
-        .def_property_readonly(
-            "decoder",
-            [](GeobufIndex &self) -> GeobufIndex::Decoder & {
-                return self.decoder;
-            },
-            rvp::reference_internal)
         //
         .def("init", py::overload_cast<const std::string &>(&GeobufIndex::init),
              "index_bytes"_a)
@@ -369,6 +354,10 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
              "bytes"_a)
         .def("decode_non_features",
              py::overload_cast<>(&GeobufIndex::decode_non_features))
+        .def(
+            "query",
+            py::overload_cast<const Eigen::Vector2d &, const Eigen::Vector2d &>(
+                &GeobufIndex::query, py::const_))
         //
         .def_static("indexing", &GeobufIndex::indexing, //
                     "input_geobuf_path"_a,              //

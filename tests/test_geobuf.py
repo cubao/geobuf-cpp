@@ -1920,9 +1920,20 @@ def test_geobuf_index():
     build_dir = os.path.abspath(f"{__pwd}/../build")
     opath = f"{build_dir}/suzhoubeizhan.idx"
 
-    assert GeobufIndex.indexing(ipath, opath)
     indexer = GeobufIndex()
+    assert indexer.header_size == indexer.num_features == 0
+    assert not indexer.offsets
+    assert indexer.ids is None
+
+    assert GeobufIndex.indexing(ipath, opath)
     assert indexer.mmap_init(opath, ipath)
+    assert indexer.header_size == 80
+    assert indexer.num_features == 1016
+    offsets = indexer.offsets
+    assert len(offsets) == 1018
+    assert offsets[:5] == [84, 346, 845, 1027, 1202]
+    assert indexer.ids["24"] == 0
+
     expected = {
         "type": "Feature",
         "geometry": {
@@ -2009,6 +2020,10 @@ def test_geobuf_index():
     assert indexer.decode_feature(0)() == expected
     assert indexer.decode_non_features()
     assert indexer.decode_non_features()() == expected_custom_props
+
+    hits = planet.query([120.64094, 31.41515], [120.64137, 31.41534])
+    assert len(hits) == 4
+    assert hits.tolist() == [529, 530, 536, 659]
 
 
 if __name__ == "__main__":

@@ -309,6 +309,19 @@ struct GeobufIndex
         return {};
     }
 
+    std::set<uint32_t> query(const Eigen::Vector2d &min,
+                             const Eigen::Vector2d &max) const
+    {
+        if (!packed_rtree) {
+            return {};
+        }
+        std::set<uint32_t> hits;
+        for (auto h : packed_rtree->search(min[0], min[1], max[0], max[1])) {
+            hits.insert(h.offset);
+        }
+        return hits;
+    }
+
     static bool indexing(const std::string &input_geobuf_path,
                          const std::string &output_index_path,
                          const std::optional<std::string> feature_id = "@",
