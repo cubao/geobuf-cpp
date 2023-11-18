@@ -10,3 +10,5 @@ benchmarks/*.pbf*
 data/suzhoubeizhan.json
 tests/*.json
 data/suzhoubeizhan.idx
+package-lock.json
+node_modules
