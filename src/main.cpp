@@ -292,6 +292,33 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
     using GeobufIndex = cubao::GeobufIndex;
     py::class_<GeobufIndex>(m, "GeobufIndex", py::module_local()) //
         .def(py::init<>())
+        // attrs
+        .def_property_readonly(
+            "header_size",
+            [](const GeobufIndex &self) { return self.header_size; })
+        .def_property_readonly(
+            "num_features",
+            [](const GeobufIndex &self) { return self.num_features; })
+        .def_property_readonly(
+            "offsets", [](const GeobufIndex &self) { return self.offsets; })
+        .def_property_readonly("ids",
+                               [](const GeobufIndex &self) { return self.ids; })
+        .def_property_readonly(
+            "packed_rtree",
+            [](GeobufIndex &self) -> FlatGeobuf::PackedRTree * {
+                if (!self.packed_rtree) {
+                    return nullptr;
+                }
+                return &(*self.packed_rtree);
+            },
+            rvp::reference_internal)
+        .def_property_readonly(
+            "decoder",
+            [](GeobufIndex &self) -> GeobufIndex::Decoder & {
+                return self.decoder;
+            },
+            rvp::reference_internal)
+        //
         .def("init", py::overload_cast<const std::string &>(&GeobufIndex::init),
              "index_bytes"_a)
         //
