@@ -292,7 +292,8 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
     using GeobufIndex = cubao::GeobufIndex;
     py::class_<GeobufIndex>(m, "GeobufIndex", py::module_local()) //
         .def(py::init<>())
-        .def("init", &GeobufIndex::init, "index_bytes"_a)
+        .def("init", py::overload_cast<const std::string &>(&GeobufIndex::init),
+             "index_bytes"_a)
         //
         .def("mmap_init",
              py::overload_cast<const std::string &, const std::string &>(

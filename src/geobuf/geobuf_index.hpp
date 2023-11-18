@@ -68,83 +68,106 @@ struct GeobufIndex
     Decoder decoder;
     mio::shared_ummap_source mmap;
 
-    bool init(const std::string &bytes)
+    bool init(const uint8_t *data, size_t size)
     {
-        int cursor = 10;
-        if (bytes.substr(0, cursor) != "GeobufIdx0") {
-            spdlog::error("invalid geobuf index");
-            return false;
+        auto pbf = protozero::pbf_reader{(const char *)data, size};
+        std::vector<std::string> fids;
+        std::vector<uint32_t> idxs;
+        while (pbf.next()) {
+            const auto tag = pbf.tag();
+            if (tag == 1) {
+                header_size = pbf.get_uint32();
+                spdlog::info("header_size: {}", header_size);
+            } else if (tag == 2) {
+                num_features = pbf.get_uint32();
+                spdlog::info("num_features: {}", num_features);
+            } else if (tag == 3) {
+                auto iter = pbf.get_packed_uint64();
+                offsets = std::vector<uint64_t>(iter.begin(), iter.end());
+                if (offsets.size() != num_features + 2) {
+                    spdlog::error("#offsets:{} != 2 + num_features:{}",
+                                  offsets.size(), num_features);
+                } else {
+                    spdlog::info("#offsets: {}, values: [{},{},..., {}, {}]",
+                                 offsets.size(), offsets[0], offsets[1],
+                                 offsets[num_features],
+                                 offsets[num_features + 1]);
+                }
+            } else if (tag == 4) {
+                fids.push_back(pbf.get_string());
+            } else if (tag == 5) {
+                auto iter = pbf.get_packed_uint32();
+                idxs = std::vector<uint32_t>(iter.begin(), iter.end());
+            } else if (tag == 8) {
+                FlatGeobuf::NodeItem extent;
+                uint32_t num_items{0};
+                uint32_t num_nodes{0};
+                uint32_t node_size{0};
+                std::string rtree_bytes;
+                protozero::pbf_reader pbf_rtree = pbf.get_message();
+                while (pbf_rtree.next()) {
+                    const auto tag = pbf_rtree.tag();
+                    if (tag == 1) {
+                        extent.minX = pbf_rtree.get_double();
+                    } else if (tag == 2) {
+                        extent.minY = pbf_rtree.get_double();
+                    } else if (tag == 3) {
+                        extent.maxX = pbf_rtree.get_double();
+                    } else if (tag == 4) {
+                        extent.maxY = pbf_rtree.get_double();
+                    } else if (tag == 5) {
+                        num_items = pbf_rtree.get_uint32();
+                    } else if (tag == 6) {
+                        num_nodes = pbf_rtree.get_uint32();
+                    } else if (tag == 7) {
+                        node_size = pbf_rtree.get_uint32();
+                    } else if (tag == 8) {
+                        rtree_bytes = pbf_rtree.get_bytes();
+                    } else {
+                        pbf_rtree.skip();
+                    }
+                }
+                spdlog::info("PackedRTree num_items={}, num_nodes={}, "
+                             "node_size={}, bbox=[{},{},{},{}], #bytes={}",
+                             num_items, num_nodes, node_size, extent.minX,
+                             extent.minY, extent.maxX, extent.maxY,
+                             rtree_bytes.size());
+                if (num_items > 0 && num_nodes > 0 && node_size > 0 &&
+                    extent.width() >= 0 && extent.height() >= 0 &&
+                    rtree_bytes.size() ==
+                        num_nodes * sizeof(FlatGeobuf::NodeItem)) {
+                    packed_rtree = FlatGeobuf::PackedRTree(
+                        (const uint8_t *)rtree_bytes.data(), num_items,
+                        node_size);
+                    if (packed_rtree->getExtent() != extent) {
+                        extent = packed_rtree->getExtent();
+                        spdlog::error(
+                            "extent mismatch, from RTree: {},{},{},{}",
+                            extent.minX, extent.minY, extent.maxX, extent.maxY);
+                    }
+                } else {
+                    spdlog::error("invalid PackedRTree");
+                }
+            } else {
+                pbf.skip();
+            }
         }
-        const uint8_t *data = reinterpret_cast<const uint8_t *>(bytes.data());
-        num_features = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(num_features);
-        spdlog::info("#features: {}", num_features);
-
-        FlatGeobuf::NodeItem extent;
-        memcpy((void *)&extent.minX, data + cursor, sizeof(extent));
-        cursor += sizeof(extent);
-        spdlog::info("extent: {},{},{},{}", extent.minX, extent.minY,
-                     extent.maxX, extent.maxY);
-
-        int num_items{0};
-        num_items = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(num_items);
-        spdlog::info("num_items: {}", num_items);
-
-        int num_nodes{0};
-        num_nodes = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(num_nodes);
-        spdlog::info("num_nodes: {}", num_nodes);
-
-        int node_size{0};
-        node_size = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(node_size);
-        spdlog::info("node_size: {}", node_size);
-
-        int tree_size{0};
-        tree_size = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(tree_size);
-        spdlog::info("tree_size: {}", tree_size);
-
-        // rtree = FlatGeobuf::PackedRTree(data + cursor, num_items, node_size);
-        // if (rtree.getNumNodes() != num_nodes || rtree.getExtent() != extent)
-        // {
-        //     spdlog::error("invalid rtree, #nodes:{} != {} (expected)",
-        //                   rtree.getNumNodes(), num_nodes);
-        //     return false;
-        // }
-        // cursor += tree_size;
-
-        int padding{0};
-        padding = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(padding);
-        if (padding != 930604) {
-            spdlog::error("invalid padding: {} != 930604 (geobuf)", padding);
-            return false;
-        }
-
-        header_size = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(header_size);
-        spdlog::info("header_size: {}", header_size);
-
-        int num_offsets{0};
-        num_offsets = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(num_offsets);
-        spdlog::info("num_offsets: {}", num_offsets);
-
-        offsets.resize(num_offsets);
-        memcpy(reinterpret_cast<void *>(offsets.data()), data + cursor,
-               sizeof(offsets[0]) * num_offsets);
-        cursor += sizeof(offsets[0]) * num_offsets;
-        spdlog::info("offsets: [{}, ..., {}]", offsets.front(), offsets.back());
-
-        padding = *reinterpret_cast<const int *>(data + cursor);
-        cursor += sizeof(padding);
-        if (padding != 930604) {
-            spdlog::error("invalid padding: {} != 930604 (geobuf)", padding);
-            return false;
+        if (fids.size() != idxs.size()) {
+            spdlog::error("bad feature ids, #fids:{} != #idxs:{}", fids.size(),
+                          idxs.size());
+        } else {
+            ids = std::unordered_map<std::string, uint32_t>{};
+            for (size_t i = 0, N = idxs.size(); i < N; ++i) {
+                ids->emplace(fids[i], idxs[i]);
+            }
+            spdlog::error("#feature_ids: {}", ids->size());
         }
         return true;
+    }
+
+    bool init(const std::string &bytes)
+    {
+        return init((const uint8_t *)bytes.data(), bytes.size());
     }
 
     bool mmap_init(const std::string &index_path,
@@ -159,7 +182,7 @@ struct GeobufIndex
     }
     bool mmap_init(const std::string &geobuf_path)
     {
-        if (num_features < 0 || offsets.empty() || header_size < 0) {
+        if (offsets.size() != num_features + 2 || header_size == 0) {
             throw std::invalid_argument("should init index first!!!");
         }
         spdlog::info(
@@ -325,17 +348,19 @@ struct GeobufIndex
             }
             auto rtree = planet.packed_rtree();
             auto extent = rtree.getExtent();
-            protozero::pbf_writer pbf_rtree{pbf, 8};
-            pbf_rtree.add_double(1, extent.minX);
-            pbf_rtree.add_double(2, extent.minY);
-            pbf_rtree.add_double(3, extent.maxX);
-            pbf_rtree.add_double(4, extent.maxY);
-            pbf_rtree.add_uint32(5, rtree.getNumItems());
-            pbf_rtree.add_uint32(6, rtree.getNumNodes());
-            pbf_rtree.add_uint32(7, rtree.getNodeSize());
-            rtree.streamWrite([&](const uint8_t *data, size_t size) {
-                pbf_rtree.add_bytes(8, (const char *)data, size);
-            });
+            if (extent.width() >= 0 && extent.height() >= 0) {
+                protozero::pbf_writer pbf_rtree{pbf, 8};
+                pbf_rtree.add_double(1, extent.minX);
+                pbf_rtree.add_double(2, extent.minY);
+                pbf_rtree.add_double(3, extent.maxX);
+                pbf_rtree.add_double(4, extent.maxY);
+                pbf_rtree.add_uint32(5, rtree.getNumItems());
+                pbf_rtree.add_uint32(6, rtree.getNumNodes());
+                pbf_rtree.add_uint32(7, rtree.getNodeSize());
+                rtree.streamWrite([&](const uint8_t *data, size_t size) {
+                    pbf_rtree.add_bytes(8, (const char *)data, size);
+                });
+            }
         }
         return mapbox::geobuf::dump_bytes(output_index_path, data);
     }
