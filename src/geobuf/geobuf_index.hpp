@@ -1,6 +1,8 @@
 #pragma once
+#include "dbg.h"
 #include "geobuf.hpp"
 #include "planet.hpp"
+#include "rapidjson_helpers.hpp"
 
 #include <spdlog/spdlog.h>
 // fix exposed macro 'GetObject' from wingdi.h (included by spdlog.h) under
@@ -19,15 +21,53 @@
 
 namespace cubao
 {
+inline std::optional<std::string>
+value2string(const mapbox::geojson::value &value)
+{
+    return value.match(
+        [](uint64_t v) { return std::to_string(v); },
+        [](int64_t v) { return std::to_string(v); },
+        [](const std::string &v) { return v; },
+        [](const auto &) -> std::optional<std::string> { return {}; });
+}
+
+inline std::optional<std::string>
+fn_feature_id_default(const mapbox::geojson::feature &feature)
+{
+    if (!feature.id.is<mapbox::feature::null_value_t>()) {
+        return feature.id.match(
+            [](uint64_t v) { return std::to_string(v); },
+            [](int64_t v) { return std::to_string(v); },
+            [](const std::string &v) { return v; },
+            [](const auto &) -> std::optional<std::string> { return {}; });
+    }
+    for (const auto &key : {"id", "feature_id", "fid"}) {
+        auto itr = feature.properties.find(key);
+        if (itr == feature.properties.end()) {
+            continue;
+        }
+        auto id = value2string(itr->second);
+        if (id) {
+            return id;
+        }
+    }
+    return {};
+}
+
 struct GeobufIndex
 {
     GeobufIndex() = default;
-    int num_features = -1;
-    int header_size = -1;
-    std::vector<int> offsets;
-    FlatGeobuf::PackedRTree rtree;
+
+    uint32_t header_size = 0;
+    uint32_t num_features = 0;
+    std::vector<uint64_t> offsets;
+    std::optional<std::unordered_map<std::string, uint32_t>> ids;
+    std::optional<FlatGeobuf::PackedRTree> packed_rtree;
+
+    using Encoder = mapbox::geobuf::Encoder;
+    using Decoder = mapbox::geobuf::Decoder;
+    Decoder decoder;
     mio::shared_ummap_source mmap;
-    mapbox::geobuf::Decoder decoder;
 
     bool init(const std::string &bytes)
     {
@@ -67,13 +107,14 @@ struct GeobufIndex
         cursor += sizeof(tree_size);
         spdlog::info("tree_size: {}", tree_size);
 
-        rtree = FlatGeobuf::PackedRTree(data + cursor, num_items, node_size);
-        if (rtree.getNumNodes() != num_nodes || rtree.getExtent() != extent) {
-            spdlog::error("invalid rtree, #nodes:{} != {} (expected)",
-                          rtree.getNumNodes(), num_nodes);
-            return false;
-        }
-        cursor += tree_size;
+        // rtree = FlatGeobuf::PackedRTree(data + cursor, num_items, node_size);
+        // if (rtree.getNumNodes() != num_nodes || rtree.getExtent() != extent)
+        // {
+        //     spdlog::error("invalid rtree, #nodes:{} != {} (expected)",
+        //                   rtree.getNumNodes(), num_nodes);
+        //     return false;
+        // }
+        // cursor += tree_size;
 
         int padding{0};
         padding = *reinterpret_cast<const int *>(data + cursor);
@@ -234,7 +275,9 @@ struct GeobufIndex
     }
 
     static bool indexing(const std::string &input_geobuf_path,
-                         const std::string &output_index_path)
+                         const std::string &output_index_path,
+                         const std::optional<std::string> feature_id = "@",
+                         const std::optional<std::string> packed_rtree = "@")
     {
         spdlog::info("indexing {} ...", input_geobuf_path);
         auto decoder = mapbox::geobuf::Decoder();
@@ -244,53 +287,58 @@ struct GeobufIndex
                 "invalid GeoJSON type, should be FeatureCollection");
         }
         auto &fc = geojson.get<mapbox::geojson::feature_collection>();
+        auto header_size = decoder.__header_size();
+        auto offsets = decoder.__offsets();
+        spdlog::info("#features", fc.size());
+        spdlog::info("header_size", header_size);
 
-        FILE *fp = fopen(output_index_path.c_str(), "wb");
-        if (!fp) {
-            spdlog::error("failed to open {} for writing", output_index_path);
-            return {};
+        std::string data;
+        Encoder::Pbf pbf{data};
+        pbf.add_uint32(1, header_size);
+        pbf.add_uint32(2, fc.size());
+        pbf.add_packed_uint64(3, offsets.begin(), offsets.end());
+
+        if (feature_id) {
+            std::map<std::string, uint32_t> ids;
+            if (*feature_id == "@") {
+                for (size_t i = 0; i < fc.size(); ++i) {
+                    auto id = fn_feature_id_default(fc[i]);
+                    if (id) {
+                        ids.emplace(*id, static_cast<uint32_t>(i));
+                    }
+                }
+            }
+            if (!ids.empty()) {
+                std::vector<uint32_t> idxs;
+                idxs.reserve(ids.size());
+                for (auto &pair : ids) {
+                    pbf.add_string(4, pair.first);
+                    idxs.push_back(pair.second);
+                }
+                pbf.add_packed_uint32(5, idxs.begin(), idxs.end());
+            }
         }
-        auto planet = Planet(fc);
-        // magic
-        fwrite("GeobufIdx0", 10, 1, fp);
-        int num_features = fc.size();
-        // #features
-        fwrite(&num_features, sizeof(num_features), 1, fp);
 
-        auto rtree = planet.packed_rtree();
-        auto extent = rtree.getExtent();
-        // extent/bbox
-        fwrite(&extent, sizeof(extent), 1, fp);
-        // num_items
-        int num_items = rtree.getNumItems();
-        fwrite(&num_items, sizeof(num_items), 1, fp);
-        // num_nodes
-        int num_nodes = rtree.getNumNodes();
-        fwrite(&num_nodes, sizeof(num_nodes), 1, fp);
-        // node_size
-        int node_size = rtree.getNodeSize();
-        fwrite(&node_size, sizeof(node_size), 1, fp);
-        // tree_size
-        int tree_size = rtree.size();
-        fwrite(&tree_size, sizeof(tree_size), 1, fp);
-        // tree_bytes
-        rtree.streamWrite([&](const uint8_t *data, size_t size) {
-            fwrite(data, 1, size, fp);
-        });
-
-        const int padding = 930604; // geobuf
-        fwrite(&padding, sizeof(padding), 1, fp);
-
-        int header_size = decoder.__header_size();
-        fwrite(&header_size, sizeof(header_size), 1, fp);
-        std::vector<int> offsets = decoder.__offsets();
-        int num_offsets = offsets.size();
-        fwrite(&num_offsets, sizeof(num_offsets), 1, fp);
-        fwrite(offsets.data(), sizeof(offsets[0]), offsets.size(), fp);
-        fwrite(&padding, sizeof(padding), 1, fp);
-        fclose(fp);
-        spdlog::info("wrote index to {}", output_index_path);
-        return true;
+        if (packed_rtree) {
+            auto planet = Planet(fc);
+            if (*packed_rtree == "per_line_segment") {
+                planet.build(true);
+            }
+            auto rtree = planet.packed_rtree();
+            auto extent = rtree.getExtent();
+            protozero::pbf_writer pbf_rtree{pbf, 8};
+            pbf_rtree.add_double(1, extent.minX);
+            pbf_rtree.add_double(2, extent.minY);
+            pbf_rtree.add_double(3, extent.maxX);
+            pbf_rtree.add_double(4, extent.maxY);
+            pbf_rtree.add_uint32(5, rtree.getNumItems());
+            pbf_rtree.add_uint32(6, rtree.getNumNodes());
+            pbf_rtree.add_uint32(7, rtree.getNodeSize());
+            rtree.streamWrite([&](const uint8_t *data, size_t size) {
+                pbf_rtree.add_bytes(8, (const char *)data, size);
+            });
+        }
+        return mapbox::geobuf::dump_bytes(output_index_path, data);
     }
 };
 } // namespace cubao

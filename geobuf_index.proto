@@ -6,16 +6,26 @@ message Index {
     repeated uint64 offsets = 3 [packed = true];    // can parse Data[offsets[i]:offsets[i+1]] to get ith feature
     // len(offsets) == num_features + 2, can parse data[offsets[-2]:offsets[-1]] to get feature_collection.custom_properties
 
-    optional map<string, uint32> ids = 5;
-    optional PackedRTree packed_rtree = 6;          // spatial index
+    // feature id?
+    //  -   feature.id
+    //  -   feature.properties.id
+    //  -   feature.properties.fid
+    //  -   feature.properties.feature_id
+    // related docs:
+    //  -   https://docs.mapbox.com/mapbox-gl-js/api/map/#instance-members-feature-state
+    //  -   https://github.com/mapbox/mapbox-gl-js/pull/8987
+    repeated string fids = 4;
+    repeated uint32 idxs = 5 [packed = true];
+
+    optional PackedRTree packed_rtree = 8;          // spatial index
     message PackedRTree {
-        double left = 0;
-        double bottom = 1;
-        double right = 2;
-        double top = 3;
-        uint32 num_items = 4;
-        uint32 num_nodes = 5;
-        uint32 node_size = 6;
-        bytes serialized = 7;
+        double left = 1;
+        double bottom = 2;
+        double right = 3;
+        double top = 4;
+        uint32 num_items = 5;
+        uint32 num_nodes = 6;
+        uint32 node_size = 7;
+        bytes serialized = 8;
     }
 }
