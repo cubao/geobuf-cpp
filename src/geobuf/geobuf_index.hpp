@@ -83,14 +83,14 @@ struct GeobufIndex
             } else if (tag == 3) {
                 auto iter = pbf.get_packed_uint64();
                 offsets = std::vector<uint64_t>(iter.begin(), iter.end());
-                if (offsets.size() != num_features + 2u) {
-                    spdlog::error("#offsets:{} != 2 + num_features:{}",
-                                  offsets.size(), num_features);
-                } else {
-                    spdlog::info("#offsets: {}, values: [{},{},..., {}, {}]",
+                if (offsets.size() == num_features + 2u) {
+                    spdlog::info("#offsets: {}, values: [{},{}, ..., {}, {}]",
                                  offsets.size(), offsets[0], offsets[1],
                                  offsets[num_features],
                                  offsets[num_features + 1]);
+                } else {
+                    spdlog::error("#offsets:{} != 2 + num_features:{}",
+                                  offsets.size(), num_features);
                 }
             } else if (tag == 4) {
                 fids.push_back(pbf.get_string());
@@ -336,8 +336,16 @@ struct GeobufIndex
         auto &fc = geojson.get<mapbox::geojson::feature_collection>();
         auto header_size = decoder.__header_size();
         auto offsets = decoder.__offsets();
-        spdlog::info("#features", fc.size());
-        spdlog::info("header_size", header_size);
+        spdlog::info("#features: {}", fc.size());
+        spdlog::info("header_size: {}", header_size);
+        if (offsets.size() == fc.size() + 2u) {
+            spdlog::info("#offsets: {}, values: [{},{}, ..., {}, {}]",
+                         offsets.size(), offsets[0], offsets[1],
+                         offsets[fc.size()], offsets[fc.size() + 1]);
+        } else {
+            spdlog::error("#offsets:{} != 2 + num_features:{}", offsets.size(),
+                          fc.size());
+        }
 
         std::string data;
         Encoder::Pbf pbf{data};
@@ -347,15 +355,14 @@ struct GeobufIndex
 
         if (feature_id) {
             std::map<std::string, uint32_t> ids;
-            if (*feature_id == "@") {
-                for (size_t i = 0; i < fc.size(); ++i) {
-                    auto id = fn_feature_id_default(fc[i]);
-                    if (id) {
-                        ids.emplace(*id, static_cast<uint32_t>(i));
-                    }
+            for (size_t i = 0; i < fc.size(); ++i) {
+                auto id = fn_feature_id_default(fc[i]);
+                if (id) {
+                    ids.emplace(*id, static_cast<uint32_t>(i));
                 }
             }
             if (!ids.empty()) {
+                spdlog::info("#feature_ids: {}", ids.size());
                 std::vector<uint32_t> idxs;
                 idxs.reserve(ids.size());
                 for (auto &pair : ids) {
@@ -373,6 +380,11 @@ struct GeobufIndex
             }
             auto rtree = planet.packed_rtree();
             auto extent = rtree.getExtent();
+            spdlog::info("PackedRTree num_items={}, num_nodes={}, "
+                         "node_size={}, bbox=[{},{},{},{}], #bytes={}",
+                         rtree.getNumItems(), rtree.getNumNodes(),
+                         rtree.getNodeSize(), extent.minX, extent.minY,
+                         extent.maxX, extent.maxY, rtree.size());
             if (extent.width() >= 0 && extent.height() >= 0) {
                 protozero::pbf_writer pbf_rtree{pbf, 8};
                 pbf_rtree.add_double(1, extent.minX);
@@ -385,6 +397,8 @@ struct GeobufIndex
                 rtree.streamWrite([&](const uint8_t *data, size_t size) {
                     pbf_rtree.add_bytes(8, (const char *)data, size);
                 });
+            } else {
+                spdlog::error("invalid PackedRTree");
             }
         }
         return mapbox::geobuf::dump_bytes(output_index_path, data);
