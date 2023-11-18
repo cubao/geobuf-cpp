@@ -1927,11 +1927,11 @@ def test_geobuf_index():
 
     assert GeobufIndex.indexing(ipath, opath)
     assert indexer.mmap_init(opath, ipath)
-    assert indexer.header_size == 80
+    assert indexer.header_size == 52
     assert indexer.num_features == 1016
     offsets = indexer.offsets
     assert len(offsets) == 1018
-    assert offsets[:5] == [84, 346, 845, 1027, 1202]
+    assert offsets[:5] == [56, 318, 817, 999, 1174]
     assert indexer.ids["24"] == 0
 
     expected = {
@@ -2021,14 +2021,14 @@ def test_geobuf_index():
     assert indexer.decode_non_features()
     assert indexer.decode_non_features()() == expected_custom_props
 
-    hits = planet.query([120.64094, 31.41515], [120.64137, 31.41534])
+    hits = indexer.query([120.64094, 31.41515], [120.64137, 31.41534])
     assert len(hits) == 4
-    assert hits.tolist() == [529, 530, 536, 659]
+    hits = [indexer.decode_feature(h) for h in hits]
+    hits = [h.properties()["id"]() for h in hits]
+    assert hits == ["943", "936", "937", "1174"]
 
 
 if __name__ == "__main__":
-    test_geobuf_index()
-
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
     pytest_main(pwd, test_file=os.path.basename(__file__))

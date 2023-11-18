@@ -1,7 +1,6 @@
 #pragma once
 #include "geobuf.hpp"
 #include "planet.hpp"
-#include "rapidjson_helpers.hpp"
 
 #include <spdlog/spdlog.h>
 // fix exposed macro 'GetObject' from wingdi.h (included by spdlog.h) under
@@ -84,7 +83,7 @@ struct GeobufIndex
             } else if (tag == 3) {
                 auto iter = pbf.get_packed_uint64();
                 offsets = std::vector<uint64_t>(iter.begin(), iter.end());
-                if (offsets.size() != num_features + 2) {
+                if (offsets.size() != num_features + 2u) {
                     spdlog::error("#offsets:{} != 2 + num_features:{}",
                                   offsets.size(), num_features);
                 } else {
@@ -182,7 +181,7 @@ struct GeobufIndex
     }
     bool mmap_init(const std::string &geobuf_path)
     {
-        if (offsets.size() != num_features + 2 || header_size == 0) {
+        if (offsets.size() != num_features + 2u || header_size == 0) {
             throw std::invalid_argument("should init index first!!!");
         }
         spdlog::info(
@@ -294,16 +293,16 @@ struct GeobufIndex
     }
     mapbox::feature::value decode_non_features()
     {
-        if (num_features <= 0 || offsets.size() < num_features + 2) {
+        if (num_features <= 0 || offsets.size() < num_features + 2u) {
             return {};
         }
         try {
-            int cursor = offsets[num_features];
-            int length = offsets[num_features + 1] - cursor;
-            if (length <= 0 || !mmap.is_open()) {
+            size_t begin = offsets[num_features];
+            size_t end = offsets[num_features + 1u];
+            if (begin >= end || !mmap.is_open()) {
                 return {};
             }
-            return decode_non_features(mmap.data() + cursor, length);
+            return decode_non_features(mmap.data() + begin, end - begin);
         } catch (...) {
         }
         return {};
