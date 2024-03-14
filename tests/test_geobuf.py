@@ -2049,6 +2049,15 @@ def test_geobuf_index():
 
     hits = indexer.query([120.64094, 31.41515], [120.64137, 31.41534])
     assert len(hits) == 4
+    tree = indexer.packed_rtree
+    assert sorted(hits) == sorted(
+        tree.search(
+            120.64094,
+            31.41515,
+            120.64137,
+            31.41534,
+        )
+    )
     hits = [indexer.decode_feature(h) for h in hits]
     hits = [h.properties()["id"]() for h in hits]
     assert hits == ["943", "936", "937", "1174"]
