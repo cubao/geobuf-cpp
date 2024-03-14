@@ -1899,7 +1899,12 @@ def test_query():
 
     tree = planet.packed_rtree()
     assert id(tree) == id(planet.packed_rtree())
-    assert tree.extent.tolist() == [120.623512, 31.4001743, 120.67509, 31.4458499]
+    assert tree.extent.tolist() == [
+        120.623512,
+        31.4001743,
+        120.67509,
+        31.4458499,
+    ]
     assert tree.num_items == 1016
     assert tree.num_nodes == 1085
     assert tree.node_size == 16
@@ -1945,7 +1950,12 @@ def test_geobuf_index():
     assert indexer.ids["24"] == 0
     tree = indexer.packed_rtree
     assert id(tree) == id(indexer.packed_rtree)
-    assert tree.extent.tolist() == [120.623512, 31.4001743, 120.67509, 31.4458499]
+    assert tree.extent.tolist() == [
+        120.623512,
+        31.4001743,
+        120.67509,
+        31.4458499,
+    ]
     assert tree.num_items == 1016
     assert tree.num_nodes == 1085
     assert tree.node_size == 16
