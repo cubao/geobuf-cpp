@@ -1896,6 +1896,14 @@ def test_query():
     path = f"{__pwd}/../data/suzhoubeizhan.pbf"
     fc = geojson.FeatureCollection().load(path)
     planet = Planet(fc)
+
+    tree = planet.packed_rtree()
+    assert id(tree) == id(planet.packed_rtree())
+    assert tree.extent.tolist() == [120.623512, 31.4001743, 120.67509, 31.4458499]
+    assert tree.num_items == 1016
+    assert tree.num_nodes == 1085
+    assert tree.node_size == 16
+
     hits = planet.query([120.64094, 31.41515], [120.64137, 31.41534])
     assert len(hits) == 4
     assert hits.tolist() == [529, 530, 536, 659]
@@ -1935,6 +1943,12 @@ def test_geobuf_index():
     assert len(offsets) == 1018
     assert offsets[:5] == [56, 318, 817, 999, 1174]
     assert indexer.ids["24"] == 0
+    tree = indexer.packed_rtree
+    assert id(tree) == id(indexer.packed_rtree)
+    assert tree.extent.tolist() == [120.623512, 31.4001743, 120.67509, 31.4458499]
+    assert tree.num_items == 1016
+    assert tree.num_nodes == 1085
+    assert tree.node_size == 16
 
     expected = {
         "type": "Feature",
