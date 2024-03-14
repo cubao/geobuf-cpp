@@ -10,6 +10,10 @@ To upgrade `pybind11-geobuf` to the latest version, use pip:
 pip install -U pybind11-geobuf
 ```
 
+## Version 0.2.1 (2024-03-14)
+
+*   Export PackedRTree
+
 ## Version 0.2.0 (2023-11-18)
 
 *   Indexing geobuf in protobuf format; Spec: geobuf_index.proto
