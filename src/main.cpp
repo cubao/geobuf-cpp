@@ -269,7 +269,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
     auto geojson = m.def_submodule("geojson");
     cubao::bind_geojson(geojson);
 
-    using NodeItem = FlatGeobuf::NodeItem;
+    using namespace FlatGeobuf;
     py::class_<NodeItem>(m, "NodeItem", py::module_local())
         .def_property_readonly("min_x",
                                [](const NodeItem &self) { return self.minX; })
@@ -279,14 +279,20 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
                                [](const NodeItem &self) { return self.maxX; })
         .def_property_readonly("max_y",
                                [](const NodeItem &self) { return self.maxY; })
-        .def_property_readonly("width",
-                               [](const NodeItem &self) { return self.width; })
-        .def_property_readonly("height",
-                               [](const NodeItem &self) { return self.height; })
+        .def_property_readonly("offset",
+                               [](const NodeItem &self) { return self.offset; })
+        .def_property_readonly(
+            "width", [](const NodeItem &self) { return self.width(); })
+        .def_property_readonly(
+            "height", [](const NodeItem &self) { return self.height(); })
+        //
+        .def("expand", &NodeItem::expand, "other"_a)
+        .def("intersects", &NodeItem::intersects, "other"_a)
+        .def(py::self == py::self)
+        .def(py::self != py::self)
         .def("to_numpy",
-             [](const NodeItem &self) {
-                 return Eigen::Vector4d(self.minX, self.minY, self.maxX,
-                                        self.maxY);
+             [](const NodeItem &self) -> Eigen::Vector4d {
+                 return {self.minX, self.minY, self.maxX, self.maxY};
              })
         //
         ;
