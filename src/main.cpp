@@ -269,6 +269,69 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
     auto geojson = m.def_submodule("geojson");
     cubao::bind_geojson(geojson);
 
+    using namespace FlatGeobuf;
+    py::class_<NodeItem>(m, "NodeItem", py::module_local())
+        .def_property_readonly("min_x",
+                               [](const NodeItem &self) { return self.minX; })
+        .def_property_readonly("min_y",
+                               [](const NodeItem &self) { return self.minY; })
+        .def_property_readonly("max_x",
+                               [](const NodeItem &self) { return self.maxX; })
+        .def_property_readonly("max_y",
+                               [](const NodeItem &self) { return self.maxY; })
+        .def_property_readonly("offset",
+                               [](const NodeItem &self) { return self.offset; })
+        .def_property_readonly(
+            "width", [](const NodeItem &self) { return self.width(); })
+        .def_property_readonly(
+            "height", [](const NodeItem &self) { return self.height(); })
+        //
+        .def("expand", &NodeItem::expand, "other"_a)
+        .def("intersects", &NodeItem::intersects, "other"_a)
+        .def(py::self == py::self)
+        .def(py::self != py::self)
+        .def("to_numpy",
+             [](const NodeItem &self) -> Eigen::Vector4d {
+                 return {self.minX, self.minY, self.maxX, self.maxY};
+             })
+        //
+        ;
+
+    using PackedRTree = FlatGeobuf::PackedRTree;
+    py::class_<PackedRTree>(m, "PackedRTree", py::module_local())
+        .def(
+            "search",
+            [](const PackedRTree &self, double minX, double minY, double maxX,
+               double maxY) {
+                auto hits = self.search(minX, minY, maxX, maxY);
+                std::vector<size_t> ret;
+                ret.reserve(hits.size());
+                for (auto &h : hits) {
+                    ret.push_back(h.offset);
+                }
+                return ret;
+            },
+            "min_x"_a, "min_y"_a, "max_x"_a, "max_y"_a)
+        .def_property_readonly(
+            "size", [](const PackedRTree &self) { return self.size(); })
+        .def_property_readonly("extent",
+                               [](const PackedRTree &self) {
+                                   auto bbox = self.getExtent();
+                                   return Eigen::Vector4d(bbox.minX, bbox.minY,
+                                                          bbox.maxX, bbox.maxY);
+                               })
+        .def_property_readonly(
+            "num_items",
+            [](const PackedRTree &self) { return self.getNumItems(); })
+        .def_property_readonly(
+            "num_nodes",
+            [](const PackedRTree &self) { return self.getNumNodes(); })
+        .def_property_readonly(
+            "node_size",
+            [](const PackedRTree &self) { return self.getNodeSize(); })
+        //
+        ;
+
     using Planet = cubao::Planet;
     py::class_<Planet>(m, "Planet", py::module_local())
         .def(py::init<>())
@@ -281,6 +344,7 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
         .def("build", &Planet::build, py::kw_only(),
              "per_line_segment"_a = false, "force"_a = false)
         .def("query", &Planet::query, "min"_a, "max"_a)
+        .def("packed_rtree", &Planet::packed_rtree, rvp::reference_internal)
         .def("copy", &Planet::copy)
         .def("crop", &Planet::crop, "polygon"_a, py::kw_only(),
              "clipping_mode"_a = "longest", //
@@ -303,6 +367,15 @@ PYBIND11_MODULE(_pybind11_geobuf, m)
             "offsets", [](const GeobufIndex &self) { return self.offsets; })
         .def_property_readonly("ids",
                                [](const GeobufIndex &self) { return self.ids; })
+        .def_property_readonly(
+            "packed_rtree",
+            [](const GeobufIndex &self) -> const FlatGeobuf::PackedRTree * {
+                if (!self.packed_rtree) {
+                    return nullptr;
+                }
+                return &*self.packed_rtree;
+            },
+            rvp::reference_internal)
         //
         .def("init", py::overload_cast<const std::string &>(&GeobufIndex::init),
              "index_bytes"_a)
