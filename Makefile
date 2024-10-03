@@ -30,6 +30,9 @@ build:
 	make -j$(NUM_JOB) && make install
 .PHONY: build
 
+restub:
+	pybind11-stubgen _geobuf._pybind11_geobuf -o stubs/pybind11_geobuf
+
 test_all:
 	@cd build && for t in $(wildcard $(BUILD_DIR)/bin/test_*); do echo $$t && eval $$t >/dev/null 2>&1 && echo 'ok' || echo $(RED)Not Ok$(NC); done
 
@@ -185,6 +188,11 @@ upload_wheels:
 tar.gz:
 	tar -cvz --exclude .git -f ../$(PROJECT_NAME).tar.gz .
 	ls -alh ../$(PROJECT_NAME).tar.gz
+
+
+SYNC_OUTPUT_DIR ?= headers/include/cubao
+sync_headers:
+	cp src/pybind11_geojson.cpp $(SYNC_OUTPUT_DIR)/pybind11_geojson.hpp
 
 # https://stackoverflow.com/a/25817631
 echo-%  : ; @echo -n $($*)
