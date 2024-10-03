@@ -24,6 +24,8 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 using rvp = py::return_value_policy;
 
+#define CUBAO_ARGV_DEFAULT_NONE(argv) py::arg_v(#argv, std::nullopt, "None")
+
 namespace cubao
 {
 void bind_geojson(py::module &m);
@@ -460,8 +462,9 @@ PYBIND11_MODULE(_core, m)
              Returns:
                  mapbox::geojson::feature: Decoded GeoJSON feature.
              )docstring")
-        .def("decode_non_features", py::overload_cast<const std::string &>(
-                                        &Decoder::decode_non_features),
+        .def("decode_non_features",
+             py::overload_cast<const std::string &>(
+                 &Decoder::decode_non_features),
              R"docstring(
              Decode non-feature elements from Protocol Buffer (PBF) bytes.
 
@@ -471,7 +474,13 @@ PYBIND11_MODULE(_core, m)
              Returns:
                  dict: Decoded non-feature elements.
              )docstring")
-        .def("offsets", &Decoder::__offsets)
+        .def("offsets", &Decoder::__offsets,
+             R"docstring(
+             Get the offsets of features in the Protocol Buffer (PBF) file.
+
+             Returns:
+                 list: A list of integer offsets representing the starting positions of features in the PBF file.
+             )docstring")
         //
         ;
 
@@ -481,28 +490,38 @@ PYBIND11_MODULE(_core, m)
     using namespace FlatGeobuf;
     py::class_<NodeItem>(m, "NodeItem", py::module_local())
         .def_property_readonly("min_x",
-                               [](const NodeItem &self) { return self.minX; })
+                               [](const NodeItem &self) { return self.minX; },
+                               "Get the minimum X coordinate of the node")
         .def_property_readonly("min_y",
-                               [](const NodeItem &self) { return self.minY; })
+                               [](const NodeItem &self) { return self.minY; },
+                               "Get the minimum Y coordinate of the node")
         .def_property_readonly("max_x",
-                               [](const NodeItem &self) { return self.maxX; })
+                               [](const NodeItem &self) { return self.maxX; },
+                               "Get the maximum X coordinate of the node")
         .def_property_readonly("max_y",
-                               [](const NodeItem &self) { return self.maxY; })
+                               [](const NodeItem &self) { return self.maxY; },
+                               "Get the maximum Y coordinate of the node")
         .def_property_readonly("offset",
-                               [](const NodeItem &self) { return self.offset; })
+                               [](const NodeItem &self) { return self.offset; },
+                               "Get the offset of the node")
         .def_property_readonly(
-            "width", [](const NodeItem &self) { return self.width(); })
+            "width", [](const NodeItem &self) { return self.width(); },
+            "Get the width of the node's bounding box")
         .def_property_readonly(
-            "height", [](const NodeItem &self) { return self.height(); })
+            "height", [](const NodeItem &self) { return self.height(); },
+            "Get the height of the node's bounding box")
         //
-        .def("expand", &NodeItem::expand, "other"_a)
-        .def("intersects", &NodeItem::intersects, "other"_a)
-        .def(py::self == py::self)
-        .def(py::self != py::self)
+        .def("expand", &NodeItem::expand, "other"_a,
+             "Expand the node's bounding box to include another node")
+        .def("intersects", &NodeItem::intersects, "other"_a,
+             "Check if this node's bounding box intersects with another node's bounding box")
+        .def(py::self == py::self, "Check if two nodes are equal")
+        .def(py::self != py::self, "Check if two nodes are not equal")
         .def("to_numpy",
              [](const NodeItem &self) -> Eigen::Vector4d {
                  return {self.minX, self.minY, self.maxX, self.maxY};
-             })
+             },
+             "Convert the node's bounding box to a numpy array [minX, minY, maxX, maxY]")
         //
         ;
 
@@ -555,13 +574,31 @@ PYBIND11_MODULE(_core, m)
 
     using Planet = cubao::Planet;
     py::class_<Planet>(m, "Planet", py::module_local())
-        .def(py::init<>())
-        .def(py::init<const mapbox::geojson::feature_collection &>())
+        .def(py::init<>(), R"docstring(
+            Initialize an empty Planet object.
+        )docstring")
+        .def(py::init<const mapbox::geojson::feature_collection &>(), R"docstring(
+            Initialize a Planet object with a feature collection.
+
+            Args:
+                feature_collection (mapbox::geojson::feature_collection): The feature collection to initialize with.
+        )docstring")
         .def("features", py::overload_cast<>(&Planet::features, py::const_),
-             rvp::reference_internal)
+             rvp::reference_internal, R"docstring(
+            Get the features of the Planet object.
+
+            Returns:
+                mapbox::geojson::feature_collection: The features of the Planet object.
+        )docstring")
         .def("features",
              py::overload_cast<const mapbox::geojson::feature_collection &>(
-                 &Planet::features))
+                 &Planet::features),
+             R"docstring(
+            Set the features of the Planet object.
+
+            Args:
+                feature_collection (mapbox::geojson::feature_collection): The new feature collection to set.
+        )docstring")
         .def("build", &Planet::build, py::kw_only(),
              "per_line_segment"_a = false, "force"_a = false,
              R"docstring(
@@ -585,8 +622,20 @@ PYBIND11_MODULE(_core, m)
              Returns:
                  list: List of features within the bounding box.
              )docstring")
-        .def("packed_rtree", &Planet::packed_rtree, rvp::reference_internal)
-        .def("copy", &Planet::copy)
+        .def("packed_rtree", &Planet::packed_rtree, rvp::reference_internal,
+             R"docstring(
+             Get the packed R-tree of the Planet object.
+
+             Returns:
+                 FlatGeobuf::PackedRTree: The packed R-tree of the Planet object.
+             )docstring")
+        .def("copy", &Planet::copy,
+             R"docstring(
+             Create a deep copy of the Planet object.
+
+             Returns:
+                 Planet: A new Planet object that is a deep copy of the current one.
+             )docstring")
         .def("crop", &Planet::crop, "polygon"_a, py::kw_only(),
              "clipping_mode"_a = "longest", //
              "strip_properties"_a = false,  //
@@ -608,18 +657,45 @@ PYBIND11_MODULE(_core, m)
 
     using GeobufIndex = cubao::GeobufIndex;
     py::class_<GeobufIndex>(m, "GeobufIndex", py::module_local()) //
-        .def(py::init<>())
+        .def(py::init<>(), R"docstring(
+            Default constructor for GeobufIndex.
+        )docstring")
         // attrs
         .def_property_readonly(
             "header_size",
-            [](const GeobufIndex &self) { return self.header_size; })
+            [](const GeobufIndex &self) { return self.header_size; },
+            R"docstring(
+            Get the size of the header in bytes.
+
+            Returns:
+                int: The size of the header in bytes.
+            )docstring")
         .def_property_readonly(
             "num_features",
-            [](const GeobufIndex &self) { return self.num_features; })
+            [](const GeobufIndex &self) { return self.num_features; },
+            R"docstring(
+            Get the number of features in the index.
+
+            Returns:
+                int: The number of features.
+            )docstring")
         .def_property_readonly(
-            "offsets", [](const GeobufIndex &self) { return self.offsets; })
+            "offsets", 
+            [](const GeobufIndex &self) { return self.offsets; },
+            R"docstring(
+            Get the offsets of features in the Geobuf file.
+
+            Returns:
+                list: A list of offsets for each feature.
+            )docstring")
         .def_property_readonly("ids",
-                               [](const GeobufIndex &self) { return self.ids; })
+                               [](const GeobufIndex &self) { return self.ids; },
+                               R"docstring(
+            Get the IDs of features in the index.
+
+            Returns:
+                list: A list of feature IDs.
+            )docstring")
         .def_property_readonly(
             "packed_rtree",
             [](const GeobufIndex &self) -> const FlatGeobuf::PackedRTree * {
@@ -628,7 +704,13 @@ PYBIND11_MODULE(_core, m)
                 }
                 return &*self.packed_rtree;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            R"docstring(
+            Get the packed R-tree of the index.
+
+            Returns:
+                FlatGeobuf.PackedRTree: The packed R-tree of the index, or None if not available.
+            )docstring")
         //
         .def("init", py::overload_cast<const std::string &>(&GeobufIndex::init),
              "index_bytes"_a,
@@ -743,25 +825,73 @@ PYBIND11_MODULE(_core, m)
              py::overload_cast<const std::vector<int> &, bool, bool>(
                  &GeobufIndex::decode_features),
              "index"_a, py::kw_only(), "only_geometry"_a = false,
-             "only_properties"_a = false)
+             "only_properties"_a = false,
+             R"docstring(
+             Decode multiple features from the Geobuf file.
+
+             Args:
+                 index (List[int]): List of indices of the features to decode.
+                 only_geometry (bool, optional): Whether to decode only geometry. Defaults to False.
+                 only_properties (bool, optional): Whether to decode only properties. Defaults to False.
+
+             Returns:
+                 List[mapbox::geojson::feature]: List of decoded features.
+             )docstring")
         //
         .def("decode_non_features",
              py::overload_cast<const std::string &>(
                  &GeobufIndex::decode_non_features),
-             "bytes"_a)
+             "bytes"_a,
+             R"docstring(
+             Decode non-feature data from bytes.
+
+             Args:
+                 bytes (str): Bytes containing the non-feature data.
+
+             Returns:
+                 Dict: Decoded non-feature data.
+             )docstring")
         .def("decode_non_features",
-             py::overload_cast<>(&GeobufIndex::decode_non_features))
+             py::overload_cast<>(&GeobufIndex::decode_non_features),
+             R"docstring(
+             Decode non-feature data from the Geobuf file.
+
+             Returns:
+                 Dict: Decoded non-feature data.
+             )docstring")
         .def(
             "query",
             py::overload_cast<const Eigen::Vector2d &, const Eigen::Vector2d &>(
-                &GeobufIndex::query, py::const_))
+                &GeobufIndex::query, py::const_),
+            R"docstring(
+            Query features within a bounding box.
+
+            Args:
+                min_corner (Eigen::Vector2d): Minimum corner of the bounding box.
+                max_corner (Eigen::Vector2d): Maximum corner of the bounding box.
+
+            Returns:
+                List[int]: List of indices of features within the bounding box.
+            )docstring")
         //
         .def_static("indexing", &GeobufIndex::indexing, //
                     "input_geobuf_path"_a,              //
                     "output_index_path"_a,              //
                     py::kw_only(),                      //
                     "feature_id"_a = "@",               //
-                    "packed_rtree"_a = "@")
+                    "packed_rtree"_a = "@",             //
+                    R"docstring(
+                    Create an index for a Geobuf file.
+
+                    Args:
+                        input_geobuf_path (str): Path to the input Geobuf file.
+                        output_index_path (str): Path to save the output index file.
+                        feature_id (str, optional): Feature ID field. Defaults to "@".
+                        packed_rtree (str, optional): Packed R-tree option. Defaults to "@".
+
+                    Returns:
+                        None
+                    )docstring")
         //
         ;
 
@@ -778,8 +908,4 @@ PYBIND11_MODULE(_core, m)
 }
 
 #define CUBAO_STATIC_LIBRARY
-#ifndef CUBAO_ARGV_DEFAULT_NONE
-#define CUBAO_ARGV_DEFAULT_NONE(argv) py::arg_v(#argv, std::nullopt, "None")
-#endif
-
 #include "cubao/pybind11_crs_transform.hpp"
