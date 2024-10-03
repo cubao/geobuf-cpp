@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import glob
 import hashlib
@@ -30,7 +32,7 @@ def system(
     if verbose:
         print(f"$ {cmd} # -> {ret}")
     if assert_return:
-        assert 0 == ret, f"failed at {cmd} -> {ret}"
+        assert ret == 0, f"failed at {cmd} -> {ret}"
 
 
 def hash(data: Union[List, Dict, str, bytes, bytearray, memoryview]) -> str:
@@ -145,7 +147,7 @@ def roundtrip(
     )
 
     system(
-        f"diff {input_normalized} {output_js} > {output_dir}/diff_input_output_js.diff",  # noqa
+        f"diff {input_normalized} {output_js} > {output_dir}/diff_input_output_js.diff",
         assert_return=False,
     )
     system(
@@ -191,6 +193,6 @@ if __name__ == "__main__":
         roundtrip(input_path)
     else:
         for path in sorted(glob.glob(f"{input_path}/*.json")):
-            if "precision.json" == path.split("/")[-1]:
+            if path.split("/")[-1] == "precision.json":
                 continue
             roundtrip(path)

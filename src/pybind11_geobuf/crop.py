@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import os
 from typing import List, Optional, Tuple, Union  # noqa
 
 import numpy as np
-from _pybind11_geobuf import geojson, tf
+from ._core import geojson, tf
 from loguru import logger
 
 
@@ -29,9 +31,7 @@ def crop_by_feature_id(
     max_z_offset: float = None,
 ) -> bool:
     if not feature_id:
-        logger.info(
-            f"invalid feature id: {feature_id} (type: {type(feature_id)})"
-        )  # noqa
+        logger.info(f"invalid feature id: {feature_id} (type: {type(feature_id)})")
         return False
     g = geojson.GeoJSON().load(input_path)
     if not g.is_feature_collection():

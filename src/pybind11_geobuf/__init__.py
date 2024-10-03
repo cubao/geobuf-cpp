@@ -1,2 +1,4 @@
-from _pybind11_geobuf import *  # noqa
-from _pybind11_geobuf import __version__  # noqa
+from __future__ import annotations
+
+from ._core import *  # noqa: F403
+from ._core import __version__  # noqa: F401

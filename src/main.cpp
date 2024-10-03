@@ -31,7 +31,7 @@ void bind_rapidjson(py::module &m);
 void bind_crs_transform(py::module &m);
 } // namespace cubao
 
-PYBIND11_MODULE(_pybind11_geobuf, m)
+PYBIND11_MODULE(_core, m)
 {
     using namespace mapbox::geobuf;
 
