@@ -78,7 +78,6 @@ roundtrip_test_cpp: build/json2geobuf
 	build/pbf_decoder $(OUTPUT_PBF_CPP) > $(OUTPUT_TXT_CPP)
 	$(BUILD_DIR)/geobuf2json $(OUTPUT_PBF_CPP) | $(LINTJSON) > $(OUTPUT_JSN_CPP)
 	cat $(INPUT_GEOJSON_PATH) | $(LINTJSON) > $(OUTPUT_DIR_CPP)/$(GEOJSON_BASENAME)
-roundtrip_test_cpp: build/json2geobuf
 diff:
 	# code --diff $(OUTPUT_TXT_JS) $(OUTPUT_TXT_CPP)
 	code --diff $(OUTPUT_JSN_JS) $(OUTPUT_JSN_CPP)
