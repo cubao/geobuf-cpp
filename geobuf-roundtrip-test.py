@@ -66,11 +66,11 @@ def normalize_json(input_path: str, output_path: str):
 
 def roundtrip_cpp(input_json: str, output_pbf: str, output_json: str):
     system(
-        f"{PWD}/build/bin/json2geobuf {input_json} > {output_pbf}",
+        f"{PWD}/build/json2geobuf {input_json} > {output_pbf}",
         dry_run=False,
     )
     system(
-        f"{PWD}/build/bin/geobuf2json {output_pbf} > {output_json}",
+        f"{PWD}/build/geobuf2json {output_pbf} > {output_json}",
         dry_run=False,
     )
 
@@ -107,7 +107,7 @@ def roundtrip(
         f"{output_dir}/input_normalized.json",
     )
 
-    pbf_decoder = f"{PWD}/build/bin/pbf_decoder"
+    pbf_decoder = f"{PWD}/build/pbf_decoder"
 
     t0j = time.time()
     roundtrip_js(input_path, f"{output_dir}/js.pbf", f"{output_dir}/js.json")

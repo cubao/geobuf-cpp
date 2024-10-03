@@ -39,7 +39,7 @@ void roundtripTest(const std::string &fixture_basename)
     auto decoder = mapbox::geobuf::Decoder();
     auto geojson_back = decoder.decode(pbf);
     dbg(mapbox::geobuf::dump(geojson_back, false));
-    // build/bin/pbf_decoder build/issue55.json.pbf
+    // build/pbf_decoder build/issue55.json.pbf
 }
 
 TEST_CASE("read write json")

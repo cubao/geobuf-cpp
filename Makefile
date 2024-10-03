@@ -46,7 +46,7 @@ restub:
 	cp -rf stubs/pybind11_geobuf/_core src/pybind11_geobuf
 
 test_all:
-	@cd build && for t in $(wildcard $(BUILD_DIR)/bin/test_*); do echo $$t && eval $$t >/dev/null 2>&1 && echo 'ok' || echo $(RED)Not Ok$(NC); done
+	@cd build && for t in $(wildcard $(BUILD_DIR)/test_*); do echo $$t && eval $$t >/dev/null 2>&1 && echo 'ok' || echo $(RED)Not Ok$(NC); done
 
 INPUT_GEOJSON_PATH ?= data/sample1.json
 # INPUT_GEOJSON_PATH := pygeobuf/test/fixtures/geometrycollection.json
@@ -62,23 +62,23 @@ OUTPUT_PBF_CPP = $(OUTPUT_DIR_CPP)/$(GEOJSON_BASENAME).pbf
 OUTPUT_TXT_CPP = $(OUTPUT_PBF_CPP).txt
 OUTPUT_JSN_CPP = $(OUTPUT_PBF_CPP).json
 
-build/bin/json2geobuf: build
+build/json2geobuf: build
 
 # LINTJSON := jq .
-LINTJSON := $(BUILD_DIR)/bin/lintjson
+LINTJSON := $(BUILD_DIR)/lintjson
 roundtrip_test_js:
 	@umask 0000 && mkdir -p $(OUTPUT_DIR_JS)
 	json2geobuf $(INPUT_GEOJSON_PATH) > $(OUTPUT_PBF_JS)
-	build/bin/pbf_decoder $(OUTPUT_PBF_JS) > $(OUTPUT_TXT_JS)
+	build/pbf_decoder $(OUTPUT_PBF_JS) > $(OUTPUT_TXT_JS)
 	geobuf2json $(OUTPUT_PBF_JS) | $(LINTJSON) > $(OUTPUT_JSN_JS)
 	cat $(INPUT_GEOJSON_PATH) | $(LINTJSON) > $(OUTPUT_DIR_JS)/$(GEOJSON_BASENAME)
-roundtrip_test_cpp: build/bin/json2geobuf
+roundtrip_test_cpp: build/json2geobuf
 	@umask 0000 && mkdir -p $(OUTPUT_DIR_CPP)
-	$(BUILD_DIR)/bin/json2geobuf $(INPUT_GEOJSON_PATH) > $(OUTPUT_PBF_CPP)
-	build/bin/pbf_decoder $(OUTPUT_PBF_CPP) > $(OUTPUT_TXT_CPP)
-	$(BUILD_DIR)/bin/geobuf2json $(OUTPUT_PBF_CPP) | $(LINTJSON) > $(OUTPUT_JSN_CPP)
+	$(BUILD_DIR)/json2geobuf $(INPUT_GEOJSON_PATH) > $(OUTPUT_PBF_CPP)
+	build/pbf_decoder $(OUTPUT_PBF_CPP) > $(OUTPUT_TXT_CPP)
+	$(BUILD_DIR)/geobuf2json $(OUTPUT_PBF_CPP) | $(LINTJSON) > $(OUTPUT_JSN_CPP)
 	cat $(INPUT_GEOJSON_PATH) | $(LINTJSON) > $(OUTPUT_DIR_CPP)/$(GEOJSON_BASENAME)
-roundtrip_test_cpp: build/bin/json2geobuf
+roundtrip_test_cpp: build/json2geobuf
 diff:
 	# code --diff $(OUTPUT_TXT_JS) $(OUTPUT_TXT_CPP)
 	code --diff $(OUTPUT_JSN_JS) $(OUTPUT_JSN_CPP)
