@@ -226,14 +226,29 @@ PYBIND11_MODULE(_core, m)
              "max_precision"_a = static_cast<uint32_t>(
                  std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION)),
              "only_xy"_a = false, //
-             "round_z"_a = std::nullopt)
+             "round_z"_a = std::nullopt,
+             R"docstring(
+             Initialize an Encoder object.
+
+             Args:
+                 max_precision (int): Maximum precision for coordinate encoding. Default is 10^8.
+                 only_xy (bool): If True, only encode X and Y coordinates. Default is False.
+                 round_z (Optional[int]): Number of decimal places to round Z coordinates. Default is None.
+             )docstring")
         //
-        .def("max_precision", &Encoder::__maxPrecision)
-        .def("only_xy", &Encoder::__onlyXY)
-        .def("round_z", &Encoder::__roundZ)
-        .def("dim", &Encoder::__dim)
-        .def("e", &Encoder::__e)
-        .def("keys", &Encoder::__keys)
+        .def("max_precision", &Encoder::__maxPrecision,
+             "Get the maximum precision used for coordinate encoding.")
+        .def("only_xy", &Encoder::__onlyXY,
+             "Check if only X and Y coordinates are being encoded.")
+        .def(
+            "round_z", &Encoder::__roundZ,
+            "Get the number of decimal places used for rounding Z coordinates.")
+        .def("dim", &Encoder::__dim,
+             "Get the dimension of the encoded coordinates (2 or 3).")
+        .def("e", &Encoder::__e,
+             "Get the encoding factor used for coordinate precision.")
+        .def("keys", &Encoder::__keys,
+             "Get the list of keys used in the encoded data.")
         .def(
             "encode",
             [](Encoder &self, const mapbox::geojson::geojson &geojson) {
@@ -341,17 +356,38 @@ PYBIND11_MODULE(_core, m)
                  geobuf (str): Path to output PBF file.
 
              Returns:
-                 None
+                 Bool: succ or not.
              )docstring")
-        .def("keys", &Encoder::__keys)
+        .def("keys", &Encoder::__keys,
+             R"docstring(
+             Get the list of keys used in the encoding process.
+
+             Returns:
+                 list: A list of strings representing the keys used during encoding.
+             )docstring")
         //
         ;
 
     py::class_<Decoder>(m, "Decoder", py::module_local()) //
-        .def(py::init<>())
+        .def(py::init<>(),
+             R"docstring(
+             Initialize a Decoder object.
+             )docstring")
         //
-        .def("precision", &Decoder::precision)
-        .def("dim", &Decoder::__dim)
+        .def("precision", &Decoder::precision,
+             R"docstring(
+             Get the precision used in the decoding process.
+
+             Returns:
+                 int: The precision value.
+             )docstring")
+        .def("dim", &Decoder::__dim,
+             R"docstring(
+             Get the dimension of the coordinates in the decoded data.
+
+             Returns:
+                 int: The dimension value (2 for 2D, 3 for 3D).
+             )docstring")
         .def(
             "decode",
             [](Decoder &self, const std::string &geobuf, bool indent,
@@ -433,7 +469,13 @@ PYBIND11_MODULE(_core, m)
             Returns:
                 None
             )docstring")
-        .def("keys", &Decoder::__keys)
+        .def("keys", &Decoder::__keys,
+             R"docstring(
+             Get the keys of the decoded Protocol Buffer (PBF) data.
+
+             Returns:
+                 list: A list of strings representing the keys in the decoded PBF data.
+             )docstring")
         //
         .def("decode_header",
              py::overload_cast<const std::string &>(&Decoder::decode_header),
