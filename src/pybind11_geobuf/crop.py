@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import os
-from typing import List, Optional, Tuple, Union  # noqa
 
 import numpy as np
-from _pybind11_geobuf import geojson, tf
 from loguru import logger
+
+from ._core import geojson, tf
 
 
 def bbox2polygon(bbox: np.ndarray):
@@ -24,14 +26,12 @@ def crop_by_feature_id(
     output_path: str,
     *,
     feature_id: str,
-    buffer: Union[float, Tuple[float, float]] = 100.0,
+    buffer: float | tuple[float, float] = 100.0,
     clipping_mode: str = "longest",
     max_z_offset: float = None,
 ) -> bool:
     if not feature_id:
-        logger.info(
-            f"invalid feature id: {feature_id} (type: {type(feature_id)})"
-        )  # noqa
+        logger.info(f"invalid feature id: {feature_id} (type: {type(feature_id)})")
         return False
     g = geojson.GeoJSON().load(input_path)
     if not g.is_feature_collection():
@@ -83,8 +83,8 @@ def crop_by_grid(
     input_path: str,
     output_dir: str,
     *,
-    anchor_lla: Union[str, List[float]] = None,
-    grid_size: Union[float, Tuple[float, float]] = 1000.0,
+    anchor_lla: str | list[float] = None,
+    grid_size: float | tuple[float, float] = 1000.0,
 ):
     os.makedirs(os.path.abspath(output_dir), exist_ok=True)
 
@@ -93,8 +93,8 @@ def crop_by_center(
     input_path: str,
     output_dir: str,
     *,
-    anchor_lla: Union[str, List[float]] = None,
-    size: Union[float, Tuple[float, float]] = 1000.0,
+    anchor_lla: str | list[float] = None,
+    size: float | tuple[float, float] = 1000.0,
 ):
     os.makedirs(os.path.abspath(output_dir), exist_ok=True)
 
@@ -103,7 +103,7 @@ def crop_by_bbox(
     input_path: str,
     output_path: str,
     *,
-    bbox: Union[str, List[float]],
+    bbox: str | list[float],
     z_center: float = None,
     z_max_offset: float = None,
 ):
@@ -114,7 +114,7 @@ def crop_by_polygon(
     input_path: str,
     output_path: str,
     *,
-    polygon: Union[str, np.ndarray],
+    polygon: str | np.ndarray,
     z_max_offset: float = None,
 ):
     pass

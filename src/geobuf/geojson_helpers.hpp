@@ -1,5 +1,4 @@
-#ifndef CUBAO_GEOJSON_HELPERS_HPP
-#define CUBAO_GEOJSON_HELPERS_HPP
+#pragma once
 
 // https://github.com/microsoft/vscode-cpptools/issues/9692
 #if __INTELLISENSE__
@@ -653,5 +652,3 @@ inline bool deduplicate_xyz(mapbox::geojson::geojson &geojson)
 }
 
 } // namespace cubao
-
-#endif

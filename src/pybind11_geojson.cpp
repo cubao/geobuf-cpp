@@ -67,9 +67,13 @@ inline bool endswith(const std::string &text, const std::string &suffix)
 void bind_geojson(py::module &geojson)
 {
 #define is_geojson_type(geojson_type)                                          \
-    .def("is_" #geojson_type, [](const mapbox::geojson::geojson &self) {       \
-        return self.is<mapbox::geojson::geojson_type>();                       \
-    })
+    .def(                                                                      \
+        "is_" #geojson_type,                                                   \
+        [](const mapbox::geojson::geojson &self) {                             \
+            return self.is<mapbox::geojson::geojson_type>();                   \
+        },                                                                     \
+        "Check if this GeoJSON object is of type " #geojson_type)
+
 #define as_geojson_type(geojson_type)                                          \
     .def(                                                                      \
         "as_" #geojson_type,                                                   \
@@ -77,19 +81,28 @@ void bind_geojson(py::module &geojson)
             -> mapbox::geojson::geojson_type & {                               \
             return self.get<mapbox::geojson::geojson_type>();                  \
         },                                                                     \
-        rvp::reference_internal)
+        rvp::reference_internal,                                               \
+        "Get this GeoJSON object as a " #geojson_type " (if it is one)")
 
 #define GEOMETRY_DEDUPLICATE_XYZ(geom_type)                                    \
-    .def("deduplicate_xyz", [](mapbox::geojson::geom_type &self) {             \
-        return deduplicate_xyz(self);                                          \
-    })
+    .def(                                                                      \
+        "deduplicate_xyz",                                                     \
+        [](mapbox::geojson::geom_type &self) {                                 \
+            return deduplicate_xyz(self);                                      \
+        },                                                                     \
+        "Remove duplicate consecutive points based on their XYZ coordinates")
 
 #define copy_deepcopy_clone(Type)                                              \
-    .def("__copy__", [](const Type &self, py::dict) -> Type { return self; })  \
+    .def(                                                                      \
+        "__copy__", [](const Type &self, py::dict) -> Type { return self; },   \
+        "Create a shallow copy of the object")                                 \
         .def(                                                                  \
             "__deepcopy__",                                                    \
-            [](const Type &self, py::dict) -> Type { return self; }, "memo"_a) \
-        .def("clone", [](const Type &self) -> Type { return self; })
+            [](const Type &self, py::dict) -> Type { return self; }, "memo"_a, \
+            "Create a deep copy of the object")                                \
+        .def(                                                                  \
+            "clone", [](const Type &self) -> Type { return self; },            \
+            "Create a clone of the object")
 
     py::class_<mapbox::geojson::geojson>(geojson, "GeoJSON", py::module_local())
         is_geojson_type(geometry)           //
@@ -99,14 +112,18 @@ void bind_geojson(py::module &geojson)
         as_geojson_type(feature)            //
         as_geojson_type(feature_collection) //
                                             //
-            .def(py::self == py::self)      //
-            .def(py::self != py::self)      //
-            .def(py::init<>())
-            .def(py::init([](const mapbox::geojson::geometry &g) { return g; }))
-            .def(py::init([](const mapbox::geojson::feature &g) { return g; }))
+            .def(py::self == py::self, "Check if two GeoJSON objects are equal")
+            .def(py::self != py::self,
+                 "Check if two GeoJSON objects are not equal")
+            .def(py::init<>(), "Create an empty GeoJSON object")
+            .def(py::init([](const mapbox::geojson::geometry &g) { return g; }),
+                 "Create a GeoJSON object from a geometry")
+            .def(py::init([](const mapbox::geojson::feature &g) { return g; }),
+                 "Create a GeoJSON object from a feature")
             .def(py::init([](const mapbox::geojson::feature_collection &g) {
-                return g;
-            })) //
+                     return g;
+                 }),
+                 "Create a GeoJSON object from a feature collection")
             .def(
                 "round",
                 [](mapbox::geojson::geojson &self, int lon, int lat,
@@ -127,8 +144,9 @@ void bind_geojson(py::module &geojson)
                     return self;
                 },
                 py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
-                rvp::reference_internal)  //
-        GEOMETRY_DEDUPLICATE_XYZ(geojson) //
+                rvp::reference_internal,
+                "Round coordinates to specified decimal places") //
+        GEOMETRY_DEDUPLICATE_XYZ(geojson)                        //
             .def(
                 "from_rapidjson",
                 [](mapbox::geojson::geojson &self,
@@ -136,13 +154,16 @@ void bind_geojson(py::module &geojson)
                     self = mapbox::geojson::convert(json);
                     return self;
                 },
-                rvp::reference_internal)
-            .def("to_rapidjson",
-                 [](const mapbox::geojson::geojson &self) {
-                     RapidjsonAllocator allocator;
-                     auto json = mapbox::geojson::convert(self, allocator);
-                     return json;
-                 })
+                rvp::reference_internal,
+                "Convert a RapidJSON value to a GeoJSON object")
+            .def(
+                "to_rapidjson",
+                [](const mapbox::geojson::geojson &self) {
+                    RapidjsonAllocator allocator;
+                    auto json = mapbox::geojson::convert(self, allocator);
+                    return json;
+                },
+                "Convert the GeoJSON object to a RapidJSON value")
             .def(
                 "from_geobuf",
                 [](mapbox::geojson::geojson &self,
@@ -150,7 +171,8 @@ void bind_geojson(py::module &geojson)
                     self = mapbox::geobuf::Decoder().decode(bytes);
                     return self;
                 },
-                rvp::reference_internal)
+                rvp::reference_internal,
+                "Decode a Geobuf byte string into a GeoJSON object")
             .def(
                 "to_geobuf",
                 [](const mapbox::geojson::geojson &self, //
@@ -163,7 +185,8 @@ void bind_geojson(py::module &geojson)
                 py::kw_only(),       //
                 "precision"_a = 8,   //
                 "only_xy"_a = false, //
-                "round_z"_a = std::nullopt)
+                "round_z"_a = std::nullopt,
+                "Encode the GeoJSON object to a Geobuf byte string")
             //
             .def(
                 "crop",
@@ -178,7 +201,8 @@ void bind_geojson(py::module &geojson)
                 },
                 "polygon"_a, py::kw_only(),    //
                 "clipping_mode"_a = "longest", //
-                "max_z_offset"_a = std::nullopt)
+                "max_z_offset"_a = std::nullopt,
+                "Crop the GeoJSON object using a polygon")
             //
             .def(
                 "load",
@@ -193,7 +217,7 @@ void bind_geojson(py::module &geojson)
                     self = mapbox::geojson::convert(json);
                     return self;
                 },
-                rvp::reference_internal)
+                rvp::reference_internal, "Load a GeoJSON object from a file")
             .def(
                 "dump",
                 [](const mapbox::geojson::geojson &self, //
@@ -217,22 +241,25 @@ void bind_geojson(py::module &geojson)
                 "indent"_a = false,      //
                 "sort_keys"_a = false,   //
                 "precision"_a = 8,       //
-                "only_xy"_a = false)     //
-        copy_deepcopy_clone(mapbox::geojson::geojson)
-            .def("__call__",
-                 [](const mapbox::geojson::geojson &self) {
-                     return self.match(
-                         [&](const mapbox::geojson::geometry &g) {
-                             return to_python(g);
-                         },
-                         [&](const mapbox::geojson::feature &f) {
-                             return to_python(f);
-                         },
-                         [&](const mapbox::geojson::feature_collection &fc) {
-                             return to_python(fc);
-                         },
-                         [](const auto &) -> py::object { return py::none(); });
-                 })
+                "only_xy"_a = false,     //
+                "Dump the GeoJSON object to a file")
+                copy_deepcopy_clone(mapbox::geojson::geojson)
+            .def(
+                "__call__",
+                [](const mapbox::geojson::geojson &self) {
+                    return self.match(
+                        [&](const mapbox::geojson::geometry &g) {
+                            return to_python(g);
+                        },
+                        [&](const mapbox::geojson::feature &f) {
+                            return to_python(f);
+                        },
+                        [&](const mapbox::geojson::feature_collection &fc) {
+                            return to_python(fc);
+                        },
+                        [](const auto &) -> py::object { return py::none(); });
+                },
+                "Convert the GeoJSON object to a Python dictionary")
         //
         ;
 
@@ -245,7 +272,8 @@ void bind_geojson(py::module &geojson)
             return self;                                                       \
         },                                                                     \
         py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,                  \
-        rvp::reference_internal)
+        rvp::reference_internal,                                               \
+        "Round coordinates to specified decimal places")
 
     py::bind_vector<mapbox::geojson::multi_point::container_type>(geojson,
                                                                   "coordinates")
@@ -256,12 +284,14 @@ void bind_geojson(py::module &geojson)
                 return Eigen::Map<RowVectors>(&self[0].x, //
                                               self.size(), 3);
             },
-            rvp::reference_internal)
-        .def("to_numpy",
-             [](const std::vector<mapbox::geojson::point> &self) -> RowVectors {
-                 return Eigen::Map<const RowVectors>(&self[0].x, //
-                                                     self.size(), 3);
-             }) //
+            rvp::reference_internal, "Get a numpy view of the coordinates")
+        .def(
+            "to_numpy",
+            [](const std::vector<mapbox::geojson::point> &self) -> RowVectors {
+                return Eigen::Map<const RowVectors>(&self[0].x, //
+                                                    self.size(), 3);
+            },
+            "Convert coordinates to a numpy array") //
         .def(
             "from_numpy",
             [](std::vector<mapbox::geojson::point> &self,
@@ -270,49 +300,65 @@ void bind_geojson(py::module &geojson)
                 eigen2geom(points, self);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal, "Set coordinates from a numpy array")
         //
         ;
 
 #define is_geometry_type(geom_type)                                            \
-    .def("is_" #geom_type, [](const mapbox::geojson::geometry &self) {         \
-        return self.is<mapbox::geojson::geom_type>();                          \
-    })
+    .def(                                                                      \
+        "is_" #geom_type,                                                      \
+        [](const mapbox::geojson::geometry &self) {                            \
+            return self.is<mapbox::geojson::geom_type>();                      \
+        },                                                                     \
+        "Check if this geometry is of type " #geom_type)
+
 #define as_geometry_type(geom_type)                                            \
     .def(                                                                      \
         "as_" #geom_type,                                                      \
         [](mapbox::geojson::geometry &self) -> mapbox::geojson::geom_type & {  \
             return self.get<mapbox::geojson::geom_type>();                     \
         },                                                                     \
-        rvp::reference_internal)
+        rvp::reference_internal,                                               \
+        "Get this geometry as a " #geom_type " (if it is one)")
 
     using GeometryBase = mapbox::geometry::geometry_base<double, std::vector>;
     py::class_<GeometryBase>(geojson, "GeometryBase", py::module_local());
     py::class_<mapbox::geojson::geometry, GeometryBase>(geojson, "Geometry",
                                                         py::module_local())
-        .def(py::init<>())
-        .def(py::init([](const mapbox::geojson::point &g) { return g; }))
-        .def(py::init([](const mapbox::geojson::multi_point &g) { return g; }))
-        .def(py::init([](const mapbox::geojson::line_string &g) { return g; }))
+        .def(py::init<>(), "Initialize an empty geometry")
+        .def(py::init([](const mapbox::geojson::point &g) { return g; }),
+             "Initialize from a Point")
+        .def(py::init([](const mapbox::geojson::multi_point &g) { return g; }),
+             "Initialize from a MultiPoint")
+        .def(py::init([](const mapbox::geojson::line_string &g) { return g; }),
+             "Initialize from a LineString")
         .def(py::init(
-            [](const mapbox::geojson::multi_line_string &g) { return g; }))
-        .def(py::init([](const mapbox::geojson::polygon &g) { return g; }))
+            [](const mapbox::geojson::multi_line_string &g) { return g; }),
+             "Initialize from a MultiLineString")
+        .def(py::init([](const mapbox::geojson::polygon &g) { return g; }),
+             "Initialize from a Polygon")
         .def(
-            py::init([](const mapbox::geojson::multi_polygon &g) { return g; }))
+            py::init([](const mapbox::geojson::multi_polygon &g) { return g; }),
+             "Initialize from a MultiPolygon")
         .def(py::init(
-            [](const mapbox::geojson::geometry_collection &g) { return g; }))
-        .def(py::init([](const mapbox::geojson::geometry &g) { return g; }))
+            [](const mapbox::geojson::geometry_collection &g) { return g; }),
+             "Initialize from a GeometryCollection")
+        .def(py::init([](const mapbox::geojson::geometry &g) { return g; }),
+             "Initialize from another Geometry")
         .def(py::init(
-            [](const mapbox::geojson::geometry_collection &g) { return g; }))
+            [](const mapbox::geojson::geometry_collection &g) { return g; }),
+             "Initialize from a GeometryCollection")
         .def(py::init(
             [](const RapidjsonValue &g) {
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(g);
-            }))
+            }),
+             "Initialize from a RapidJSON value")
         .def(py::init(
             [](const py::dict &g) {
                 auto json = to_rapidjson(g);
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(json);
-            }))
+            }),
+             "Initialize from a Python dictionary")
         // check geometry type
         is_geometry_type(empty)               //
         is_geometry_type(point)               //
@@ -336,7 +382,8 @@ void bind_geojson(py::module &geojson)
                const std::string &key) -> mapbox::geojson::value & {
                 return self.custom_properties.at(key);
             },
-            "key"_a, rvp::reference_internal) //
+            "key"_a, rvp::reference_internal,
+            "Get a custom property value") //
         .def(
             "get",
             [](mapbox::geojson::geometry &self,
@@ -348,7 +395,8 @@ void bind_geojson(py::module &geojson)
                 }
                 return &itr->second;
             },
-            "key"_a, rvp::reference_internal)
+            "key"_a, rvp::reference_internal,
+            "Get a custom property value, returns None if not found")
         .def("__setitem__",
              [](mapbox::geojson::geometry &self, const std::string &key,
                 const py::object &value) {
@@ -357,13 +405,16 @@ void bind_geojson(py::module &geojson)
                  }
                  self.custom_properties[key] = to_geojson_value(value);
                  return value;
-             })
+             },
+             "Set a custom property value")
         .def("__delitem__",
              [](mapbox::geojson::geometry &self, const std::string &key) {
                  return self.custom_properties.erase(key);
-             })
+             },
+             "Delete a custom property")
         .def("__len__",
-             [](mapbox::geojson::geometry &self) { return __len__(self); })
+             [](mapbox::geojson::geometry &self) { return __len__(self); },
+             "Get the number of coordinates or sub-geometries")
         .def(
             "push_back",
             [](mapbox::geojson::geometry &self,
@@ -372,7 +423,8 @@ void bind_geojson(py::module &geojson)
                 geometry_push_back(self, point);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Add a point to the geometry")
         .def(
             "push_back",
             [](mapbox::geojson::geometry &self,
@@ -380,7 +432,8 @@ void bind_geojson(py::module &geojson)
                 geometry_push_back(self, point);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Add a point to the geometry")
         .def(
             "push_back",
             [](mapbox::geojson::geometry &self,
@@ -389,7 +442,8 @@ void bind_geojson(py::module &geojson)
                 geometry_push_back(self, points);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Add multiple points to the geometry")
         .def(
             "push_back",
             [](mapbox::geojson::geometry &self,
@@ -402,7 +456,8 @@ void bind_geojson(py::module &geojson)
                 }
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Add a sub-geometry to the geometry")
         .def(
             "push_back",
             [](mapbox::geojson::geometry &self,
@@ -415,7 +470,8 @@ void bind_geojson(py::module &geojson)
                     }
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Add a polygon to a multi-polygon geometry")
         .def(
             "push_back",
             [](mapbox::geojson::geometry &self,
@@ -428,21 +484,24 @@ void bind_geojson(py::module &geojson)
                     }
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Add a line string to a multi-line string geometry")
         .def(
             "pop_back",
             [](mapbox::geojson::geometry &self) -> mapbox::geojson::geometry & {
                 geometry_pop_back(self);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Remove the last point or sub-geometry")
         .def(
             "resize",
             [](mapbox::geojson::geometry &self, int size) -> mapbox::geojson::geometry & {
                 geometry_resize(self, size);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Resize the geometry")
         .def(
             "clear",
             [](mapbox::geojson::geometry &self) -> mapbox::geojson::geometry & {
@@ -450,22 +509,26 @@ void bind_geojson(py::module &geojson)
                 self.custom_properties.clear();
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Clear the geometry and custom properties")
         .def("type",
              [](const mapbox::geojson::geometry &self) {
                  return geometry_type(self);
-             })
+             },
+             "Get the type of the geometry")
         //
         .def(
             "as_numpy",
             [](mapbox::geojson::geometry &self) -> Eigen::Map<RowVectors> {
                 return as_row_vectors(self);
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Get a numpy view of the geometry coordinates")
         .def("to_numpy",
              [](const mapbox::geojson::geometry &self) -> RowVectors {
                  return as_row_vectors(self);
-             }) //
+             },
+             "Convert geometry coordinates to a numpy array") //
         .def(
             "from_numpy",
             [](mapbox::geojson::geometry &self,
@@ -474,7 +537,8 @@ void bind_geojson(py::module &geojson)
                 eigen2geom(points, self);
                 return self;
             },
-            rvp::reference_internal) //
+            rvp::reference_internal,
+            "Set geometry coordinates from a numpy array") //
         // dumps, loads, from/to rapidjson
         copy_deepcopy_clone(mapbox::geojson::geometry)
         .def(py::pickle(
@@ -485,7 +549,8 @@ void bind_geojson(py::module &geojson)
                 auto json = to_rapidjson(o);
                 return mapbox::geojson::convert<mapbox::geojson::geometry>(
                     json);
-            }))
+            }),
+            "Pickle support for Geometry objects")
         // custom_properties
         BIND_PY_FLUENT_ATTRIBUTE(mapbox::geojson::geometry,  //
                                  PropertyMap,               //
@@ -493,23 +558,27 @@ void bind_geojson(py::module &geojson)
             .def("keys",
                  [](mapbox::geojson::geometry &self) {
                      return py::make_key_iterator(self.custom_properties);
-                 }, py::keep_alive<0, 1>())
+                 }, py::keep_alive<0, 1>(),
+                 "Get an iterator over the custom property keys")
             .def("values",
                  [](mapbox::geojson::geometry &self) {
                      return py::make_value_iterator(self.custom_properties);
-                 }, py::keep_alive<0, 1>())
+                 }, py::keep_alive<0, 1>(),
+                 "Get an iterator over the custom property values")
             .def("items",
                  [](mapbox::geojson::geometry &self) {
                      return py::make_iterator(self.custom_properties);
                  },
-                 py::keep_alive<0, 1>())
+                 py::keep_alive<0, 1>(),
+                 "Get an iterator over the custom property items")
 
         .def(
             "__iter__",
             [](mapbox::geojson::geometry &self) {
                 return py::make_key_iterator(self.custom_properties);
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>(),
+            "Get an iterator over the custom property keys")
         GEOMETRY_ROUND_COORDS(geometry)
         GEOMETRY_DEDUPLICATE_XYZ(geometry)
         .def_property_readonly(
@@ -525,13 +594,15 @@ void bind_geojson(py::module &geojson)
                     mapbox::geojson::convert<mapbox::geojson::geometry>(json);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Convert a RapidJSON value to a geometry")
         .def("to_rapidjson",
              [](const mapbox::geojson::geometry &self) {
                  RapidjsonAllocator allocator;
                  auto json = mapbox::geojson::convert(self, allocator);
                  return json;
-             })
+             },
+             "Convert the geometry to a RapidJSON value")
         .def(
             "from_geobuf",
             [](mapbox::geojson::geometry &self,
@@ -540,7 +611,8 @@ void bind_geojson(py::module &geojson)
                 self = std::move(geojson.get<mapbox::geojson::geometry>());
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Decode a Geobuf byte string into a geometry")
         .def("to_geobuf",
             [](const mapbox::geojson::geometry &self, //
             int precision, bool only_xy, std::optional<int> round_z) {
@@ -551,7 +623,8 @@ void bind_geojson(py::module &geojson)
             }, py::kw_only(), //
             "precision"_a = 8, //
             "only_xy"_a = false, //
-            "round_z"_a = std::nullopt)
+            "round_z"_a = std::nullopt,
+            "Encode the geometry to a Geobuf byte string")
         .def("load",
             [](mapbox::geojson::geometry &self, const std::string &path) -> mapbox::geojson::geometry & {
                 if (endswith(path, ".pbf")) {
@@ -564,7 +637,8 @@ void bind_geojson(py::module &geojson)
                 self =
                     mapbox::geojson::convert<mapbox::geojson::geometry>(json);
                 return self;
-            }, rvp::reference_internal)
+            }, rvp::reference_internal,
+            "Load a geometry from a file")
         .def("dump",
             [](const mapbox::geojson::geometry &self, //
                 const std::string &path, //
@@ -584,37 +658,45 @@ void bind_geojson(py::module &geojson)
             "indent"_a = false, //
             "sort_keys"_a = false, //
             "precision"_a = 8, //
-            "only_xy"_a = false)
+            "only_xy"_a = false,
+            "Dump the geometry to a file")
         .def("bbox", [](const mapbox::geojson::geometry &self, bool with_z) -> Eigen::VectorXd {
             return geom2bbox(self, with_z);
-        }, py::kw_only(), "with_z"_a = false)
-        .def(py::self == py::self) //
-        .def(py::self != py::self) //
+        }, py::kw_only(), "with_z"_a = false,
+        "Get the bounding box of the geometry")
+        .def(py::self == py::self, "Check if two geometries are equal")
+        .def(py::self != py::self, "Check if two geometries are not equal")
 
         .def("__call__",
              [](const mapbox::geojson::geometry &self) {
                  return to_python(self);
-             })
+             },
+             "Convert the geometry to a Python dictionary")
         //
         ;
 
     py::class_<mapbox::geojson::point>(geojson, "Point", py::module_local())
-        .def(py::init<>())
-        .def(py::init<double, double, double>(), "x"_a, "y"_a, "z"_a = 0.0)
+        .def(py::init<>(), "Initialize an empty Point")
+        .def(py::init<double, double, double>(), "x"_a, "y"_a, "z"_a = 0.0,
+             "Initialize a Point with coordinates (x, y, z)")
         .def(py::init([](const Eigen::VectorXd &p) {
-            return mapbox::geojson::point(p[0], p[1],
-                                          p.size() > 2 ? p[2] : 0.0);
-        }))
+                 return mapbox::geojson::point(p[0], p[1],
+                                               p.size() > 2 ? p[2] : 0.0);
+             }),
+             "Initialize a Point from a numpy array or vector")
         .def(
             "as_numpy",
             [](mapbox::geojson::point &self) -> Eigen::Map<Eigen::Vector3d> {
                 return Eigen::Vector3d::Map(&self.x);
             },
-            rvp::reference_internal)
-        .def("to_numpy",
-             [](const mapbox::geojson::point &self) -> Eigen::Vector3d {
-                 return Eigen::Vector3d::Map(&self.x);
-             })
+            rvp::reference_internal,
+            "Get a numpy view of the point coordinates")
+        .def(
+            "to_numpy",
+            [](const mapbox::geojson::point &self) -> Eigen::Vector3d {
+                return Eigen::Vector3d::Map(&self.x);
+            },
+            "Convert point coordinates to a numpy array")
         .def(
             "from_numpy",
             [](mapbox::geojson::point &self,
@@ -624,55 +706,68 @@ void bind_geojson(py::module &geojson)
                 self.z = p.size() > 2 ? p[2] : 0.0;
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal, "Set point coordinates from a numpy array")
         .def_property(
             "x", [](const mapbox::geojson::point &self) { return self.x; },
-            [](mapbox::geojson::point &self, double value) { self.x = value; })
+            [](mapbox::geojson::point &self, double value) { self.x = value; },
+            "Get or set the x-coordinate of the point")
         .def_property(
             "y", [](const mapbox::geojson::point &self) { return self.y; },
-            [](mapbox::geojson::point &self, double value) { self.y = value; })
+            [](mapbox::geojson::point &self, double value) { self.y = value; },
+            "Get or set the y-coordinate of the point")
         .def_property(
             "z", [](const mapbox::geojson::point &self) { return self.z; },
-            [](mapbox::geojson::point &self, double value) { self.z = value; })
+            [](mapbox::geojson::point &self, double value) { self.z = value; },
+            "Get or set the z-coordinate of the point")
         .def(
             "__getitem__",
             [](mapbox::geojson::point &self, int index) -> double {
                 return *(&self.x + (index >= 0 ? index : index + 3));
             },
-            "index"_a)
+            "index"_a,
+            "Get the coordinate value at the specified index (0: x, 1: y, 2: "
+            "z)")
         .def(
             "__setitem__",
             [](mapbox::geojson::point &self, int index, double v) {
                 *(&self.x + (index >= 0 ? index : index + 3)) = v;
                 return v;
             },
-            "index"_a, "value"_a) //
-        .def("__len__",
-             [](const mapbox::geojson::point &self) -> int { return 3; })
+            "index"_a, "value"_a,
+            "Set the coordinate value at the specified index (0: x, 1: y, 2: "
+            "z)") //
+        .def(
+            "__len__",
+            [](const mapbox::geojson::point &self) -> int { return 3; },
+            "Return the number of coordinates (always 3)")
         .def(
             "__iter__",
             [](mapbox::geojson::point &self) {
                 return py::make_iterator(&self.x, &self.x + 3);
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>(),
+            "Return an iterator over the point's coordinates")
         //
         copy_deepcopy_clone(mapbox::geojson::point)
         .def(py::pickle(
-            [](const mapbox::geojson::point &self) {
-                return to_python(mapbox::geojson::geometry(self));
-            },
-            [](py::object o) -> mapbox::geojson::point {
-                auto json = to_rapidjson(o);
-                return mapbox::geojson::convert<mapbox::geojson::geometry>(json)
-                    .get<mapbox::geojson::point>();
-            }))                         //
-        GEOMETRY_ROUND_COORDS(point)    //
-        GEOMETRY_DEDUPLICATE_XYZ(point) //
+                 [](const mapbox::geojson::point &self) {
+                     return to_python(mapbox::geojson::geometry(self));
+                 },
+                 [](py::object o) -> mapbox::geojson::point {
+                     auto json = to_rapidjson(o);
+                     return mapbox::geojson::convert<mapbox::geojson::geometry>(
+                                json)
+                         .get<mapbox::geojson::point>();
+                 }),
+             "Enable pickling support for Point objects") //
+        GEOMETRY_ROUND_COORDS(point)                      //
+        GEOMETRY_DEDUPLICATE_XYZ(point)                   //
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::point &self) -> py::object {
                 return to_python(self);
-            })
+            },
+            "Return the __geo_interface__ representation of the point")
         .def(
             "from_rapidjson",
             [](mapbox::geojson::point &self,
@@ -681,21 +776,24 @@ void bind_geojson(py::module &geojson)
                            .get<mapbox::geojson::point>();
                 return self;
             },
-            rvp::reference_internal)
-        .def("to_rapidjson",
-             [](const mapbox::geojson::point &self) {
-                 RapidjsonAllocator allocator;
-                 auto json = mapbox::geojson::convert(
-                     mapbox::geojson::geometry{self}, allocator);
-                 return json;
-             })
+            rvp::reference_internal, "Create a Point from a RapidJSON value")
+        .def(
+            "to_rapidjson",
+            [](const mapbox::geojson::point &self) {
+                RapidjsonAllocator allocator;
+                auto json = mapbox::geojson::convert(
+                    mapbox::geojson::geometry{self}, allocator);
+                return json;
+            },
+            "Convert the Point to a RapidJSON value")
         .def(
             "bbox",
             [](const mapbox::geojson::point &self, bool with_z)
                 -> Eigen::VectorXd { return geom2bbox(self, with_z); },
-            py::kw_only(), "with_z"_a = false)
-        .def(py::self == py::self) //
-        .def(py::self != py::self) //
+            py::kw_only(), "with_z"_a = false,
+            "Get the bounding box of the point")
+        .def(py::self == py::self, "Check if two Points are equal")     //
+        .def(py::self != py::self, "Check if two Points are not equal") //
         .def(
             "clear",
             [](mapbox::geojson::point &self)
@@ -705,49 +803,60 @@ void bind_geojson(py::module &geojson)
                 self.z = 0.0;
                 return self;
             },
-            rvp::reference_internal)
-        .def("__call__",
-             [](const mapbox::geojson::point &self) { return to_python(self); })
+            rvp::reference_internal,
+            "Reset all coordinates of the point to 0.0")
+        .def(
+            "__call__",
+            [](const mapbox::geojson::point &self) { return to_python(self); },
+            "Convert the Point to a Python dictionary")
         //
         ;
 
 #define BIND_FOR_VECTOR_POINT_TYPE_PURE(geom_type)                             \
-    .def("__call__",                                                           \
-         [](const mapbox::geojson::geom_type &self) {                          \
-             return to_python(self);                                           \
-         })                                                                    \
+    .def(                                                                      \
+        "__call__",                                                            \
+        [](const mapbox::geojson::geom_type &self) {                           \
+            return to_python(self);                                            \
+        },                                                                     \
+        "Convert the geometry to a Python dictionary")                         \
         .def(                                                                  \
             "__getitem__",                                                     \
             [](mapbox::geojson::geom_type &self,                               \
                int index) -> mapbox::geojson::point & {                        \
                 return self[index >= 0 ? index : index + (int)self.size()];    \
             },                                                                 \
-            rvp::reference_internal)                                           \
-        .def("__setitem__",                                                    \
-             [](mapbox::geojson::geom_type &self, int index,                   \
-                const mapbox::geojson::point &p) {                             \
-                 self[index >= 0 ? index : index + (int)self.size()] = p;      \
-                 return p;                                                     \
-             })                                                                \
-        .def("__setitem__",                                                    \
-             [](mapbox::geojson::geom_type &self, int index,                   \
-                const Eigen::VectorXd &p) {                                    \
-                 index = index >= 0 ? index : index + (int)self.size();        \
-                 self[index].x = p[0];                                         \
-                 self[index].y = p[1];                                         \
-                 self[index].z = p.size() > 2 ? p[2] : 0.0;                    \
-                 return p;                                                     \
-             })                                                                \
-        .def("__len__",                                                        \
-             [](const mapbox::geojson::geom_type &self) -> int {               \
-                 return self.size();                                           \
-             })                                                                \
+            rvp::reference_internal, "Get a point from the geometry by index") \
+        .def(                                                                  \
+            "__setitem__",                                                     \
+            [](mapbox::geojson::geom_type &self, int index,                    \
+               const mapbox::geojson::point &p) {                              \
+                self[index >= 0 ? index : index + (int)self.size()] = p;       \
+                return p;                                                      \
+            },                                                                 \
+            "Set a point in the geometry by index")                            \
+        .def(                                                                  \
+            "__setitem__",                                                     \
+            [](mapbox::geojson::geom_type &self, int index,                    \
+               const Eigen::VectorXd &p) {                                     \
+                index = index >= 0 ? index : index + (int)self.size();         \
+                self[index].x = p[0];                                          \
+                self[index].y = p[1];                                          \
+                self[index].z = p.size() > 2 ? p[2] : 0.0;                     \
+                return p;                                                      \
+            },                                                                 \
+            "Set a point in the geometry by index using a vector")             \
+        .def(                                                                  \
+            "__len__",                                                         \
+            [](const mapbox::geojson::geom_type &self) -> int {                \
+                return self.size();                                            \
+            },                                                                 \
+            "Get the number of points in the geometry")                        \
         .def(                                                                  \
             "__iter__",                                                        \
             [](mapbox::geojson::geom_type &self) {                             \
                 return py::make_iterator(self.begin(), self.end());            \
             },                                                                 \
-            py::keep_alive<0, 1>())                                            \
+            py::keep_alive<0, 1>(), "Iterate over the points in the geometry") \
         .def(                                                                  \
             "clear",                                                           \
             [](mapbox::geojson::geom_type &self)                               \
@@ -755,7 +864,7 @@ void bind_geojson(py::module &geojson)
                 self.clear();                                                  \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
+            rvp::reference_internal, "Clear all points from the geometry")     \
         .def(                                                                  \
             "pop_back",                                                        \
             [](mapbox::geojson::geom_type &self)                               \
@@ -763,7 +872,8 @@ void bind_geojson(py::module &geojson)
                 self.pop_back();                                               \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
+            rvp::reference_internal,                                           \
+            "Remove the last point from the geometry")                         \
         .def(                                                                  \
             "push_back",                                                       \
             [](mapbox::geojson::geom_type &self,                               \
@@ -772,7 +882,7 @@ void bind_geojson(py::module &geojson)
                 self.push_back(point);                                         \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
+            rvp::reference_internal, "Add a point to the end of the geometry") \
         .def(                                                                  \
             "push_back",                                                       \
             [](mapbox::geojson::geom_type &self,                               \
@@ -781,18 +891,22 @@ void bind_geojson(py::module &geojson)
                                   xyz.size() > 2 ? xyz[2] : 0.0);              \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
+            rvp::reference_internal,                                           \
+            "Add a point to the end of the geometry using a vector")           \
         .def(                                                                  \
             "as_numpy",                                                        \
             [](mapbox::geojson::geom_type &self) -> Eigen::Map<RowVectors> {   \
                 return Eigen::Map<RowVectors>(&self[0].x, self.size(), 3);     \
             },                                                                 \
-            rvp::reference_internal)                                           \
-        .def("to_numpy",                                                       \
-             [](const mapbox::geojson::geom_type &self) -> RowVectors {        \
-                 return Eigen::Map<const RowVectors>(&self[0].x, self.size(),  \
-                                                     3);                       \
-             })                                                                \
+            rvp::reference_internal,                                           \
+            "Get a numpy view of the geometry points")                         \
+        .def(                                                                  \
+            "to_numpy",                                                        \
+            [](const mapbox::geojson::geom_type &self) -> RowVectors {         \
+                return Eigen::Map<const RowVectors>(&self[0].x, self.size(),   \
+                                                    3);                        \
+            },                                                                 \
+            "Convert the geometry points to a numpy array")                    \
         .def(                                                                  \
             "from_numpy",                                                      \
             [](mapbox::geojson::geom_type &self,                               \
@@ -801,38 +915,45 @@ void bind_geojson(py::module &geojson)
                 eigen2geom(points, self);                                      \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
+            rvp::reference_internal,                                           \
+            "Set the geometry points from a numpy array")                      \
             copy_deepcopy_clone(mapbox::geojson::geom_type) //
 
 #define BIND_FOR_VECTOR_POINT_TYPE(geom_type)                                  \
     BIND_FOR_VECTOR_POINT_TYPE_PURE(geom_type)                                 \
         .def(py::init([](const Eigen::Ref<const MatrixXdRowMajor> &points) {   \
-            mapbox::geojson::geom_type self;                                   \
-            eigen2geom(points, self);                                          \
-            return self;                                                       \
-        }))                                                                    \
-        .def("resize",                                                         \
-             [](mapbox::geojson::geom_type &self,                              \
-                int size) -> mapbox::geojson::geom_type & {                    \
-                 self.resize(size);                                            \
+                 mapbox::geojson::geom_type self;                              \
+                 eigen2geom(points, self);                                     \
                  return self;                                                  \
-             })                                                                \
-        .def(py::pickle(                                                       \
-            [](const mapbox::geojson::geom_type &self) {                       \
-                return to_python(mapbox::geojson::geometry{self});             \
+             }),                                                               \
+             "Initialize from a numpy array of points")                        \
+        .def(                                                                  \
+            "resize",                                                          \
+            [](mapbox::geojson::geom_type &self,                               \
+               int size) -> mapbox::geojson::geom_type & {                     \
+                self.resize(size);                                             \
+                return self;                                                   \
             },                                                                 \
-            [](py::object o) -> mapbox::geojson::geom_type {                   \
-                auto json = to_rapidjson(o);                                   \
-                return mapbox::geojson::convert<mapbox::geojson::geometry>(    \
-                           json)                                               \
-                    .get<mapbox::geojson::geom_type>();                        \
-            })) GEOMETRY_ROUND_COORDS(geom_type)                               \
-            GEOMETRY_DEDUPLICATE_XYZ(geom_type)                                \
+            "Resize the geometry to the specified size")                       \
+        .def(py::pickle(                                                       \
+                 [](const mapbox::geojson::geom_type &self) {                  \
+                     return to_python(mapbox::geojson::geometry{self});        \
+                 },                                                            \
+                 [](py::object o) -> mapbox::geojson::geom_type {              \
+                     auto json = to_rapidjson(o);                              \
+                     return mapbox::geojson::convert<                          \
+                                mapbox::geojson::geometry>(json)               \
+                         .get<mapbox::geojson::geom_type>();                   \
+                 }),                                                           \
+             "Pickle support for serialization")                               \
+            GEOMETRY_ROUND_COORDS(geom_type)                                   \
+                GEOMETRY_DEDUPLICATE_XYZ(geom_type)                            \
         .def_property_readonly(                                                \
             "__geo_interface__",                                               \
             [](const mapbox::geojson::geom_type &self) -> py::object {         \
                 return to_python(mapbox::geojson::geometry(self));             \
-            })                                                                 \
+            },                                                                 \
+            "Return the __geo_interface__ representation")                     \
         .def(                                                                  \
             "from_rapidjson",                                                  \
             [](mapbox::geojson::geom_type &self,                               \
@@ -842,78 +963,88 @@ void bind_geojson(py::module &geojson)
                         .get<mapbox::geojson::geom_type>();                    \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
-        .def("to_rapidjson",                                                   \
-             [](const mapbox::geojson::geom_type &self) {                      \
-                 RapidjsonAllocator allocator;                                 \
-                 auto json = mapbox::geojson::convert(                         \
-                     mapbox::geojson::geometry{self}, allocator);              \
-                 return json;                                                  \
-             })                                                                \
+            rvp::reference_internal, "Initialize from a RapidJSON value")      \
+        .def(                                                                  \
+            "to_rapidjson",                                                    \
+            [](const mapbox::geojson::geom_type &self) {                       \
+                RapidjsonAllocator allocator;                                  \
+                auto json = mapbox::geojson::convert(                          \
+                    mapbox::geojson::geometry{self}, allocator);               \
+                return json;                                                   \
+            },                                                                 \
+            "Convert to a RapidJSON value")                                    \
         .def(                                                                  \
             "bbox",                                                            \
             [](const mapbox::geojson::geom_type &self, bool with_z)            \
                 -> Eigen::VectorXd { return geom2bbox(self, with_z); },        \
-            py::kw_only(), "with_z"_a = false)
+            py::kw_only(), "with_z"_a = false,                                 \
+            "Compute the bounding box of the geometry")
 
     py::class_<mapbox::geojson::multi_point,
                std::vector<mapbox::geojson::point>>(geojson, "MultiPoint",
                                                     py::module_local())
-        .def(py::init<>())                      //
-        BIND_FOR_VECTOR_POINT_TYPE(multi_point) //
-        .def(py::self == py::self)              //
-        .def(py::self != py::self)              //
-        //
-        ;
+        .def(py::init<>(), "Default constructor for MultiPoint")
+            BIND_FOR_VECTOR_POINT_TYPE(multi_point)
+        .def(py::self == py::self, "Check if two MultiPoints are equal")
+        .def(py::self != py::self, "Check if two MultiPoints are not equal");
+
     py::class_<mapbox::geojson::line_string,
                std::vector<mapbox::geojson::point>>(geojson, "LineString",
                                                     py::module_local())
-        .def(py::init<>())                      //
-        BIND_FOR_VECTOR_POINT_TYPE(line_string) //
-        .def(py::self == py::self)              //
-        .def(py::self != py::self)              //
-        .def("deduplicate_xyz",
-             [](mapbox::geojson::line_string &self) {
-                 return deduplicate_xyz(self);
-             })
-        //
-        ;
+        .def(py::init<>(), "Default constructor for LineString")
+            BIND_FOR_VECTOR_POINT_TYPE(line_string)
+        .def(py::self == py::self, "Check if two LineStrings are equal")
+        .def(py::self != py::self, "Check if two LineStrings are not equal")
+        .def(
+            "deduplicate_xyz",
+            [](mapbox::geojson::line_string &self) {
+                return deduplicate_xyz(self);
+            },
+            "Remove duplicate consecutive points based on their XYZ "
+            "coordinates");
 
 #define BIND_FOR_VECTOR_LINEAR_RING_TYPE(geom_type)                            \
     .def(py::init([](const Eigen::Ref<const MatrixXdRowMajor> &points) {       \
-        mapbox::geojson::geom_type self;                                       \
-        eigen2geom(points, self);                                              \
-        return self;                                                           \
-    }))                                                                        \
-        .def("__call__",                                                       \
-             [](const mapbox::geojson::geom_type &self) {                      \
-                 return to_python(self);                                       \
-             })                                                                \
-        .def("__len__",                                                        \
-             [](const mapbox::geojson::geom_type &self) -> int {               \
-                 return self.size();                                           \
-             })                                                                \
+             mapbox::geojson::geom_type self;                                  \
+             eigen2geom(points, self);                                         \
+             return self;                                                      \
+         }),                                                                   \
+         "Initialize from a numpy array of points")                            \
+        .def(                                                                  \
+            "__call__",                                                        \
+            [](const mapbox::geojson::geom_type &self) {                       \
+                return to_python(self);                                        \
+            },                                                                 \
+            "Convert the geometry to a Python dictionary")                     \
+        .def(                                                                  \
+            "__len__",                                                         \
+            [](const mapbox::geojson::geom_type &self) -> int {                \
+                return self.size();                                            \
+            },                                                                 \
+            "Return the number of linear rings in the geometry")               \
         .def(                                                                  \
             "__iter__",                                                        \
             [](mapbox::geojson::geom_type &self) {                             \
                 return py::make_iterator(self.begin(), self.end());            \
             },                                                                 \
-            py::keep_alive<0, 1>())                                            \
+            py::keep_alive<0, 1>(),                                            \
+            "Return an iterator over the linear rings in the geometry")        \
         .def(                                                                  \
             "__getitem__",                                                     \
             [](mapbox::geojson::geom_type &self,                               \
                int index) -> decltype(self[0]) & {                             \
                 return self[index >= 0 ? index : index + (int)self.size()];    \
             },                                                                 \
-            rvp::reference_internal)                                           \
-        .def("__setitem__",                                                    \
-             [](mapbox::geojson::geom_type &self, int index,                   \
-                const Eigen::Ref<const MatrixXdRowMajor> &points) {            \
-                 auto &g =                                                     \
-                     self[index >= 0 ? index : index + (int)self.size()];      \
-                 eigen2geom(points, g);                                        \
-                 return points;                                                \
-             })                                                                \
+            rvp::reference_internal, "Get a linear ring by index")             \
+        .def(                                                                  \
+            "__setitem__",                                                     \
+            [](mapbox::geojson::geom_type &self, int index,                    \
+               const Eigen::Ref<const MatrixXdRowMajor> &points) {             \
+                auto &g = self[index >= 0 ? index : index + (int)self.size()]; \
+                eigen2geom(points, g);                                         \
+                return points;                                                 \
+            },                                                                 \
+            "Set a linear ring by index using a numpy array of points")        \
         .def(                                                                  \
             "clear",                                                           \
             [](mapbox::geojson::geom_type &self)                               \
@@ -921,7 +1052,8 @@ void bind_geojson(py::module &geojson)
                 self.clear();                                                  \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
+            rvp::reference_internal,                                           \
+            "Clear all linear rings from the geometry")                        \
         .def(                                                                  \
             "pop_back",                                                        \
             [](mapbox::geojson::geom_type &self)                               \
@@ -929,7 +1061,8 @@ void bind_geojson(py::module &geojson)
                 self.back().pop_back();                                        \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
+            rvp::reference_internal,                                           \
+            "Remove the last point from the last linear ring")                 \
         .def(                                                                  \
             "push_back",                                                       \
             [](mapbox::geojson::geom_type &self,                               \
@@ -940,7 +1073,8 @@ void bind_geojson(py::module &geojson)
                 self.push_back(ls);                                            \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
+            rvp::reference_internal,                                           \
+            "Add a new linear ring from a numpy array of points")              \
         .def(                                                                  \
             "push_back",                                                       \
             [](mapbox::geojson::geom_type &self,                               \
@@ -949,17 +1083,20 @@ void bind_geojson(py::module &geojson)
                 self.push_back(g);                                             \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
+            rvp::reference_internal, "Add a new linear ring")                  \
         .def(                                                                  \
             "as_numpy",                                                        \
             [](mapbox::geojson::geom_type &self) -> Eigen::Map<RowVectors> {   \
                 return as_row_vectors(self);                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
-        .def("to_numpy",                                                       \
-             [](const mapbox::geojson::geom_type &self) -> RowVectors {        \
-                 return as_row_vectors(self);                                  \
-             })                                                                \
+            rvp::reference_internal,                                           \
+            "Return a numpy view of the geometry's points")                    \
+        .def(                                                                  \
+            "to_numpy",                                                        \
+            [](const mapbox::geojson::geom_type &self) -> RowVectors {         \
+                return as_row_vectors(self);                                   \
+            },                                                                 \
+            "Convert the geometry to a numpy array")                           \
         .def(                                                                  \
             "from_numpy",                                                      \
             [](mapbox::geojson::geom_type &self,                               \
@@ -968,23 +1105,26 @@ void bind_geojson(py::module &geojson)
                 eigen2geom(points, self);                                      \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
+            rvp::reference_internal,                                           \
+            "Set the geometry from a numpy array of points")                   \
             copy_deepcopy_clone(mapbox::geojson::geom_type)                    \
         .def(py::pickle(                                                       \
-            [](const mapbox::geojson::geom_type &self) {                       \
-                return to_python(mapbox::geojson::geometry{self});             \
-            },                                                                 \
-            [](py::object o) -> mapbox::geojson::geom_type {                   \
-                auto json = to_rapidjson(o);                                   \
-                return mapbox::geojson::convert<mapbox::geojson::geometry>(    \
-                           json)                                               \
-                    .get<mapbox::geojson::geom_type>();                        \
-            }))                                                                \
+                 [](const mapbox::geojson::geom_type &self) {                  \
+                     return to_python(mapbox::geojson::geometry{self});        \
+                 },                                                            \
+                 [](py::object o) -> mapbox::geojson::geom_type {              \
+                     auto json = to_rapidjson(o);                              \
+                     return mapbox::geojson::convert<                          \
+                                mapbox::geojson::geometry>(json)               \
+                         .get<mapbox::geojson::geom_type>();                   \
+                 }),                                                           \
+             "Pickle support for the geometry")                                \
         .def_property_readonly(                                                \
             "__geo_interface__",                                               \
             [](const mapbox::geojson::geom_type &self) -> py::object {         \
                 return to_python(mapbox::geojson::geometry(self));             \
-            })                                                                 \
+            },                                                                 \
+            "Return the __geo_interface__ representation of the geometry")     \
         .def(                                                                  \
             "from_rapidjson",                                                  \
             [](mapbox::geojson::geom_type &self,                               \
@@ -994,14 +1134,17 @@ void bind_geojson(py::module &geojson)
                         .get<mapbox::geojson::geom_type>();                    \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)                                           \
-        .def("to_rapidjson",                                                   \
-             [](const mapbox::geojson::geom_type &self) {                      \
-                 RapidjsonAllocator allocator;                                 \
-                 auto json = mapbox::geojson::convert(                         \
-                     mapbox::geojson::geometry{self}, allocator);              \
-                 return json;                                                  \
-             })                                                                \
+            rvp::reference_internal,                                           \
+            "Initialize the geometry from a RapidJSON value")                  \
+        .def(                                                                  \
+            "to_rapidjson",                                                    \
+            [](const mapbox::geojson::geom_type &self) {                       \
+                RapidjsonAllocator allocator;                                  \
+                auto json = mapbox::geojson::convert(                          \
+                    mapbox::geojson::geometry{self}, allocator);               \
+                return json;                                                   \
+            },                                                                 \
+            "Convert the geometry to a RapidJSON value")                       \
         .def(                                                                  \
             "round",                                                           \
             [](mapbox::geojson::geom_type &self, int lon, int lat,             \
@@ -1012,55 +1155,63 @@ void bind_geojson(py::module &geojson)
                 return self;                                                   \
             },                                                                 \
             py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,              \
-            rvp::reference_internal) GEOMETRY_DEDUPLICATE_XYZ(geom_type)       \
+            rvp::reference_internal, "Round the coordinates of the geometry")  \
+            GEOMETRY_DEDUPLICATE_XYZ(geom_type)                                \
         .def(                                                                  \
             "bbox",                                                            \
             [](const mapbox::geojson::geom_type &self, bool with_z)            \
                 -> Eigen::VectorXd { return geom2bbox(self, with_z); },        \
-            py::kw_only(), "with_z"_a = false)
+            py::kw_only(), "with_z"_a = false,                                 \
+            "Compute the bounding box of the geometry")
 
     py::class_<mapbox::geojson::linear_ring,
                mapbox::geojson::linear_ring::container_type>(
-        geojson, "LinearRing", py::module_local()) //
-        .def(py::init<>())                         //
+        geojson, "LinearRing", py::module_local())               //
+        .def(py::init<>(), "Default constructor for LinearRing") //
         BIND_FOR_VECTOR_POINT_TYPE_PURE(linear_ring)
-        .def(py::self == py::self) //
-        .def(py::self != py::self) //
+        .def(py::self == py::self, "Check if two LinearRings are equal")     //
+        .def(py::self != py::self, "Check if two LinearRings are not equal") //
         //
         ;
 
     py::bind_vector<mapbox::geojson::multi_line_string::container_type>(
-        geojson, "LineStringList", py::module_local());
+        geojson, "LineStringList", py::module_local(), "A list of LineStrings");
 
     py::class_<mapbox::geojson::multi_line_string,
                mapbox::geojson::multi_line_string::container_type>(
         geojson, "MultiLineString", py::module_local()) //
-        .def(py::init<>())
-        .def(py::init<mapbox::geojson::multi_line_string::container_type>())
+        .def(py::init<>(), "Default constructor for MultiLineString")
+        .def(py::init<mapbox::geojson::multi_line_string::container_type>(),
+             "Construct MultiLineString from a container of LineStrings")
         .def(py::init([](std::vector<mapbox::geojson::point> line_string) {
-            return mapbox::geojson::multi_line_string({std::move(line_string)});
-        })) //
+                 return mapbox::geojson::multi_line_string(
+                     {std::move(line_string)});
+             }),
+             "Construct MultiLineString from a single LineString") //
         //
-        BIND_FOR_VECTOR_LINEAR_RING_TYPE(multi_line_string) //
-        .def(py::self == py::self)                          //
-        .def(py::self != py::self)                          //
+        BIND_FOR_VECTOR_LINEAR_RING_TYPE(multi_line_string)                   //
+        .def(py::self == py::self, "Check if two MultiLineStrings are equal") //
+        .def(py::self != py::self,
+             "Check if two MultiLineStrings are not equal") //
         //
         ;
 
     py::bind_vector<mapbox::geojson::polygon::container_type>(
-        geojson, "LinearRingList", py::module_local());
+        geojson, "LinearRingList", py::module_local(), "A list of LinearRings");
     py::class_<mapbox::geojson::polygon,
                mapbox::geojson::polygon::container_type>(geojson, "Polygon",
                                                          py::module_local()) //
-        .def(py::init<>())
-        .def(py::init<mapbox::geojson::polygon::container_type>())
+        .def(py::init<>(), "Default constructor for Polygon")
+        .def(py::init<mapbox::geojson::polygon::container_type>(),
+             "Construct Polygon from a container of LinearRings")
         .def(py::init([](std::vector<mapbox::geojson::point> shell) {
-            return mapbox::geojson::polygon({std::move(shell)});
-        })) //
+                 return mapbox::geojson::polygon({std::move(shell)});
+             }),
+             "Construct Polygon from a single LinearRing (shell)") //
         //
-        BIND_FOR_VECTOR_LINEAR_RING_TYPE(polygon) //
-        .def(py::self == py::self)                //
-        .def(py::self != py::self)                //
+        BIND_FOR_VECTOR_LINEAR_RING_TYPE(polygon)                         //
+        .def(py::self == py::self, "Check if two Polygons are equal")     //
+        .def(py::self != py::self, "Check if two Polygons are not equal") //
         //
         ;
 
@@ -1069,24 +1220,30 @@ void bind_geojson(py::module &geojson)
     py::class_<mapbox::geojson::multi_polygon,
                mapbox::geojson::multi_polygon::container_type>(
         geojson, "MultiPolygon", py::module_local()) //
-        .def(py::init<>())
-        .def(py::init<mapbox::geojson::multi_polygon>())
-        .def(py::init<mapbox::geojson::multi_polygon::container_type>())
+        .def(py::init<>(), "Default constructor for MultiPolygon")
+        .def(py::init<mapbox::geojson::multi_polygon>(),
+             "Copy constructor for MultiPolygon")
+        .def(py::init<mapbox::geojson::multi_polygon::container_type>(),
+             "Construct MultiPolygon from a container of Polygons")
         .def(py::init([](const Eigen::Ref<const MatrixXdRowMajor> &points) {
-            mapbox::geojson::multi_polygon self;
-            eigen2geom(points, self);
-            return self;
-        }))
+                 mapbox::geojson::multi_polygon self;
+                 eigen2geom(points, self);
+                 return self;
+             }),
+             "Construct MultiPolygon from a numpy array of points")
         .def(
             "as_numpy",
             [](mapbox::geojson::multi_polygon &self) -> Eigen::Map<RowVectors> {
                 return as_row_vectors(self);
             },
-            rvp::reference_internal)
-        .def("to_numpy",
-             [](const mapbox::geojson::polygon &self) -> RowVectors {
-                 return as_row_vectors(self);
-             }) //
+            rvp::reference_internal,
+            "Return a numpy view of the MultiPolygon coordinates")
+        .def(
+            "to_numpy",
+            [](const mapbox::geojson::polygon &self) -> RowVectors {
+                return as_row_vectors(self);
+            },
+            "Convert MultiPolygon to a numpy array") //
         .def(
             "from_numpy",
             [](mapbox::geojson::multi_polygon &self,
@@ -1095,43 +1252,54 @@ void bind_geojson(py::module &geojson)
                 eigen2geom(points, self);
                 return self;
             },
-            rvp::reference_internal) //
-                                     //
-        .def("__call__",
-             [](const mapbox::geojson::multi_polygon &self) {
-                 return to_python(self);
-             })
-        .def("__len__",
-             [](const mapbox::geojson::multi_polygon &self) -> int {
-                 return self.size();
-             })
+            rvp::reference_internal,
+            "Set MultiPolygon coordinates from a numpy array") //
+                                                               //
+        .def(
+            "__call__",
+            [](const mapbox::geojson::multi_polygon &self) {
+                return to_python(self);
+            },
+            "Convert MultiPolygon to a Python object")
+        .def(
+            "__len__",
+            [](const mapbox::geojson::multi_polygon &self) -> int {
+                return self.size();
+            },
+            "Return the number of Polygons in the MultiPolygon")
         .def(
             "__iter__",
             [](mapbox::geojson::multi_polygon &self) {
                 return py::make_iterator(self.begin(), self.end());
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>(),
+            "Return an iterator over the Polygons in the MultiPolygon")
         .def(
             "__getitem__",
             [](mapbox::geojson::multi_polygon &self,
                int index) -> mapbox::geojson::polygon & {
                 return self[index >= 0 ? index : index + (int)self.size()];
             },
-            rvp::reference_internal)
-        .def("__setitem__",
-             [](mapbox::geojson::multi_polygon &self, int index,
-                const mapbox::geojson::polygon &polygon) {
-                 self[index >= 0 ? index : index + (int)self.size()] = polygon;
-                 return polygon;
-             })
-        .def("__setitem__",
-             [](mapbox::geojson::multi_polygon &self, int index,
-                const Eigen::Ref<const MatrixXdRowMajor> &points) {
-                 auto &polygon =
-                     self[index >= 0 ? index : index + (int)self.size()];
-                 eigen2geom(points, polygon);
-                 return polygon;
-             })
+            rvp::reference_internal,
+            "Get a Polygon from the MultiPolygon by index")
+        .def(
+            "__setitem__",
+            [](mapbox::geojson::multi_polygon &self, int index,
+               const mapbox::geojson::polygon &polygon) {
+                self[index >= 0 ? index : index + (int)self.size()] = polygon;
+                return polygon;
+            },
+            "Set a Polygon in the MultiPolygon by index")
+        .def(
+            "__setitem__",
+            [](mapbox::geojson::multi_polygon &self, int index,
+               const Eigen::Ref<const MatrixXdRowMajor> &points) {
+                auto &polygon =
+                    self[index >= 0 ? index : index + (int)self.size()];
+                eigen2geom(points, polygon);
+                return polygon;
+            },
+            "Set a Polygon in the MultiPolygon by index using a numpy array")
         .def(
             "clear",
             [](mapbox::geojson::multi_polygon &self)
@@ -1139,7 +1307,7 @@ void bind_geojson(py::module &geojson)
                 self.clear();
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal, "Clear all Polygons from the MultiPolygon")
         .def(
             "pop_back",
             [](mapbox::geojson::multi_polygon &self)
@@ -1147,7 +1315,8 @@ void bind_geojson(py::module &geojson)
                 self.pop_back();
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Remove the last Polygon from the MultiPolygon")
         .def(
             "push_back",
             [](mapbox::geojson::multi_polygon &self,
@@ -1158,7 +1327,8 @@ void bind_geojson(py::module &geojson)
                 self.push_back(std::move(polygon));
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Add a new Polygon to the MultiPolygon from a numpy array")
         .def(
             "push_back",
             [](mapbox::geojson::multi_polygon &self,
@@ -1167,17 +1337,19 @@ void bind_geojson(py::module &geojson)
                 self.push_back(polygon);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal, "Add a new Polygon to the MultiPolygon")
             copy_deepcopy_clone(mapbox::geojson::multi_polygon)
         .def(py::pickle(
-            [](const mapbox::geojson::multi_polygon &self) {
-                return to_python(mapbox::geojson::geometry{self});
-            },
-            [](py::object o) -> mapbox::geojson::multi_polygon {
-                auto json = to_rapidjson(o);
-                return mapbox::geojson::convert<mapbox::geojson::geometry>(json)
-                    .get<mapbox::geojson::multi_polygon>();
-            }))
+                 [](const mapbox::geojson::multi_polygon &self) {
+                     return to_python(mapbox::geojson::geometry{self});
+                 },
+                 [](py::object o) -> mapbox::geojson::multi_polygon {
+                     auto json = to_rapidjson(o);
+                     return mapbox::geojson::convert<mapbox::geojson::geometry>(
+                                json)
+                         .get<mapbox::geojson::multi_polygon>();
+                 }),
+             "Pickle support for MultiPolygon")
         .def(
             "round",
             [](mapbox::geojson::multi_polygon &self, int lon, int lat,
@@ -1190,12 +1362,14 @@ void bind_geojson(py::module &geojson)
                 return self;
             },
             py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Round the coordinates of the MultiPolygon")
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::multi_polygon &self) -> py::object {
                 return to_python(mapbox::geojson::geometry(self));
-            })
+            },
+            "Return the __geo_interface__ representation of the MultiPolygon")
         .def(
             "from_rapidjson",
             [](mapbox::geojson::multi_polygon &self,
@@ -1204,21 +1378,26 @@ void bind_geojson(py::module &geojson)
                            .get<mapbox::geojson::multi_polygon>();
                 return self;
             },
-            rvp::reference_internal)
-        .def("to_rapidjson",
-             [](const mapbox::geojson::multi_polygon &self) {
-                 RapidjsonAllocator allocator;
-                 auto json = mapbox::geojson::convert(
-                     mapbox::geojson::geometry{self}, allocator);
-                 return json;
-             })
+            rvp::reference_internal,
+            "Set the MultiPolygon from a RapidJSON value")
+        .def(
+            "to_rapidjson",
+            [](const mapbox::geojson::multi_polygon &self) {
+                RapidjsonAllocator allocator;
+                auto json = mapbox::geojson::convert(
+                    mapbox::geojson::geometry{self}, allocator);
+                return json;
+            },
+            "Convert the MultiPolygon to a RapidJSON value")
         .def(
             "bbox",
             [](const mapbox::geojson::multi_polygon &self, bool with_z)
                 -> Eigen::VectorXd { return geom2bbox(self, with_z); },
-            py::kw_only(), "with_z"_a = false)
-        .def(py::self == py::self) //
-        .def(py::self != py::self) //
+            py::kw_only(), "with_z"_a = false,
+            "Compute the bounding box of the MultiPolygon")
+        .def(py::self == py::self, "Check if two MultiPolygons are equal") //
+        .def(py::self != py::self,
+             "Check if two MultiPolygons are not equal") //
         //
         ;
 
@@ -1227,12 +1406,14 @@ void bind_geojson(py::module &geojson)
     py::class_<mapbox::geojson::geometry_collection,
                mapbox::geojson::geometry_collection::container_type>(
         geojson, "GeometryCollection", py::module_local()) //
-        .def(py::init<>())
-        .def(py::init(
-            [](const mapbox::geojson::geometry_collection &g) { return g; }))
+        .def(py::init<>(), "Default constructor for GeometryCollection")
+        .def(py::init([](const mapbox::geojson::geometry_collection &g) {
+                 return g;
+             }),
+             "Copy constructor for GeometryCollection")
         .def(py::init(
                  [](int N) { return mapbox::geojson::geometry_collection(N); }),
-             "N"_a)
+             "N"_a, "Construct a GeometryCollection with N empty geometries")
         .def(
             "resize",
             [](mapbox::geojson::geometry_collection &self,
@@ -1240,7 +1421,8 @@ void bind_geojson(py::module &geojson)
                 self.resize(N);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Resize the GeometryCollection to contain N geometries")
 #define SETITEM_FOR_TYPE(geom_type)                                            \
     .def(                                                                      \
         "__setitem__",                                                         \
@@ -1249,7 +1431,8 @@ void bind_geojson(py::module &geojson)
             self[index >= 0 ? index : index + (int)self.size()] = g;           \
             return self;                                                       \
         },                                                                     \
-        rvp::reference_internal)
+        rvp::reference_internal,                                               \
+        "Set a geometry in the GeometryCollection by index")
         //
         SETITEM_FOR_TYPE(geometry)            //
         SETITEM_FOR_TYPE(point)               //
@@ -1267,7 +1450,8 @@ void bind_geojson(py::module &geojson)
                 self.clear();
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Clear all geometries from the GeometryCollection")
         .def(
             "pop_back",
             [](mapbox::geojson::geometry_collection &self)
@@ -1275,7 +1459,8 @@ void bind_geojson(py::module &geojson)
                 self.pop_back();
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Remove the last geometry from the GeometryCollection")
 #define PUSH_BACK_FOR_TYPE(geom_type)                                          \
     .def(                                                                      \
         "push_back",                                                           \
@@ -1284,7 +1469,8 @@ void bind_geojson(py::module &geojson)
             self.push_back(g);                                                 \
             return self;                                                       \
         },                                                                     \
-        rvp::reference_internal)
+        rvp::reference_internal,                                               \
+        "Add a new geometry to the GeometryCollection")
         //
         PUSH_BACK_FOR_TYPE(geometry)            //
         PUSH_BACK_FOR_TYPE(point)               //
@@ -1296,14 +1482,16 @@ void bind_geojson(py::module &geojson)
         PUSH_BACK_FOR_TYPE(geometry_collection) //
 #undef PUSH_BACK_FOR_TYPE
         .def(py::pickle(
-            [](const mapbox::geojson::geometry_collection &self) {
-                return to_python(mapbox::geojson::geometry{self});
-            },
-            [](py::object o) -> mapbox::geojson::geometry_collection {
-                auto json = to_rapidjson(o);
-                return mapbox::geojson::convert<mapbox::geojson::geometry>(json)
-                    .get<mapbox::geojson::geometry_collection>();
-            }))
+                 [](const mapbox::geojson::geometry_collection &self) {
+                     return to_python(mapbox::geojson::geometry{self});
+                 },
+                 [](py::object o) -> mapbox::geojson::geometry_collection {
+                     auto json = to_rapidjson(o);
+                     return mapbox::geojson::convert<mapbox::geojson::geometry>(
+                                json)
+                         .get<mapbox::geojson::geometry_collection>();
+                 }),
+             "Pickle support for GeometryCollection")
         .def(
             "round",
             [](mapbox::geojson::geometry_collection &self, int lon, int lat,
@@ -1314,13 +1502,16 @@ void bind_geojson(py::module &geojson)
                 return self;
             },
             py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Round the coordinates of all geometries in the GeometryCollection")
             GEOMETRY_DEDUPLICATE_XYZ(geometry_collection)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::geometry_collection &self) -> py::object {
                 return to_python(mapbox::geojson::geometry(self));
-            })
+            },
+            "Return the __geo_interface__ representation of the "
+            "GeometryCollection")
         .def(
             "from_rapidjson",
             [](mapbox::geojson::geometry_collection &self,
@@ -1330,85 +1521,106 @@ void bind_geojson(py::module &geojson)
                            .get<mapbox::geojson::geometry_collection>();
                 return self;
             },
-            rvp::reference_internal)
-        .def("to_rapidjson",
-             [](const mapbox::geojson::geometry_collection &self) {
-                 RapidjsonAllocator allocator;
-                 auto json = mapbox::geojson::convert(
-                     mapbox::geojson::geometry{self}, allocator);
-                 return json;
-             })
-        .def("__call__",
-             [](const mapbox::geojson::geometry_collection &self) {
-                 return to_python(self);
-             })
-        .def(py::self == py::self) //
-        .def(py::self != py::self) //
+            rvp::reference_internal,
+            "Set the GeometryCollection from a RapidJSON value")
+        .def(
+            "to_rapidjson",
+            [](const mapbox::geojson::geometry_collection &self) {
+                RapidjsonAllocator allocator;
+                auto json = mapbox::geojson::convert(
+                    mapbox::geojson::geometry{self}, allocator);
+                return json;
+            },
+            "Convert the GeometryCollection to a RapidJSON value")
+        .def(
+            "__call__",
+            [](const mapbox::geojson::geometry_collection &self) {
+                return to_python(self);
+            },
+            "Convert the GeometryCollection to a Python object")
+        .def(py::self == py::self,
+             "Check if two GeometryCollections are equal") //
+        .def(py::self != py::self,
+             "Check if two GeometryCollections are not equal") //
         ;
 
     auto geojson_value =
         py::class_<mapbox::geojson::value>(geojson, "value", py::module_local())
-            .def(py::init<>())
+            .def(py::init<>(), "Default constructor for GeoJSON value")
             .def(
-                py::init([](const py::object &obj) { return to_geojson_value(obj); }))
+                py::init([](const py::object &obj) { return to_geojson_value(obj); }),
+                "Construct a GeoJSON value from a Python object")
             .def("GetType",
                  [](const mapbox::geojson::value &self) {
                     return get_type(self);
-                 })
+                 },
+                 "Get the type of the GeoJSON value")
             .def("__call__",
                  [](const mapbox::geojson::value &self) {
                      return to_python(self);
-                 })
+                 },
+                 "Convert the GeoJSON value to a Python object")
             .def("Get",
                  [](const mapbox::geojson::value &self) {
                      return to_python(self);
-                 })
+                 },
+                 "Get the GeoJSON value as a Python object")
             .def("GetBool",
-                 [](mapbox::geojson::value &self) { return self.get<bool>(); })
+                 [](mapbox::geojson::value &self) { return self.get<bool>(); },
+                 "Get the GeoJSON value as a boolean")
             .def("GetUint64",
                  [](mapbox::geojson::value &self) {
                      return self.get<uint64_t>();
-                 })
+                 },
+                 "Get the GeoJSON value as an unsigned 64-bit integer")
             .def("GetInt64",
                  [](mapbox::geojson::value &self) {
                      return self.get<int64_t>();
-                 })
+                 },
+                 "Get the GeoJSON value as a signed 64-bit integer")
             .def("GetDouble",
                  [](mapbox::geojson::value &self) -> double & {
                      return self.get<double>();
-                 })
+                 },
+                 "Get the GeoJSON value as a double")
             .def("GetString",
                  [](mapbox::geojson::value &self) -> std::string & {
                      return self.get<std::string>();
-                 })
+                 },
+                 "Get the GeoJSON value as a string")
             // casters
             .def("is_object",
                  [](const mapbox::geojson::value &self) {
                      return self.is<mapbox::geojson::value::object_type>();
-                 })
+                 },
+                 "Check if the GeoJSON value is an object")
             .def("as_object",
                  [](mapbox::geojson::value &self)
                      -> mapbox::geojson::value::object_type & {
                          return self.get<mapbox::geojson::value::object_type>();
                      },
-                 rvp::reference_internal)
+                 rvp::reference_internal,
+                 "Get the GeoJSON value as an object")
             .def("is_array",
                  [](const mapbox::geojson::value &self) {
                      return self.is<mapbox::geojson::value::array_type>();
-                 })
+                 },
+                 "Check if the GeoJSON value is an array")
             .def("as_array",
                  [](mapbox::geojson::value &self)
                      -> mapbox::geojson::value::array_type & {
                          return self.get<mapbox::geojson::value::array_type>();
                      },
-                 rvp::reference_internal)
+                 rvp::reference_internal,
+                 "Get the GeoJSON value as an array")
             .def("__getitem__",
                  [](mapbox::geojson::value &self,
                     int index) -> mapbox::geojson::value & {
                      auto &arr = self.get<mapbox::geojson::value::array_type>();
                      return arr[index >= 0 ? index : index + (int)arr.size()];
                  },
-                 rvp::reference_internal)
+                 rvp::reference_internal,
+                 "Get an item from the GeoJSON array by index")
             .def("__getitem__",
                  [](mapbox::geojson::value &self,
                     const std::string &key) -> mapbox::geojson::value & {
@@ -1416,7 +1628,8 @@ void bind_geojson(py::module &geojson)
                          self.get<mapbox::geojson::value::object_type>();
                      return obj.at(key);
                  },
-                 rvp::reference_internal)                         //
+                 rvp::reference_internal,
+                 "Get an item from the GeoJSON object by key")                         //
             .def(
                 "get", // get by key
                 [](mapbox::geojson::value &self,
@@ -1429,14 +1642,16 @@ void bind_geojson(py::module &geojson)
                     }
                     return &itr->second;
                 },
-                "key"_a, rvp::reference_internal)
+                "key"_a, rvp::reference_internal,
+                "Get an item from the GeoJSON object by key, returning None if not found")
             .def("set", // set value
                  [](mapbox::geojson::value &self,
                     const py::object &obj) -> mapbox::geojson::value & {
                      self = to_geojson_value(obj);
                      return self;
                  },
-                 rvp::reference_internal)
+                 rvp::reference_internal,
+                 "Set the GeoJSON value from a Python object")
             .def("__setitem__",
                  [](mapbox::geojson::value &self, const std::string &key,
                     const py::object &value) {
@@ -1444,7 +1659,8 @@ void bind_geojson(py::module &geojson)
                          self.get<mapbox::geojson::value::object_type>();
                      obj[key] = to_geojson_value(value);
                      return value;
-                 })
+                 },
+                 "Set an item in the GeoJSON object by key")
             .def("__setitem__",
                  [](mapbox::geojson::value &self, int index,
                     const py::object &value) {
@@ -1452,47 +1668,54 @@ void bind_geojson(py::module &geojson)
                      arr[index >= 0 ? index : index + (int)arr.size()] =
                          to_geojson_value(value);
                      return value;
-                 })
+                 },
+                 "Set an item in the GeoJSON array by index")
             .def("keys",
                  [](mapbox::geojson::value &self) {
                      std::vector<std::string> keys;
                      auto &obj =
                          self.get<mapbox::geojson::value::object_type>();
                      return py::make_key_iterator(obj);
-                 }, py::keep_alive<0, 1>())
+                 }, py::keep_alive<0, 1>(),
+                 "Get an iterator over the keys of the GeoJSON object")
             .def("values",
                  [](mapbox::geojson::value &self) {
                      std::vector<std::string> keys;
                      auto &obj =
                          self.get<mapbox::geojson::value::object_type>();
                      return py::make_value_iterator(obj);
-                 }, py::keep_alive<0, 1>())
+                 }, py::keep_alive<0, 1>(),
+                 "Get an iterator over the values of the GeoJSON object")
             .def("items",
                  [](mapbox::geojson::value &self) {
                      auto &obj =
                          self.get<mapbox::geojson::value::object_type>();
                      return py::make_iterator(obj.begin(), obj.end());
                  },
-                 py::keep_alive<0, 1>())
+                 py::keep_alive<0, 1>(),
+                 "Get an iterator over the items of the GeoJSON object")
 
             .def("__delitem__",
                  [](mapbox::geojson::value &self, const std::string &key) {
                      auto &obj =
                          self.get<mapbox::geojson::value::object_type>();
                      return obj.erase(key);
-                 })
+                 },
+                 "Delete an item from the GeoJSON object by key")
             .def("__delitem__",
                  [](mapbox::geojson::value &self, int index) {
                      auto &arr = self.get<mapbox::geojson::value::array_type>();
                      arr.erase(arr.begin() +
                                (index >= 0 ? index : index + (int)arr.size()));
-                 })
+                 },
+                 "Delete an item from the GeoJSON array by index")
             .def("clear",
                  [](mapbox::geojson::value &self) -> mapbox::geojson::value & {
                      geojson_value_clear(self);
                      return self;
                  },
-                 rvp::reference_internal)
+                 rvp::reference_internal,
+                 "Clear the GeoJSON value")
             .def("push_back",
                  [](mapbox::geojson::value &self,
                     const py::object &value) -> mapbox::geojson::value & {
@@ -1500,44 +1723,51 @@ void bind_geojson(py::module &geojson)
                      arr.push_back(to_geojson_value(value));
                      return self;
                  },
-                 rvp::reference_internal)
+                 rvp::reference_internal,
+                 "Add a value to the end of the GeoJSON array")
             .def("pop_back",
                  [](mapbox::geojson::value &self) -> mapbox::geojson::value & {
                      auto &arr = self.get<mapbox::geojson::value::array_type>();
                      arr.pop_back();
                      return self;
                  },
-                 rvp::reference_internal)
+                 rvp::reference_internal,
+                 "Remove the last value from the GeoJSON array")
             .def("__len__",
                  [](const mapbox::geojson::value &self) -> int {
                     return __len__(self);
-                 })
+                 },
+                 "Get the length of the GeoJSON value")
             .def("__bool__",
                  [](const mapbox::geojson::value &self) -> bool {
                     return __bool__(self);
-                 })
+                 },
+                 "Check if the GeoJSON value is truthy")
             .def(
                 "from_rapidjson",
                 [](mapbox::geojson::value &self, const RapidjsonValue &json) -> mapbox::geojson::value & {
                     self = mapbox::geojson::convert<mapbox::geojson::value>(json);
                     return self;
                 },
-                rvp::reference_internal)
+                rvp::reference_internal,
+                "Set the GeoJSON value from a RapidJSON value")
             .def("to_rapidjson",
                 [](const mapbox::geojson::value &self) {
                     return to_rapidjson(self);
-                })
+                },
+                "Convert the GeoJSON value to a RapidJSON value")
         //
         //
         ;
 
     py::bind_vector<mapbox::geojson::value::array_type>(
         geojson_value, "array_type", py::module_local())
-        .def(py::init<>())
+        .def(py::init<>(), "Default constructor for GeoJSON array")
         .def(py::init([](const py::handle &arr) {
-            return to_geojson_value(arr)
-                .get<mapbox::geojson::value::array_type>();
-        }))
+                 return to_geojson_value(arr)
+                     .get<mapbox::geojson::value::array_type>();
+             }),
+             "Construct a GeoJSON array from a Python iterable")
         .def(
             "clear",
             [](mapbox::geojson::value::array_type &self)
@@ -1545,14 +1775,15 @@ void bind_geojson(py::module &geojson)
                 self.clear();
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal, "Clear the GeoJSON array")
         .def(
             "__getitem__",
             [](mapbox::geojson::value::array_type &self,
                int index) -> mapbox::geojson::value & {
                 return self[index >= 0 ? index : index + (int)self.size()];
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Get an item from the GeoJSON array by index")
         .def(
             "__setitem__",
             [](mapbox::geojson::value::array_type &self, int index,
@@ -1561,7 +1792,8 @@ void bind_geojson(py::module &geojson)
                 self[index] = to_geojson_value(obj);
                 return self[index]; // why not return obj?
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Set an item in the GeoJSON array by index")
         .def(
             "from_rapidjson",
             [](mapbox::geojson::value::array_type &self,
@@ -1571,25 +1803,31 @@ void bind_geojson(py::module &geojson)
                            .get<mapbox::geojson::value::array_type>();
                 return self;
             },
-            rvp::reference_internal)
-        .def("to_rapidjson",
-             [](const mapbox::geojson::value::array_type &self) {
-                 return to_rapidjson(self);
-             })
-        .def("__call__",
-             [](const mapbox::geojson::value::array_type &self) {
-                 return to_python(self);
-             })
+            rvp::reference_internal,
+            "Set the GeoJSON array from a RapidJSON value")
+        .def(
+            "to_rapidjson",
+            [](const mapbox::geojson::value::array_type &self) {
+                return to_rapidjson(self);
+            },
+            "Convert the GeoJSON array to a RapidJSON value")
+        .def(
+            "__call__",
+            [](const mapbox::geojson::value::array_type &self) {
+                return to_python(self);
+            },
+            "Convert the GeoJSON array to a Python list")
         //
         ;
 
     py::bind_map<mapbox::geojson::value::object_type>(
         geojson_value, "object_type", py::module_local())
-        .def(py::init<>())
+        .def(py::init<>(), "Default constructor for GeoJSON object")
         .def(py::init([](const py::object &obj) {
-            return to_geojson_value(obj)
-                .get<mapbox::geojson::value::object_type>();
-        }))
+                 return to_geojson_value(obj)
+                     .get<mapbox::geojson::value::object_type>();
+             }),
+             "Construct a GeoJSON object from a Python dict")
         .def(
             "clear",
             [](mapbox::geojson::value::object_type &self)
@@ -1597,7 +1835,7 @@ void bind_geojson(py::module &geojson)
                 self.clear();
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal, "Clear the GeoJSON object")
         .def(
             "__setitem__",
             [](mapbox::geojson::value::object_type &self,
@@ -1605,25 +1843,29 @@ void bind_geojson(py::module &geojson)
                 self[key] = to_geojson_value(obj);
                 return self[key];
             },
-            rvp::reference_internal)
+            rvp::reference_internal, "Set an item in the GeoJSON object by key")
         .def(
             "keys",
             [](const mapbox::geojson::value::object_type &self) {
                 return py::make_key_iterator(self.begin(), self.end());
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>(),
+            "Get an iterator over the keys of the GeoJSON object")
         .def(
             "values",
             [](const mapbox::geojson::value::object_type &self) {
                 return py::make_value_iterator(self.begin(), self.end());
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>(),
+            "Get an iterator over the values of the GeoJSON object")
         .def(
             "items",
             [](mapbox::geojson::value::object_type &self) {
                 return py::make_iterator(self.begin(), self.end());
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>(),
+            "Get an iterator over the items (key-value pairs) of the GeoJSON "
+            "object")
         .def(
             "from_rapidjson",
             [](mapbox::geojson::value::object_type &self,
@@ -1633,29 +1875,39 @@ void bind_geojson(py::module &geojson)
                     mapbox::geojson::value::object_type>(json);
                 return self;
             },
-            rvp::reference_internal)
-        .def("to_rapidjson",
-             [](const mapbox::geojson::value::object_type &self) {
-                 return to_rapidjson(self);
-             })
-        .def("__call__",
-             [](const mapbox::geojson::value::object_type &self) {
-                 return to_python(self);
-             })
+            rvp::reference_internal,
+            "Convert a RapidJSON value to a GeoJSON object")
+        .def(
+            "to_rapidjson",
+            [](const mapbox::geojson::value::object_type &self) {
+                return to_rapidjson(self);
+            },
+            "Convert the GeoJSON object to a RapidJSON value")
+        .def(
+            "__call__",
+            [](const mapbox::geojson::value::object_type &self) {
+                return to_python(self);
+            },
+            "Convert the GeoJSON object to a Python dict")
         //
         ;
 
     py::class_<mapbox::geojson::feature>(geojson, "Feature", py::module_local())
-        .def(py::init<>())
+        .def(py::init<>(), "Default constructor for GeoJSON Feature")
         .def(py::init(
-            [](const mapbox::geojson::feature &other) { return other; }))
+                 [](const mapbox::geojson::feature &other) { return other; }),
+             "Copy constructor for GeoJSON Feature")
         .def(py::init([](const RapidjsonValue &feature) {
-            return mapbox::geojson::convert<mapbox::geojson::feature>(feature);
-        }))
+                 return mapbox::geojson::convert<mapbox::geojson::feature>(
+                     feature);
+             }),
+             "Construct a GeoJSON Feature from a RapidJSON value")
         .def(py::init([](const py::dict &feature) {
-            auto json = to_rapidjson(feature);
-            return mapbox::geojson::convert<mapbox::geojson::feature>(json);
-        }))
+                 auto json = to_rapidjson(feature);
+                 return mapbox::geojson::convert<mapbox::geojson::feature>(
+                     json);
+             }),
+             "Construct a GeoJSON Feature from a Python dict")
         //
         BIND_PY_FLUENT_ATTRIBUTE(mapbox::geojson::feature,  //
                                  mapbox::geojson::geometry, //
@@ -1677,14 +1929,15 @@ void bind_geojson(py::module &geojson)
             self.geometry = geometry;                                          \
             return self;                                                       \
         },                                                                     \
-        #geom_type##_a, rvp::reference_internal) //
-                                                 //
-        GeometryFromType(point)                  //
-        GeometryFromType(multi_point)            //
-        GeometryFromType(line_string)            //
-        GeometryFromType(multi_line_string)      //
-        GeometryFromType(polygon)                //
-        GeometryFromType(multi_polygon)          //
+        #geom_type##_a, rvp::reference_internal,                               \
+        "Set the geometry of the feature to the given geometry object") //
+                                                                        //
+        GeometryFromType(point)                                         //
+        GeometryFromType(multi_point)                                   //
+        GeometryFromType(line_string)                                   //
+        GeometryFromType(multi_line_string)                             //
+        GeometryFromType(polygon)                                       //
+        GeometryFromType(multi_polygon)                                 //
 #undef GeometryFromType
 
         .def(
@@ -1696,7 +1949,8 @@ void bind_geojson(py::module &geojson)
                     mapbox::geojson::convert<mapbox::geojson::geometry>(json);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Set the geometry of the feature from a Python object")
         .def(
             "properties",
             [](mapbox::geojson::feature &self,
@@ -1707,7 +1961,8 @@ void bind_geojson(py::module &geojson)
                         json);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Set the properties of the feature from a Python object")
         .def(
             "properties",
             [](mapbox::geojson::feature &self,
@@ -1719,7 +1974,7 @@ void bind_geojson(py::module &geojson)
                 }
                 return &itr->second;
             },
-            rvp::reference_internal)
+            rvp::reference_internal, "Get a property value by key")
         .def(
             "properties",
             [](mapbox::geojson::feature &self, const std::string &key,
@@ -1731,9 +1986,11 @@ void bind_geojson(py::module &geojson)
                 }
                 return self;
             },
-            rvp::reference_internal)
-        .def("id",
-             [](mapbox::geojson::feature &self) { return to_python(self.id); })
+            rvp::reference_internal, "Set a property value by key")
+        .def(
+            "id",
+            [](mapbox::geojson::feature &self) { return to_python(self.id); },
+            "Get the feature ID")
         .def(
             "id",
             [](mapbox::geojson::feature &self,
@@ -1741,7 +1998,7 @@ void bind_geojson(py::module &geojson)
                 self.id = to_feature_id(value);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal, "Set the feature ID")
         //
         .def(
             "__getitem__",
@@ -1755,34 +2012,39 @@ void bind_geojson(py::module &geojson)
                 }
                 return &itr->second;
             },
-            rvp::reference_internal)
-        .def("__setitem__",
-             [](mapbox::geojson::feature &self, const std::string &key,
-                const py::object &value) {
-                 if (key == "type" || key == "geometry" ||
-                     key == "properties" || key == "id") {
-                     throw pybind11::key_error(key);
-                 }
-                 self.custom_properties[key] = to_geojson_value(value);
-                 return value;
-             })
-        .def("__delitem__",
-             [](mapbox::geojson::feature &self, const std::string &key) {
-                 return self.custom_properties.erase(key);
-             })
+            rvp::reference_internal, "Get a custom property value by key")
+        .def(
+            "__setitem__",
+            [](mapbox::geojson::feature &self, const std::string &key,
+               const py::object &value) {
+                if (key == "type" || key == "geometry" || key == "properties" ||
+                    key == "id") {
+                    throw pybind11::key_error(key);
+                }
+                self.custom_properties[key] = to_geojson_value(value);
+                return value;
+            },
+            "Set a custom property value by key")
+        .def(
+            "__delitem__",
+            [](mapbox::geojson::feature &self, const std::string &key) {
+                return self.custom_properties.erase(key);
+            },
+            "Delete a custom property by key")
         .def(
             "keys",
             [](mapbox::geojson::feature &self) {
                 return py::make_key_iterator(self.custom_properties);
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>(), "Get an iterator over custom property keys")
         .def(
             "items",
             [](mapbox::geojson::feature &self) {
                 return py::make_iterator(self.custom_properties.begin(),
                                          self.custom_properties.end());
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>(),
+            "Get an iterator over custom property items")
         .def(
             "clear",
             [](mapbox::geojson::feature &self) -> mapbox::geojson::feature & {
@@ -1793,29 +2055,35 @@ void bind_geojson(py::module &geojson)
                 self.custom_properties.clear();
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Clear all properties and geometry of the feature")
         .def(
             "bbox",
             [](const mapbox::geojson::feature &self, bool with_z)
                 -> Eigen::VectorXd { return geom2bbox(self.geometry, with_z); },
-            py::kw_only(), "with_z"_a = false)
-        .def(py::self == py::self) //
-        .def(py::self != py::self) //
+            py::kw_only(), "with_z"_a = false,
+            "Compute the bounding box of the feature")
+        .def(py::self == py::self, "Check if two features are equal")     //
+        .def(py::self != py::self, "Check if two features are not equal") //
         //
         .def(
             "as_numpy",
             [](mapbox::geojson::feature &self) -> Eigen::Map<RowVectors> {
                 return as_row_vectors(self.geometry);
             },
-            rvp::reference_internal)
-        .def("to_numpy",
-             [](const mapbox::geojson::feature &self) -> RowVectors {
-                 return as_row_vectors(self.geometry);
-             }) //
-        .def("__call__",
-             [](const mapbox::geojson::feature &self) {
-                 return to_python(self);
-             })
+            rvp::reference_internal, "Get a numpy view of the feature geometry")
+        .def(
+            "to_numpy",
+            [](const mapbox::geojson::feature &self) -> RowVectors {
+                return as_row_vectors(self.geometry);
+            },
+            "Convert the feature geometry to a numpy array") //
+        .def(
+            "__call__",
+            [](const mapbox::geojson::feature &self) {
+                return to_python(self);
+            },
+            "Convert the feature to a Python dict")
         .def(
             "from_rapidjson",
             [](mapbox::geojson::feature &self,
@@ -1823,7 +2091,8 @@ void bind_geojson(py::module &geojson)
                 self = mapbox::geojson::convert<mapbox::geojson::feature>(json);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Initialize the feature from a RapidJSON value")
         .def(
             "from_rapidjson",
             [](mapbox::geojson::feature &self,
@@ -1832,12 +2101,15 @@ void bind_geojson(py::module &geojson)
                     to_rapidjson(feature));
                 return self;
             },
-            rvp::reference_internal)
-        .def("to_rapidjson",
-             [](const mapbox::geojson::feature &self) {
-                 RapidjsonAllocator allocator;
-                 return mapbox::geojson::convert(self, allocator);
-             })
+            rvp::reference_internal,
+            "Initialize the feature from a Python object")
+        .def(
+            "to_rapidjson",
+            [](const mapbox::geojson::feature &self) {
+                RapidjsonAllocator allocator;
+                return mapbox::geojson::convert(self, allocator);
+            },
+            "Convert the feature to a RapidJSON value")
         .def(
             "from_geobuf",
             [](mapbox::geojson::feature &self,
@@ -1846,7 +2118,7 @@ void bind_geojson(py::module &geojson)
                 self = std::move(geojson.get<mapbox::geojson::feature>());
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal, "Initialize the feature from Geobuf bytes")
         .def(
             "to_geobuf",
             [](const mapbox::geojson::feature &self, //
@@ -1859,7 +2131,7 @@ void bind_geojson(py::module &geojson)
             py::kw_only(),       //
             "precision"_a = 8,   //
             "only_xy"_a = false, //
-            "round_z"_a = std::nullopt)
+            "round_z"_a = std::nullopt, "Convert the feature to Geobuf bytes")
         .def(
             "load",
             [](mapbox::geojson::feature &self,
@@ -1874,7 +2146,8 @@ void bind_geojson(py::module &geojson)
                 self = mapbox::geojson::convert<mapbox::geojson::feature>(json);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Load a feature from a file (GeoJSON or Geobuf)")
         .def(
             "dump",
             [](const mapbox::geojson::feature &self, //
@@ -1898,7 +2171,8 @@ void bind_geojson(py::module &geojson)
             "indent"_a = false,      //
             "sort_keys"_a = false,   //
             "precision"_a = 8,       //
-            "only_xy"_a = false)
+            "only_xy"_a = false,
+            "Dump the feature to a file (GeoJSON or Geobuf)")
         //
         copy_deepcopy_clone(mapbox::geojson::feature)
         //
@@ -1910,7 +2184,8 @@ void bind_geojson(py::module &geojson)
                 return self;
             },
             py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
-            rvp::reference_internal) //
+            rvp::reference_internal,
+            "Round the coordinates of the feature geometry") //
         GEOMETRY_DEDUPLICATE_XYZ(feature)
         //
         ;
@@ -1924,15 +2199,17 @@ void bind_geojson(py::module &geojson)
     auto fc_binding = py::class_<mapbox::geojson::feature_collection,
                                  std::vector<mapbox::geojson::feature>>(
         geojson, "FeatureCollection", py::module_local());
-    fc_binding.def(py::init<>())
-        .def(py::init(
-            [](const mapbox::geojson::feature_collection &g) { return g; }))
+    fc_binding.def(py::init<>(), "Initialize an empty FeatureCollection")
+        .def(py::init([](const mapbox::geojson::feature_collection &g) {
+                 return g;
+             }),
+             "Initialize a FeatureCollection from another FeatureCollection")
         .def(py::init([](int N) {
                  mapbox::geojson::feature_collection fc;
                  fc.resize(N);
                  return fc;
              }),
-             "N"_a)
+             "N"_a, "Initialize a FeatureCollection with N empty features")
         .def(
             "resize",
             [](mapbox::geojson::feature_collection &self,
@@ -1940,12 +2217,15 @@ void bind_geojson(py::module &geojson)
                 self.resize(N);
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Resize the FeatureCollection to contain N features")
         //
-        .def("__call__",
-             [](const mapbox::geojson::feature_collection &self) {
-                 return to_python(self);
-             }) //
+        .def(
+            "__call__",
+            [](const mapbox::geojson::feature_collection &self) {
+                return to_python(self);
+            },
+            "Convert the FeatureCollection to a Python dictionary") //
         .def(
             "round",
             [](mapbox::geojson::feature_collection &self, int lon, int lat,
@@ -1956,7 +2236,8 @@ void bind_geojson(py::module &geojson)
                 return self;
             },
             py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Round the coordinates of all features in the collection")
             GEOMETRY_DEDUPLICATE_XYZ(feature_collection)
         // round
         //
@@ -1970,13 +2251,16 @@ void bind_geojson(py::module &geojson)
                                   .get<mapbox::geojson::feature_collection>());
                 return self;
             },
-            rvp::reference_internal)
-        .def("to_rapidjson",
-             [](const mapbox::geojson::feature_collection &self) {
-                 RapidjsonAllocator allocator;
-                 auto json = mapbox::geojson::convert(self, allocator);
-                 return json;
-             })
+            rvp::reference_internal,
+            "Load the FeatureCollection from a RapidJSON value")
+        .def(
+            "to_rapidjson",
+            [](const mapbox::geojson::feature_collection &self) {
+                RapidjsonAllocator allocator;
+                auto json = mapbox::geojson::convert(self, allocator);
+                return json;
+            },
+            "Convert the FeatureCollection to a RapidJSON value")
         //
         .def(
             "from_geobuf",
@@ -1988,7 +2272,8 @@ void bind_geojson(py::module &geojson)
                     geojson.get<mapbox::geojson::feature_collection>());
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Load the FeatureCollection from Geobuf bytes")
         .def(
             "to_geobuf",
             [](const mapbox::geojson::feature_collection &self, //
@@ -2001,7 +2286,8 @@ void bind_geojson(py::module &geojson)
             py::kw_only(),       //
             "precision"_a = 8,   //
             "only_xy"_a = false, //
-            "round_z"_a = std::nullopt)
+            "round_z"_a = std::nullopt,
+            "Convert the FeatureCollection to Geobuf bytes")
         .def(
             "load",
             [](mapbox::geojson::feature_collection &self,
@@ -2020,7 +2306,8 @@ void bind_geojson(py::module &geojson)
                                   .get<mapbox::geojson::feature_collection>());
                 return self;
             },
-            rvp::reference_internal)
+            rvp::reference_internal,
+            "Load the FeatureCollection from a file (GeoJSON or Geobuf)")
         .def(
             "dump",
             [](const mapbox::geojson::feature_collection &self,
@@ -2044,7 +2331,8 @@ void bind_geojson(py::module &geojson)
             "indent"_a = false,      //
             "sort_keys"_a = false,   //
             "precision"_a = 8,       //
-            "only_xy"_a = false)
+            "only_xy"_a = false,
+            "Dump the FeatureCollection to a file (GeoJSON or Geobuf)")
         //
         copy_deepcopy_clone(mapbox::geojson::feature_collection)
         //
@@ -2056,19 +2344,22 @@ void bind_geojson(py::module &geojson)
             [](mapbox::geojson::feature_collection &self) {
                 return py::make_key_iterator(self.custom_properties);
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>(),
+            "Return an iterator over the keys of custom properties")
         .def(
             "values",
             [](mapbox::geojson::feature_collection &self) {
                 return py::make_value_iterator(self.custom_properties);
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>(),
+            "Return an iterator over the values of custom properties")
         .def(
             "items",
             [](mapbox::geojson::feature_collection &self) {
                 return py::make_iterator(self.custom_properties);
             },
-            py::keep_alive<0, 1>())
+            py::keep_alive<0, 1>(),
+            "Return an iterator over the items of custom properties")
         .def(
             "__getitem__",
             [](mapbox::geojson::feature_collection &self,
@@ -2081,20 +2372,25 @@ void bind_geojson(py::module &geojson)
                 }
                 return &itr->second;
             },
-            rvp::reference_internal)
-        .def("__setitem__",
-             [](mapbox::geojson::feature_collection &self,
-                const std::string &key, const py::object &value) {
-                 if (key == "type" || key == "features") {
-                     throw pybind11::key_error(key);
-                 }
-                 self.custom_properties[key] = to_geojson_value(value);
-                 return value;
-             })
-        .def("__delitem__", [](mapbox::geojson::feature_collection &self,
-                               const std::string &key) {
-            return self.custom_properties.erase(key);
-        });
+            rvp::reference_internal, "Get a custom property by key")
+        .def(
+            "__setitem__",
+            [](mapbox::geojson::feature_collection &self,
+               const std::string &key, const py::object &value) {
+                if (key == "type" || key == "features") {
+                    throw pybind11::key_error(key);
+                }
+                self.custom_properties[key] = to_geojson_value(value);
+                return value;
+            },
+            "Set a custom property")
+        .def(
+            "__delitem__",
+            [](mapbox::geojson::feature_collection &self,
+               const std::string &key) {
+                return self.custom_properties.erase(key);
+            },
+            "Delete a custom property");
     //
     ;
 
@@ -2121,11 +2417,15 @@ void bind_geojson(py::module &geojson)
             i = wrap_i(i, v.size());
             return v[(SizeType)i];
         },
-        rvp::reference_internal); // ref + keepalive
-    cl.def("__setitem__", [wrap_i](Vector &v, DiffType i, const T &t) {
-        i = wrap_i(i, v.size());
-        v[(SizeType)i] = t;
-    });
+        rvp::reference_internal,
+        "Get a feature from the collection by index"); // ref + keepalive
+    cl.def(
+        "__setitem__",
+        [wrap_i](Vector &v, DiffType i, const T &t) {
+            i = wrap_i(i, v.size());
+            v[(SizeType)i] = t;
+        },
+        "Set a feature in the collection at the specified index");
     cl.def(
         "__getitem__",
         [](const Vector &v, const py::slice &slice) -> Vector * {

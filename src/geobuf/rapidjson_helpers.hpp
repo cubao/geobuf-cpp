@@ -1,5 +1,4 @@
-#ifndef CUBAO_RAPIDJSON_HELPERS_HPP
-#define CUBAO_RAPIDJSON_HELPERS_HPP
+#pragma once
 
 #include <mapbox/geojson.hpp>
 #include <mapbox/geojson/rapidjson.hpp>
@@ -618,5 +617,3 @@ inline bool is_subset_of(const RapidjsonValue &a, const RapidjsonValue &b)
 }
 
 } // namespace cubao
-
-#endif

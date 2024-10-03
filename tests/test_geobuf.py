@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import contextlib
 import json
@@ -12,7 +14,7 @@ import numpy as np
 import pytest
 
 import pybind11_geobuf
-from pybind11_geobuf import (  # noqa
+from pybind11_geobuf import (
     Decoder,
     Encoder,
     GeobufIndex,
@@ -33,7 +35,7 @@ def test_version():
 
 
 def sample_geojson():
-    geojson = {
+    return {
         "type": "Feature",
         "properties": {
             "string": "string",
@@ -55,7 +57,6 @@ def sample_geojson():
         },
         "my_key": "my_value",
     }
-    return geojson
 
 
 def test_geobuf():
@@ -147,14 +148,11 @@ def test_rapidjson_arr():
     assert arr[2]() == 789
     arr[2] = arr()
     arr[0].set({"key": "value"})
-    assert (
-        arr.dumps() == '[{"key":"value"},3,[1,3,789,{"key":3.2}],{"key":3.2}]'
-    )  # noqa
+    assert arr.dumps() == '[{"key":"value"},3,[1,3,789,{"key":3.2}],{"key":3.2}]'
 
     obj = rapidjson({"arr": arr})
     assert (
-        obj.dumps()
-        == '{"arr":[{"key":"value"},3,[1,3,789,{"key":3.2}],{"key":3.2}]}'  # noqa
+        obj.dumps() == '{"arr":[{"key":"value"},3,[1,3,789,{"key":3.2}],{"key":3.2}]}'
     )
 
 
@@ -165,10 +163,9 @@ def test_rapidjson_obj():
     assert obj["type"]
     assert obj["type"]() == "Feature"
     assert id(obj["type"]) == id(obj["type"])
-    try:
-        assert obj["missing_key"]
-    except KeyError as e:
-        assert "missing_key" in repr(e)
+    with pytest.raises(KeyError) as e:
+        obj["missing_key"]
+    assert "missing_key" in repr(e)
     assert obj.get("missing_key") is None
     assert obj.keys()
     assert obj.values()
@@ -197,9 +194,7 @@ def test_rapidjson_obj():
     assert obj() is None
 
     # https://github.com/pybind/pybind11_json/blob/b02a2ad597d224c3faee1f05a56d81d4c4453092/include/pybind11_json/pybind11_json.hpp#L110
-    assert rapidjson(b"raw bytes")() == base64.b64encode(b"raw bytes").decode(
-        "utf-8"
-    )  # noqa
+    assert rapidjson(b"raw bytes")() == base64.b64encode(b"raw bytes").decode("utf-8")
     assert rapidjson(b"raw bytes")() == "cmF3IGJ5dGVz"  # base64 encoded
     obj = rapidjson({"bytes": b"raw bytes"})
     obj["other_bytes"] = b"bytes"
@@ -254,12 +249,12 @@ def test_rapidjson_sort_dump():
     assert obj1.dumps() == '{"key1":42,"key2":3.14}'
     assert (
         obj.dumps()
-        == '[{"key1":42,"key2":3.14,"another":5},{"key1":42,"key2":3.14},{"obj2":{"key1":42,"key2":3.14},"obj1":{"key1":42,"key2":3.14}}]'  # noqa
+        == '[{"key1":42,"key2":3.14,"another":5},{"key1":42,"key2":3.14},{"obj2":{"key1":42,"key2":3.14},"obj1":{"key1":42,"key2":3.14}}]'
     )
     obj.sort_keys()
     assert (
         obj.dumps()
-        == '[{"another":5,"key1":42,"key2":3.14},{"key1":42,"key2":3.14},{"obj1":{"key1":42,"key2":3.14},"obj2":{"key1":42,"key2":3.14}}]'  # noqa
+        == '[{"another":5,"key1":42,"key2":3.14},{"key1":42,"key2":3.14},{"obj1":{"key1":42,"key2":3.14},"obj2":{"key1":42,"key2":3.14}}]'
     )
 
     obj3 = obj
@@ -293,13 +288,11 @@ def test_rapidjson_round():
     assert obj() == sample_geojson()
     assert (
         obj.clone().round(precision=1).dumps(sort_keys=True)
-        == '{"geometry":{"coordinates":[[120.4,31.4,1.1],[120.3,31.3,2.2],[120.4,31.2,3.3],[120.7,31.3,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.1},"double":3.1,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'  # noqa
+        == '{"geometry":{"coordinates":[[120.4,31.4,1.1],[120.3,31.3,2.2],[120.4,31.2,3.3],[120.7,31.3,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.1},"double":3.1,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'
     )
     assert (
-        obj.clone()
-        .round(precision=1, skip_keys=["geometry"])
-        .dumps(sort_keys=True)  # noqa
-        == '{"geometry":{"coordinates":[[120.40317479950272,31.416966084052177,1.111111],[120.28451900911591,31.30578266928819,2.22],[120.35592249359615,31.21781895672254,3.3333333333333],[120.67093786630113,31.299502266522722,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.1},"double":3.1,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'  # noqa
+        obj.clone().round(precision=1, skip_keys=["geometry"]).dumps(sort_keys=True)
+        == '{"geometry":{"coordinates":[[120.40317479950272,31.416966084052177,1.111111],[120.28451900911591,31.30578266928819,2.22],[120.35592249359615,31.21781895672254,3.3333333333333],[120.67093786630113,31.299502266522722,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.1},"double":3.1,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'
     )
 
 
@@ -309,9 +302,7 @@ def test_rapidjson_normalize():
     assert arr.clone().denoise_double_0().dumps() == "[0,0.1,0.2]"
 
     ls = geojson.LineString().from_numpy(np.ones((2, 2)))
-    expected = (
-        '{"type":"LineString","coordinates":[[1.0,1.0,0.0],[1.0,1.0,0.0]]}'  # noqa
-    )
+    expected = '{"type":"LineString","coordinates":[[1.0,1.0,0.0],[1.0,1.0,0.0]]}'
     assert ls.to_rapidjson().dumps() == expected
     expected = '{"type":"LineString","coordinates":[[1,1,0],[1,1,0]]}'
     assert ls.to_rapidjson().denoise_double_0().dumps() == expected
@@ -328,17 +319,17 @@ def test_rapidjson_normalize():
 
     mls = geojson.MultiLineString().from_numpy(np.ones((2, 2)))
     mls.push_back(geojson.LineString().from_numpy(2 * np.ones((3, 2))))
-    expected = '{"coordinates":[[[1,1],[1,1]],[[2,2],[2,2],[2,2]]],"type":"MultiLineString"}'  # noqa
+    expected = (
+        '{"coordinates":[[[1,1],[1,1]],[[2,2],[2,2],[2,2]]],"type":"MultiLineString"}'
+    )
     assert mls.to_rapidjson().normalize().dumps() == expected
     mls[0][0].z = 0.5
-    expected = '{"coordinates":[[[1,1,0.5],[1,1,0]],[[2,2,0],[2,2,0],[2,2,0]]],"type":"MultiLineString"}'  # noqa
+    expected = '{"coordinates":[[[1,1,0.5],[1,1,0]],[[2,2,0],[2,2,0],[2,2,0]]],"type":"MultiLineString"}'
     assert mls.to_rapidjson().normalize().dumps() == expected
 
     llas = np.array([[1.2345678, 2.3456789, 3.456789]])
     ls = geojson.LineString().from_numpy(llas)
-    expected = (
-        '{"coordinates":[[1.2345678,2.3456789,3.457]],"type":"LineString"}'  # noqa
-    )
+    expected = '{"coordinates":[[1.2345678,2.3456789,3.457]],"type":"LineString"}'
     assert ls.to_rapidjson().normalize().dumps() == expected
     expected = '{"coordinates":[[1.235,2.346,3.5]],"type":"LineString"}'
     assert (
@@ -348,37 +339,30 @@ def test_rapidjson_normalize():
     expected = rapidjson(llas.round(2).tolist()).dumps()
     assert (
         expected
-        in ls.to_rapidjson().normalize(round_geojson_geometry=[2, 2, 2]).dumps()  # noqa
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[2, 2, 2]).dumps()
     )
 
-    expected = (
-        '{"coordinates":[[1.2345678,2.3456789,3.456789]],"type":"LineString"}'  # noqa
-    )
-    assert (
-        ls.to_rapidjson().normalize(round_geojson_geometry=None).dumps()
-        == expected  # noqa
-    )
+    expected = '{"coordinates":[[1.2345678,2.3456789,3.456789]],"type":"LineString"}'
+    assert ls.to_rapidjson().normalize(round_geojson_geometry=None).dumps() == expected
 
     llas = np.array([[2.5, -10.5, 1.1]])
     ls = geojson.LineString().from_numpy(llas)
     expected = '{"coordinates":[[2.5,-10.5,1]],"type":"LineString"}'
     assert (
         expected
-        in ls.to_rapidjson().normalize(round_geojson_geometry=[1, 1, 0]).dumps()  # noqa
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[1, 1, 0]).dumps()
     )
     expected = '{"coordinates":[[3,-10,1]],"type":"LineString"}'
     assert (
         expected
-        in ls.to_rapidjson().normalize(round_geojson_geometry=[0, 0, 0]).dumps()  # noqa
+        in ls.to_rapidjson().normalize(round_geojson_geometry=[0, 0, 0]).dumps()
     )
 
     for scale in [1.0, -1.0]:
         for _ in range(100):
             llas = np.random.random((100, 3)) * scale
             ls = geojson.LineString().from_numpy(llas)
-            coords = ls.to_rapidjson().normalize(
-                round_geojson_geometry=[3, 3, 3]
-            )()[  # noqa
+            coords = ls.to_rapidjson().normalize(round_geojson_geometry=[3, 3, 3])()[
                 "coordinates"
             ]
             assert np.all(np.array(coords) == np.round(llas, 3))
@@ -434,9 +418,9 @@ def test_geojson_point():
     g1 = geojson.Point(*coords)
     assert np.all(coords == g1.as_numpy())
     # 8, 8, 3
-    assert np.all([123.45678901, 45.67890123, 7.891] == g1.round().as_numpy())
+    assert np.all(g1.round().as_numpy() == [123.45678901, 45.67890123, 7.891])
     g1.round(lon=5, lat=7, alt=2)
-    assert np.all([123.45679, 45.6789012, 7.89] == g1.as_numpy())
+    assert np.all(g1.as_numpy() == [123.45679, 45.6789012, 7.89])
 
     coords = [0.5, -0.5]
     g1 = geojson.Point(*coords)
@@ -919,11 +903,11 @@ def test_geojson_multi_polygon():
 
     with pytest.raises(ValueError) as excinfo:
         g1[0] = [3, 4]  # should be Nx2 or Nx3 (dim==2)
-    assert "matrix shape expected to be Nx2 or Nx3, actual=2x1" in repr(excinfo)  # noqa
+    assert "matrix shape expected to be Nx2 or Nx3, actual=2x1" in repr(excinfo)
     assert g1() == [[[[1.0, 2.0, 0.0]]]]
     with pytest.raises(ValueError) as excinfo:
         g1.push_back([3, 4])
-    assert "matrix shape expected to be Nx2 or Nx3, actual=2x1" in repr(excinfo)  # noqa
+    assert "matrix shape expected to be Nx2 or Nx3, actual=2x1" in repr(excinfo)
     assert g1() == [[[[1.0, 2.0, 0.0]]]]
 
     g1.push_back([[3, 4]])
@@ -986,16 +970,12 @@ def test_geojson_geometry_collection():
         "type": "GeometryCollection",
         "geometries": [{"type": "Point", "coordinates": [1.0, 2.0, 0.0]}],
     }
-    gc2.push_back(geojson.Point(1, 2)).push_back(
-        geojson.MultiPoint()
-    ).push_back(  # noqa
+    gc2.push_back(geojson.Point(1, 2)).push_back(geojson.MultiPoint()).push_back(
         geojson.LineString()
-    )  # noqa
-    gc2.push_back(geojson.MultiLineString()).push_back(
-        geojson.Polygon()
-    ).push_back(  # noqa
+    )
+    gc2.push_back(geojson.MultiLineString()).push_back(geojson.Polygon()).push_back(
         geojson.MultiPolygon()
-    )  # noqa
+    )
     gc2.push_back(geojson.GeometryCollection())  # nesting
     # value semantic, push back a current copy, weird but working
     gc2.push_back(geojson.GeometryCollection(gc2))
@@ -1126,7 +1106,7 @@ def test_geojson_geometry():
 
     assert (
         g2.to_rapidjson().sort_keys().dumps()
-        == '{"coordinates":[0.0,0.0,0.0],"key":"wrapped in custom_properties","my_key":"my_value","type":"Point"}'  # noqa
+        == '{"coordinates":[0.0,0.0,0.0],"key":"wrapped in custom_properties","my_key":"my_value","type":"Point"}'
     )
     g2.custom_properties().clear()
     assert len(g2.custom_properties()) == 0
@@ -1314,9 +1294,7 @@ def test_geobuf_from_geojson():
     decoded = decoder.decode(encoded)
     assert decoder.dim() == 3
 
-    decoded_again = Decoder().decode(
-        Encoder(max_precision=int(10**8)).encode(decoded)
-    )
+    decoded_again = Decoder().decode(Encoder(max_precision=int(10**8)).encode(decoded))
     assert rapidjson().loads(decoded_again) == rapidjson().loads(decoded)
     assert rapidjson().loads(decoded_again) == rapidjson().loads(
         Decoder().decode(encoded)
@@ -1348,9 +1326,9 @@ def test_geobuf_from_geojson():
     np.testing.assert_allclose(coords, f.to_numpy(), atol=1e-9)
     np.testing.assert_allclose(coords, f.as_numpy(), atol=1e-9)
     f.to_numpy()[0, 2] = 0.0
-    assert 0.0 != f.as_numpy()[0, 2]
+    assert f.as_numpy()[0, 2] != 0.0
     f.as_numpy()[0, 2] = 0.0
-    assert 0.0 == f.as_numpy()[0, 2]
+    assert f.as_numpy()[0, 2] == 0.0
 
     print(j(), j.dumps())
 
@@ -1414,7 +1392,7 @@ def test_geojson_feature():
     assert isinstance(props, geojson.value.object_type)
     assert (
         props.to_rapidjson().sort_keys().dumps()
-        == '{"dict":{"key":42,"value":3.14},"double":3.141592653,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"}'  # noqa
+        == '{"dict":{"key":42,"value":3.14},"double":3.141592653,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"}'
     )
 
     assert set(props.keys()) == {
@@ -1504,33 +1482,31 @@ def test_geojson_feature():
     ]
     assert (
         feature.to_rapidjson().dumps()
-        == '{"type":"Feature","geometry":{"type":"Point","coordinates":[3.0,4.0,0.0]},"properties":{"key":8},"my_key":"my_value"}'  # noqa
+        == '{"type":"Feature","geometry":{"type":"Point","coordinates":[3.0,4.0,0.0]},"properties":{"key":8},"my_key":"my_value"}'
     )
     f2 = geojson.Feature().from_rapidjson(feature.to_rapidjson())
     assert f2 == feature
     assert f2() == feature()
 
     feature = geojson.Feature(sample_geojson())
-    expected = '{"geometry":{"coordinates":[[120.4031748,31.41696608,1.111],[120.28451901,31.30578267,2.22],[120.35592249,31.21781896,3.333],[120.67093787,31.29950227,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.14},"double":3.142,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'  # noqa
+    expected = '{"geometry":{"coordinates":[[120.4031748,31.41696608,1.111],[120.28451901,31.30578267,2.22],[120.35592249,31.21781896,3.333],[120.67093787,31.29950227,4.4]],"extra_key":"extra_value","type":"LineString"},"my_key":"my_value","properties":{"dict":{"key":42,"value":3.14},"double":3.142,"int":42,"int2":-101,"list":["a","list","is","a","list"],"string":"string"},"type":"Feature"}'
     assert feature.to_rapidjson().normalize().dumps() == expected
     assert normalize_json(feature.to_rapidjson()).dumps() == expected
 
     # adjust round_geojson_non_geometry
-    assert feature.to_rapidjson().normalize()()["properties"]["double"] == 3.142  # noqa
+    assert feature.to_rapidjson().normalize()()["properties"]["double"] == 3.142
     assert (
-        feature.to_rapidjson().normalize(round_geojson_non_geometry=1)()[
-            "properties"
-        ][  # noqa
+        feature.to_rapidjson().normalize(round_geojson_non_geometry=1)()["properties"][
             "double"
         ]
         == 3.1
-    )  # noqa
+    )
     assert (
         feature.to_rapidjson().normalize(round_geojson_non_geometry=None)()[
             "properties"
         ]["double"]
         == 3.141592653
-    )  # noqa
+    )
 
     feature = geojson.Feature({**sample_geojson(), "id": 666})
     assert feature.id() == 666
@@ -1641,12 +1617,8 @@ def test_geojson_load_dump():
     for gg in [g, f, fc]:
         g0 = gg
         gg = gg.clone()
-        assert len(gg.to_rapidjson().dumps()) > len(
-            gg.round().to_rapidjson().dumps()
-        )  # noqa
-        assert len(gg.to_rapidjson().dumps()) == len(
-            gg.round().to_rapidjson().dumps()
-        )  # noqa
+        assert len(gg.to_rapidjson().dumps()) > len(gg.round().to_rapidjson().dumps())
+        assert len(gg.to_rapidjson().dumps()) == len(gg.round().to_rapidjson().dumps())
         assert len(gg.to_rapidjson().dumps()) > len(
             gg.round(lon=5, lat=5).to_rapidjson().dumps()
         )
@@ -1680,27 +1652,21 @@ def test_geojson_load_dump():
     g_ = geojson.GeoJSON().load(path1)
     assert g_.is_geometry()
     assert g.to_rapidjson() != g_.to_rapidjson()
-    assert (
-        g.clone().round(lon=8, lat=8, alt=8).to_rapidjson() == g_.to_rapidjson()  # noqa
-    )
+    assert g.clone().round(lon=8, lat=8, alt=8).to_rapidjson() == g_.to_rapidjson()
 
     f_ = geojson.GeoJSON().load(path2)
     assert f_.is_feature()
     assert f_.as_feature().id() == 234
     assert f.to_rapidjson() != f_.to_rapidjson()
-    assert (
-        f.clone().round(lon=8, lat=8, alt=8).to_rapidjson() == f_.to_rapidjson()  # noqa
-    )
+    assert f.clone().round(lon=8, lat=8, alt=8).to_rapidjson() == f_.to_rapidjson()
 
     fc_ = geojson.GeoJSON().load(path3)
     assert fc_.is_feature_collection()
     assert fc.to_rapidjson() != fc_.to_rapidjson()
-    assert (
-        fc.clone().round(lon=8, lat=8, alt=8).to_rapidjson()
-        == fc_.to_rapidjson()  # noqa
-    )
+    assert fc.clone().round(lon=8, lat=8, alt=8).to_rapidjson() == fc_.to_rapidjson()
 
     build_dir = os.path.abspath(f"{__pwd}/../build")
+    os.makedirs(build_dir, exist_ok=True)
     path1 = f"{build_dir}/geometry.json"
     assert g.dump(path1, indent=True, sort_keys=True)
     assert geojson.GeoJSON().load(path1).as_geometry() == g
@@ -1722,19 +1688,14 @@ def test_geojson_load_dump():
     assert geojson.GeoJSON().load(path3) == fc_
 
     # to/from_geobuf
-    encoded = g_.to_geobuf()
-    assert encoded == g_.as_geometry().to_geobuf()
-    decoded = geojson.GeoJSON().from_geobuf(encoded)
+    # (geojson keys may not in sorted order)
+    decoded = geojson.GeoJSON().from_geobuf(g_.as_geometry().to_geobuf())
     assert decoded == g_
 
-    encoded = f_.to_geobuf()
-    assert encoded == f_.as_feature().to_geobuf()
-    decoded = geojson.GeoJSON().from_geobuf(encoded)
+    decoded = geojson.GeoJSON().from_geobuf(f_.as_feature().to_geobuf())
     assert decoded == f_
 
-    encoded = fc_.to_geobuf()
-    assert encoded == fc_.as_feature_collection().to_geobuf()
-    decoded = geojson.GeoJSON().from_geobuf(encoded)
+    decoded = geojson.GeoJSON().from_geobuf(fc_.as_feature_collection().to_geobuf())
     assert decoded == fc_
 
     # onlyXY
@@ -1776,7 +1737,6 @@ def test_geojson_load_dump():
 
 
 def pytest_main(dir: str, *, test_file: str = None):
-
     os.chdir(dir)
     sys.exit(
         pytest.main(
@@ -1855,10 +1815,7 @@ def test_rapidjson_normalize_non_geojson():
         ).sort_keys(),
         round_geojson_geometry=[3, 2, 1],
     )
-    assert (
-        j.dumps()
-        == '{"coordinates":[1.235,7.89,4.6],"type":"Point","value":3.123}'  # noqa
-    )
+    assert j.dumps() == '{"coordinates":[1.235,7.89,4.6],"type":"Point","value":3.123}'
 
     j = normalize_json(
         rapidjson(
@@ -1872,7 +1829,7 @@ def test_rapidjson_normalize_non_geojson():
     )
     assert (
         j.dumps()
-        == '{"coordinates":[1.23456,7.890123,4.567],"type":"Point","value":3.123}'  # noqa
+        == '{"coordinates":[1.23456,7.890123,4.567],"type":"Point","value":3.123}'
     )
 
     j = normalize_json(
@@ -1886,10 +1843,7 @@ def test_rapidjson_normalize_non_geojson():
         round_geojson_geometry=[1, 1, 1],
         round_geojson_non_geometry=None,
     )
-    assert (
-        j.dumps()
-        == '{"coordinates":[1.2,7.9,4.6],"type":"Point","value":3.123456}'  # noqa
-    )
+    assert j.dumps() == '{"coordinates":[1.2,7.9,4.6],"type":"Point","value":3.123456}'
 
 
 def test_query():
@@ -1931,6 +1885,7 @@ def test_query():
 def test_geobuf_index():
     ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
     build_dir = os.path.abspath(f"{__pwd}/../build")
+    os.makedirs(build_dir, exist_ok=True)
     opath = f"{build_dir}/suzhoubeizhan.idx"
 
     indexer = GeobufIndex()
@@ -2023,6 +1978,7 @@ def test_geobuf_index():
     ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
     fc = geojson.GeoJSON().load(ipath)
     build_dir = os.path.abspath(f"{__pwd}/../build")
+    os.makedirs(build_dir, exist_ok=True)
     opath = f"{build_dir}/suzhoubeizhan.pbf"
     fc.as_feature_collection()["number"] = 42
     fc.as_feature_collection()["string"] = "string"

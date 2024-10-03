@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import glob
 import hashlib
@@ -6,7 +8,6 @@ import os
 import shutil
 import sys
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple, Union  # noqa
 
 from loguru import logger
 
@@ -30,14 +31,14 @@ def system(
     if verbose:
         print(f"$ {cmd} # -> {ret}")
     if assert_return:
-        assert 0 == ret, f"failed at {cmd} -> {ret}"
+        assert ret == 0, f"failed at {cmd} -> {ret}"
 
 
-def hash(data: Union[List, Dict, str, bytes, bytearray, memoryview]) -> str:
+def hash(data: list | dict | str | bytes | bytearray | memoryview) -> str:
     if isinstance(data, list):
         digests = [hash(d) for d in data]
         return hash(";".join(digests))
-    if isinstance(data, Dict):
+    if isinstance(data, dict):
         data = json.dumps(data)
     if isinstance(data, str):
         data = str.encode(data)
@@ -65,11 +66,11 @@ def normalize_json(input_path: str, output_path: str):
 
 def roundtrip_cpp(input_json: str, output_pbf: str, output_json: str):
     system(
-        f"{PWD}/build/bin/json2geobuf {input_json} > {output_pbf}",
+        f"{PWD}/build/json2geobuf {input_json} > {output_pbf}",
         dry_run=False,
     )
     system(
-        f"{PWD}/build/bin/geobuf2json {output_pbf} > {output_json}",
+        f"{PWD}/build/geobuf2json {output_pbf} > {output_json}",
         dry_run=False,
     )
 
@@ -106,7 +107,7 @@ def roundtrip(
         f"{output_dir}/input_normalized.json",
     )
 
-    pbf_decoder = f"{PWD}/build/bin/pbf_decoder"
+    pbf_decoder = f"{PWD}/build/pbf_decoder"
 
     t0j = time.time()
     roundtrip_js(input_path, f"{output_dir}/js.pbf", f"{output_dir}/js.json")
@@ -145,7 +146,7 @@ def roundtrip(
     )
 
     system(
-        f"diff {input_normalized} {output_js} > {output_dir}/diff_input_output_js.diff",  # noqa
+        f"diff {input_normalized} {output_js} > {output_dir}/diff_input_output_js.diff",
         assert_return=False,
     )
     system(
@@ -191,6 +192,6 @@ if __name__ == "__main__":
         roundtrip(input_path)
     else:
         for path in sorted(glob.glob(f"{input_path}/*.json")):
-            if "precision.json" == path.split("/")[-1]:
+            if path.split("/")[-1] == "precision.json":
                 continue
             roundtrip(path)

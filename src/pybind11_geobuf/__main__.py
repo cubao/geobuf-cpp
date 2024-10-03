@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 import os
-from typing import Optional, Tuple
 
 from loguru import logger
 
-from pybind11_geobuf import rapidjson  # noqa
-from pybind11_geobuf import Decoder, Encoder, GeobufIndex  # noqa
-from pybind11_geobuf import is_subset_of as is_subset_of_impl  # noqa
-from pybind11_geobuf import normalize_json as normalize_json_impl  # noqa
-from pybind11_geobuf import pbf_decode as pbf_decode_impl  # noqa
+from pybind11_geobuf import (
+    Decoder,
+    Encoder,
+    GeobufIndex,
+    rapidjson,
+)
+from pybind11_geobuf import is_subset_of as is_subset_of_impl
+from pybind11_geobuf import normalize_json as normalize_json_impl
+from pybind11_geobuf import pbf_decode as pbf_decode_impl
 
 
 def __filesize(path: str) -> int:
@@ -21,9 +26,7 @@ def geobuf2json(
     indent: bool = False,
     sort_keys: bool = False,
 ):
-    logger.info(
-        f"geobuf decoding {input_path} ({__filesize(input_path):,} bytes)..."
-    )  # noqa
+    logger.info(f"geobuf decoding {input_path} ({__filesize(input_path):,} bytes)...")
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     decoder = Decoder()
     assert decoder.decode(
@@ -42,9 +45,7 @@ def json2geobuf(
     precision: int = 8,
     only_xy: bool = False,
 ):
-    logger.info(
-        f"geobuf encoding {input_path} ({__filesize(input_path):,} bytes)..."
-    )  # noqa
+    logger.info(f"geobuf encoding {input_path} ({__filesize(input_path):,} bytes)...")
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     encoder = Encoder(max_precision=int(10**precision), only_xy=only_xy)
     assert encoder.encode(
@@ -62,9 +63,7 @@ def normalize_geobuf(
     precision: int = -1,
     only_xy: bool = False,
 ):
-    logger.info(
-        f"normalize_geobuf {input_path} ({__filesize(input_path):,} bytes)"
-    )  # noqa
+    logger.info(f"normalize_geobuf {input_path} ({__filesize(input_path):,} bytes)")
     with open(input_path, "rb") as f:
         encoded = f.read()
     decoder = Decoder()
@@ -94,19 +93,15 @@ def normalize_json(
     only_xy: bool = False,
     denoise_double_0: bool = True,
     strip_geometry_z_0: bool = True,
-    round_non_geojson: Optional[int] = 3,
-    round_geojson_non_geometry: Optional[int] = 3,
-    round_geojson_geometry: Optional[Tuple[int, int, int]] = (8, 8, 3),
+    round_non_geojson: int | None = 3,
+    round_geojson_non_geometry: int | None = 3,
+    round_geojson_geometry: tuple[int, int, int] | None = (8, 8, 3),
 ):
-    logger.info(
-        f"normalize_json {input_path} ({__filesize(input_path):,} bytes)"
-    )  # noqa
+    logger.info(f"normalize_json {input_path} ({__filesize(input_path):,} bytes)")
     output_path = output_path or input_path
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     if precision > 0:
-        logger.info(
-            f"convert to geobuf (precision: {precision}), then back to geojson"
-        )  # noqa
+        logger.info(f"convert to geobuf (precision: {precision}), then back to geojson")
         encoder = Encoder(max_precision=int(10**precision), only_xy=only_xy)
         geojson = rapidjson().load(input_path)
         assert geojson.IsObject(), f"invalid geojson: {input_path}"
@@ -137,9 +132,7 @@ def pbf_decode(path: str, output_path: str = None, *, indent: str = ""):
         data = f.read()
     decoded = pbf_decode_impl(data, indent=indent)
     if output_path:
-        os.makedirs(
-            os.path.dirname(os.path.abspath(output_path)), exist_ok=True
-        )  # noqa
+        os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
         with open(output_path, "w", encoding="utf8") as f:
             f.write(decoded)
         logger.info(f"wrote to {output_path}")
@@ -149,7 +142,7 @@ def pbf_decode(path: str, output_path: str = None, *, indent: str = ""):
 
 def system(cmd: str):
     print(f"$ {cmd}")
-    assert 0 == os.system(cmd), f"failed at {cmd}"
+    assert os.system(cmd) == 0, f"failed at {cmd}"
 
 
 def remove(path):
@@ -183,7 +176,7 @@ def round_trip(
     opath = f"{output_dir}/{filename}_1.pbf"
     remove(opath)
     if json2pb_use_python:
-        cmd = f"geobuf encode --precision={precision} --with-z < {ipath} > {opath}"  # noqa
+        cmd = f"geobuf encode --precision={precision} --with-z < {ipath} > {opath}"
         system(cmd)
     else:
         json2geobuf(ipath, opath, precision=precision)
@@ -214,8 +207,8 @@ def index_geobuf(
     input_geobuf_path: str,
     output_index_path: str,
     *,
-    feature_id: Optional[str] = "@",
-    packed_rtree: Optional[str] = "@",
+    feature_id: str | None = "@",
+    packed_rtree: str | None = "@",
 ):
     os.makedirs(
         os.path.dirname(os.path.abspath(output_index_path)),

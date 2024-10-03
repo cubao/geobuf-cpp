@@ -53,6 +53,13 @@ pull all code:
 git submodule update --init --recursive
 ```
 
+install deps:
+
+```
+npm i -g geobuf
+python3 -m pip install geobuf
+```
+
 compile & test:
 
 ```bash

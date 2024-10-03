@@ -1,5 +1,4 @@
-#ifndef CUBAO_PYBIND11_HELPERS_HPP
-#define CUBAO_PYBIND11_HELPERS_HPP
+#pragma once
 
 // https://github.com/microsoft/vscode-cpptools/issues/9692
 #if __INTELLISENSE__
@@ -461,14 +460,13 @@ inline geojson_value to_geojson_value(const py::handle &obj)
 #define BIND_PY_FLUENT_ATTRIBUTE(Klass, type, var)                             \
     .def(                                                                      \
         #var, [](Klass &self) -> type & { return self.var; },                  \
-        rvp::reference_internal)                                               \
+        rvp::reference_internal, "Get the '" #var "' attribute")               \
         .def(                                                                  \
             #var,                                                              \
             [](Klass &self, const type &v) -> Klass & {                        \
                 self.var = v;                                                  \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal)
-#endif
-
+            "new_value"_a, rvp::reference_internal,                            \
+            "Set the '" #var "' attribute")
 #endif
