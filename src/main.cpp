@@ -489,21 +489,21 @@ PYBIND11_MODULE(_core, m)
 
     using namespace FlatGeobuf;
     py::class_<NodeItem>(m, "NodeItem", py::module_local())
-        .def_property_readonly("min_x",
-                               [](const NodeItem &self) { return self.minX; },
-                               "Get the minimum X coordinate of the node")
-        .def_property_readonly("min_y",
-                               [](const NodeItem &self) { return self.minY; },
-                               "Get the minimum Y coordinate of the node")
-        .def_property_readonly("max_x",
-                               [](const NodeItem &self) { return self.maxX; },
-                               "Get the maximum X coordinate of the node")
-        .def_property_readonly("max_y",
-                               [](const NodeItem &self) { return self.maxY; },
-                               "Get the maximum Y coordinate of the node")
-        .def_property_readonly("offset",
-                               [](const NodeItem &self) { return self.offset; },
-                               "Get the offset of the node")
+        .def_property_readonly(
+            "min_x", [](const NodeItem &self) { return self.minX; },
+            "Get the minimum X coordinate of the node")
+        .def_property_readonly(
+            "min_y", [](const NodeItem &self) { return self.minY; },
+            "Get the minimum Y coordinate of the node")
+        .def_property_readonly(
+            "max_x", [](const NodeItem &self) { return self.maxX; },
+            "Get the maximum X coordinate of the node")
+        .def_property_readonly(
+            "max_y", [](const NodeItem &self) { return self.maxY; },
+            "Get the maximum Y coordinate of the node")
+        .def_property_readonly(
+            "offset", [](const NodeItem &self) { return self.offset; },
+            "Get the offset of the node")
         .def_property_readonly(
             "width", [](const NodeItem &self) { return self.width(); },
             "Get the width of the node's bounding box")
@@ -514,14 +514,17 @@ PYBIND11_MODULE(_core, m)
         .def("expand", &NodeItem::expand, "other"_a,
              "Expand the node's bounding box to include another node")
         .def("intersects", &NodeItem::intersects, "other"_a,
-             "Check if this node's bounding box intersects with another node's bounding box")
+             "Check if this node's bounding box intersects with another node's "
+             "bounding box")
         .def(py::self == py::self, "Check if two nodes are equal")
         .def(py::self != py::self, "Check if two nodes are not equal")
-        .def("to_numpy",
-             [](const NodeItem &self) -> Eigen::Vector4d {
-                 return {self.minX, self.minY, self.maxX, self.maxY};
-             },
-             "Convert the node's bounding box to a numpy array [minX, minY, maxX, maxY]")
+        .def(
+            "to_numpy",
+            [](const NodeItem &self) -> Eigen::Vector4d {
+                return {self.minX, self.minY, self.maxX, self.maxY};
+            },
+            "Convert the node's bounding box to a numpy array [minX, minY, "
+            "maxX, maxY]")
         //
         ;
 
@@ -577,7 +580,8 @@ PYBIND11_MODULE(_core, m)
         .def(py::init<>(), R"docstring(
             Initialize an empty Planet object.
         )docstring")
-        .def(py::init<const mapbox::geojson::feature_collection &>(), R"docstring(
+        .def(py::init<const mapbox::geojson::feature_collection &>(),
+             R"docstring(
             Initialize a Planet object with a feature collection.
 
             Args:
@@ -680,17 +684,16 @@ PYBIND11_MODULE(_core, m)
                 int: The number of features.
             )docstring")
         .def_property_readonly(
-            "offsets", 
-            [](const GeobufIndex &self) { return self.offsets; },
+            "offsets", [](const GeobufIndex &self) { return self.offsets; },
             R"docstring(
             Get the offsets of features in the Geobuf file.
 
             Returns:
                 list: A list of offsets for each feature.
             )docstring")
-        .def_property_readonly("ids",
-                               [](const GeobufIndex &self) { return self.ids; },
-                               R"docstring(
+        .def_property_readonly(
+            "ids", [](const GeobufIndex &self) { return self.ids; },
+            R"docstring(
             Get the IDs of features in the index.
 
             Returns:

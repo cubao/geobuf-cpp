@@ -460,18 +460,15 @@ inline geojson_value to_geojson_value(const py::handle &obj)
 #ifndef BIND_PY_FLUENT_ATTRIBUTE
 #define BIND_PY_FLUENT_ATTRIBUTE(Klass, type, var)                             \
     .def(                                                                      \
-        #var,                                                                  \
-        [](Klass &self) -> type & { return self.var; },                        \
-        rvp::reference_internal,                                               \
-        "Get the " #var " attribute")                                          \
+        #var, [](Klass &self) -> type & { return self.var; },                  \
+        rvp::reference_internal, "Get the " #var " attribute")                 \
         .def(                                                                  \
             #var,                                                              \
             [](Klass &self, const type &v) -> Klass & {                        \
                 self.var = v;                                                  \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal,                                           \
-            "Set the " #var " attribute")
+            rvp::reference_internal, "Set the " #var " attribute")
 #endif
 
 #endif
