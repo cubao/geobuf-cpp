@@ -80,6 +80,7 @@ extend-select = [
   "PD",          # pandas-vet
 ]
 ignore = [
+  "ARG001",
   "NPY002",
   "PLR09",    # Too many X
   "PLR2004",  # Magic comparison
@@ -95,7 +96,10 @@ ignore = [
   "PTH119",
   "PTH120",
   "PTH123",
+  "PTH116",
+  "PTH207",
   "RUF013",
+  "T201",
 ]
 isort.required-imports = ["from __future__ import annotations"]
 

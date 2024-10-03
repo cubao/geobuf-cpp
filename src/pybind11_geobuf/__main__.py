@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from typing import Optional, Tuple
 
 from loguru import logger
 
@@ -94,9 +93,9 @@ def normalize_json(
     only_xy: bool = False,
     denoise_double_0: bool = True,
     strip_geometry_z_0: bool = True,
-    round_non_geojson: Optional[int] = 3,
-    round_geojson_non_geometry: Optional[int] = 3,
-    round_geojson_geometry: Optional[Tuple[int, int, int]] = (8, 8, 3),
+    round_non_geojson: int | None = 3,
+    round_geojson_non_geometry: int | None = 3,
+    round_geojson_geometry: tuple[int, int, int] | None = (8, 8, 3),
 ):
     logger.info(f"normalize_json {input_path} ({__filesize(input_path):,} bytes)")
     output_path = output_path or input_path
@@ -208,8 +207,8 @@ def index_geobuf(
     input_geobuf_path: str,
     output_index_path: str,
     *,
-    feature_id: Optional[str] = "@",
-    packed_rtree: Optional[str] = "@",
+    feature_id: str | None = "@",
+    packed_rtree: str | None = "@",
 ):
     os.makedirs(
         os.path.dirname(os.path.abspath(output_index_path)),

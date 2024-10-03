@@ -35,7 +35,7 @@ def system(
         assert ret == 0, f"failed at {cmd} -> {ret}"
 
 
-def hash(data: Union[List, Dict, str, bytes, bytearray, memoryview]) -> str:
+def hash(data: Union[List, Dict, str, bytes, bytearray, memoryview]) -> str:  # noqa: UP006, UP007
     if isinstance(data, list):
         digests = [hash(d) for d in data]
         return hash(";".join(digests))
