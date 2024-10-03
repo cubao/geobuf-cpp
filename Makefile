@@ -42,7 +42,8 @@ cli_test: cli_test1 cli_test2 cli_test3 cli_test4
 .PHONY: build python_install python_wheel python_sdist test pytest cli_test
 
 restub:
-	pybind11-stubgen pybind11_geobuf._core -o stubs/pybind11_geobuf
+	pybind11-stubgen pybind11_geobuf._core -o stubs
+	cp -rf stubs/pybind11_geobuf/_core src/pybind11_geobuf
 
 test_all:
 	@cd build && for t in $(wildcard $(BUILD_DIR)/bin/test_*); do echo $$t && eval $$t >/dev/null 2>&1 && echo 'ok' || echo $(RED)Not Ok$(NC); done

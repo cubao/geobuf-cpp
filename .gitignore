@@ -12,3 +12,4 @@ tests/*.json
 data/suzhoubeizhan.idx
 package-lock.json
 node_modules
+stubs
