@@ -60,7 +60,24 @@ PYBIND11_MODULE(_core, m)
          "strip_geometry_z_0"_a = true,      //
          "round_non_geojson"_a = 3,          //
          "round_geojson_non_geometry"_a = 3, //
-         "round_geojson_geometry"_a = std::array<int, 3>{8, 8, 3})
+         "round_geojson_geometry"_a = std::array<int, 3>{8, 8, 3},
+         R"docstring(
+         Normalize JSON file.
+
+         Args:
+             input_path (str): Path to input JSON file.
+             output_path (str): Path to output normalized JSON file.
+             indent (bool, optional): Whether to indent the output JSON. Defaults to True.
+             sort_keys (bool, optional): Whether to sort object keys. Defaults to True.
+             denoise_double_0 (bool, optional): Whether to remove trailing zeros from doubles. Defaults to True.
+             strip_geometry_z_0 (bool, optional): Whether to strip Z coordinate if it's 0. Defaults to True.
+             round_non_geojson (int, optional): Number of decimal places to round non-GeoJSON numbers. Defaults to 3.
+             round_geojson_non_geometry (int, optional): Number of decimal places to round GeoJSON non-geometry numbers. Defaults to 3.
+             round_geojson_geometry (array of 3 ints, optional): Number of decimal places to round GeoJSON geometry coordinates. Defaults to [8, 8, 3].
+
+         Returns:
+             None
+         )docstring")
         .def(
             "normalize_json",
             [](RapidjsonValue &json, bool sort_keys, bool denoise_double_0,
@@ -85,7 +102,22 @@ PYBIND11_MODULE(_core, m)
             "round_non_geojson"_a = 3,     //
             "round_geojson_non_geometry"_a = 3,
             "round_geojson_geometry"_a = std::array<int, 3>{8, 8, 3},
-            rvp::reference_internal);
+            rvp::reference_internal,
+            R"docstring(
+            Normalize JSON object in-place.
+
+            Args:
+                json (RapidjsonValue): JSON object to normalize.
+                sort_keys (bool, optional): Whether to sort object keys. Defaults to True.
+                denoise_double_0 (bool, optional): Whether to remove trailing zeros from doubles. Defaults to True.
+                strip_geometry_z_0 (bool, optional): Whether to strip Z coordinate if it's 0. Defaults to True.
+                round_non_geojson (int, optional): Number of decimal places to round non-GeoJSON numbers. Defaults to 3.
+                round_geojson_non_geometry (int, optional): Number of decimal places to round GeoJSON non-geometry numbers. Defaults to 3.
+                round_geojson_geometry (array of 3 ints, optional): Number of decimal places to round GeoJSON geometry coordinates. Defaults to [8, 8, 3].
+
+            Returns:
+                RapidjsonValue: Reference to the normalized JSON object.
+            )docstring");
 
     m.def(
         "is_subset_of",
@@ -94,7 +126,17 @@ PYBIND11_MODULE(_core, m)
             auto json2 = mapbox::geobuf::load_json(path2);
             return cubao::is_subset_of(json1, json2);
         },
-        "path1"_a, "path2"_a);
+        "path1"_a, "path2"_a,
+        R"docstring(
+        Check if the JSON at path1 is a subset of the JSON at path2.
+
+        Args:
+            path1 (str): Path to the first JSON file.
+            path2 (str): Path to the second JSON file.
+
+        Returns:
+            bool: True if the first JSON is a subset of the second, False otherwise.
+        )docstring");
 
     m.def(
         "str2json2str",
@@ -113,7 +155,18 @@ PYBIND11_MODULE(_core, m)
         "json_string"_a,    //
         py::kw_only(),      //
         "indent"_a = false, //
-        "sort_keys"_a = false);
+        "sort_keys"_a = false,
+        R"docstring(
+        Convert JSON string to JSON object and back to string.
+
+        Args:
+            json_string (str): Input JSON string.
+            indent (bool, optional): Whether to indent the output JSON. Defaults to False.
+            sort_keys (bool, optional): Whether to sort object keys. Defaults to False.
+
+        Returns:
+            Optional[str]: Converted JSON string, or None if input is invalid.
+        )docstring");
 
     m.def(
         "str2geojson2str",
@@ -134,7 +187,18 @@ PYBIND11_MODULE(_core, m)
         "json_string"_a,    //
         py::kw_only(),      //
         "indent"_a = false, //
-        "sort_keys"_a = false);
+        "sort_keys"_a = false,
+        R"docstring(
+        Convert JSON string to GeoJSON object and back to JSON string.
+
+        Args:
+            json_string (str): Input JSON string.
+            indent (bool, optional): Whether to indent the output JSON. Defaults to False.
+            sort_keys (bool, optional): Whether to sort object keys. Defaults to False.
+
+        Returns:
+            Optional[str]: Converted GeoJSON string, or None if input is invalid.
+        )docstring");
 
     m.def(
         "pbf_decode",
@@ -142,7 +206,17 @@ PYBIND11_MODULE(_core, m)
             -> std::string { return Decoder::to_printable(pbf_bytes, indent); },
         "pbf_bytes"_a, //
         py::kw_only(), //
-        "indent"_a = "");
+        "indent"_a = "",
+        R"docstring(
+        Decode Protocol Buffer (PBF) bytes to a printable string.
+
+        Args:
+            pbf_bytes (str): Input PBF bytes.
+            indent (str, optional): Indentation string. Defaults to "".
+
+        Returns:
+            str: Decoded and formatted PBF content as a string.
+        )docstring");
 
     py::class_<Encoder>(m, "Encoder", py::module_local())    //
         .def(py::init<uint32_t, bool, std::optional<int>>(), //
@@ -163,32 +237,77 @@ PYBIND11_MODULE(_core, m)
             [](Encoder &self, const mapbox::geojson::geojson &geojson) {
                 return py::bytes(self.encode(geojson));
             },
-            "geojson"_a)
+            "geojson"_a,
+            R"docstring(
+            Encode GeoJSON to Protocol Buffer (PBF) bytes.
+
+            Args:
+                geojson (mapbox::geojson::geojson): Input GeoJSON object.
+
+            Returns:
+                bytes: Encoded PBF bytes.
+            )docstring")
         .def(
             "encode",
             [](Encoder &self,
                const mapbox::geojson::feature_collection &geojson) {
                 return py::bytes(self.encode(geojson));
             },
-            "features"_a)
+            "features"_a,
+            R"docstring(
+            Encode GeoJSON FeatureCollection to Protocol Buffer (PBF) bytes.
+
+            Args:
+                features (mapbox::geojson::feature_collection): Input GeoJSON FeatureCollection.
+
+            Returns:
+                bytes: Encoded PBF bytes.
+            )docstring")
         .def(
             "encode",
             [](Encoder &self, const mapbox::geojson::feature &geojson) {
                 return py::bytes(self.encode(geojson));
             },
-            "feature"_a)
+            "feature"_a,
+            R"docstring(
+            Encode GeoJSON Feature to Protocol Buffer (PBF) bytes.
+
+            Args:
+                feature (mapbox::geojson::feature): Input GeoJSON Feature.
+
+            Returns:
+                bytes: Encoded PBF bytes.
+            )docstring")
         .def(
             "encode",
             [](Encoder &self, const mapbox::geojson::geometry &geojson) {
                 return py::bytes(self.encode(geojson));
             },
-            "geometry"_a)
+            "geometry"_a,
+            R"docstring(
+            Encode GeoJSON Geometry to Protocol Buffer (PBF) bytes.
+
+            Args:
+                geometry (mapbox::geojson::geometry): Input GeoJSON Geometry.
+
+            Returns:
+                bytes: Encoded PBF bytes.
+            )docstring")
         .def(
             "encode",
             [](Encoder &self, const RapidjsonValue &geojson) {
                 return py::bytes(self.encode(geojson));
             },
-            "geojson"_a)
+            "geojson"_a,
+            R"docstring(
+            Encode RapidjsonValue GeoJSON to Protocol Buffer (PBF) bytes.
+
+            Args:
+                geojson (RapidjsonValue): Input RapidjsonValue GeoJSON object.
+
+            Returns:
+                bytes: Encoded PBF bytes.
+            )docstring")
         .def(
             "encode",
             [](Encoder &self, const py::object &geojson) {
@@ -198,11 +317,30 @@ PYBIND11_MODULE(_core, m)
                 }
                 return py::bytes(self.encode(cubao::to_rapidjson(geojson)));
             },
-            "geojson"_a)
+            "geojson"_a,
+            R"docstring(
+            Encode Python object GeoJSON to Protocol Buffer (PBF) bytes.
+
+            Args:
+                geojson (object): Input Python object representing GeoJSON.
+
+            Returns:
+                bytes: Encoded PBF bytes.
+            )docstring")
         .def("encode",
              py::overload_cast<const std::string &, const std::string &>(
                  &Encoder::encode),
-             py::kw_only(), "geojson"_a, "geobuf"_a)
+             py::kw_only(), "geojson"_a, "geobuf"_a,
+             R"docstring(
+             Encode GeoJSON file to Protocol Buffer (PBF) file.
+
+             Args:
+                 geojson (str): Path to input GeoJSON file.
+                 geobuf (str): Path to output PBF file.
+
+             Returns:
+                 None
+             )docstring")
         .def("keys", &Encoder::__keys)
         //
         ;
@@ -220,7 +358,18 @@ PYBIND11_MODULE(_core, m)
                                             sort_keys);
             },
             "geobuf"_a, py::kw_only(), "indent"_a = false,
-            "sort_keys"_a = false)
+            "sort_keys"_a = false,
+            R"docstring(
+            Decode Protocol Buffer (PBF) bytes to GeoJSON string.
+
+            Args:
+                geobuf (str): Input PBF bytes.
+                indent (bool, optional): Whether to indent the output JSON. Defaults to False.
+                sort_keys (bool, optional): Whether to sort object keys. Defaults to False.
+
+            Returns:
+                str: Decoded GeoJSON as a string.
+            )docstring")
         .def(
             "decode_to_rapidjson",
             [](Decoder &self, const std::string &geobuf, bool sort_keys) {
@@ -230,13 +379,32 @@ PYBIND11_MODULE(_core, m)
                 }
                 return json;
             },
-            "geobuf"_a, py::kw_only(), "sort_keys"_a = false)
+            "geobuf"_a, py::kw_only(), "sort_keys"_a = false,
+            R"docstring(
+            Decode Protocol Buffer (PBF) bytes to RapidjsonValue GeoJSON.
+
+            Args:
+                geobuf (str): Input PBF bytes.
+                sort_keys (bool, optional): Whether to sort object keys. Defaults to False.
+
+            Returns:
+                RapidjsonValue: Decoded GeoJSON as a RapidjsonValue object.
+            )docstring")
         .def(
             "decode_to_geojson",
             [](Decoder &self, const std::string &geobuf) {
                 return self.decode(geobuf);
             },
-            "geobuf"_a)
+            "geobuf"_a,
+            R"docstring(
+            Decode Protocol Buffer (PBF) bytes to mapbox::geojson::geojson object.
+
+            Args:
+                geobuf (str): Input PBF bytes.
+
+            Returns:
+                mapbox::geojson::geojson: Decoded GeoJSON object.
+            )docstring")
         .def(
             "decode",
             [](Decoder &self,              //
@@ -250,18 +418,59 @@ PYBIND11_MODULE(_core, m)
             "geobuf"_a,         //
             "geojson"_a,        //
             "indent"_a = false, //
-            "sort_keys"_a = false)
+            "sort_keys"_a = false,
+            R"docstring(
+            Decode Protocol Buffer (PBF) file to GeoJSON file.
+
+            Args:
+                geobuf (str): Path to input PBF file.
+                geojson (str): Path to output GeoJSON file.
+                indent (bool, optional): Whether to indent the output JSON. Defaults to False.
+                sort_keys (bool, optional): Whether to sort object keys. Defaults to False.
+
+            Returns:
+                None
+            )docstring")
         .def("keys", &Decoder::__keys)
         //
         .def("decode_header",
              py::overload_cast<const std::string &>(&Decoder::decode_header),
-             "bytes"_a)
+             "bytes"_a,
+             R"docstring(
+             Decode Protocol Buffer (PBF) header.
+
+             Args:
+                 bytes (str): Input PBF bytes.
+
+             Returns:
+                 dict: Decoded header information.
+             )docstring")
         .def("decode_feature",
              py::overload_cast<const std::string &, bool, bool>(
                  &Decoder::decode_feature),
-             "bytes"_a, "only_geometry"_a = false, "only_properties"_a = false)
+             "bytes"_a, "only_geometry"_a = false, "only_properties"_a = false,
+             R"docstring(
+             Decode Protocol Buffer (PBF) feature.
+
+             Args:
+                 bytes (str): Input PBF bytes.
+                 only_geometry (bool, optional): Whether to decode only geometry. Defaults to False.
+                 only_properties (bool, optional): Whether to decode only properties. Defaults to False.
+
+             Returns:
+                 mapbox::geojson::feature: Decoded GeoJSON feature.
+             )docstring")
         .def("decode_non_features", py::overload_cast<const std::string &>(
-                                        &Decoder::decode_non_features))
+                                        &Decoder::decode_non_features),
+             R"docstring(
+             Decode non-feature elements from Protocol Buffer (PBF) bytes.
+
+             Args:
+                 bytes (str): Input PBF bytes.
+
+             Returns:
+                 dict: Decoded non-feature elements.
+             )docstring")
         .def("offsets", &Decoder::__offsets)
         //
         ;
@@ -311,7 +520,19 @@ PYBIND11_MODULE(_core, m)
                 }
                 return ret;
             },
-            "min_x"_a, "min_y"_a, "max_x"_a, "max_y"_a)
+            "min_x"_a, "min_y"_a, "max_x"_a, "max_y"_a,
+            R"docstring(
+            Search for items within the given bounding box.
+
+            Args:
+                min_x (float): Minimum X coordinate of the bounding box.
+                min_y (float): Minimum Y coordinate of the bounding box.
+                max_x (float): Maximum X coordinate of the bounding box.
+                max_y (float): Maximum Y coordinate of the bounding box.
+
+            Returns:
+                list: List of offsets of items within the bounding box.
+            )docstring")
         .def_property_readonly(
             "size", [](const PackedRTree &self) { return self.size(); })
         .def_property_readonly("extent",
@@ -342,14 +563,46 @@ PYBIND11_MODULE(_core, m)
              py::overload_cast<const mapbox::geojson::feature_collection &>(
                  &Planet::features))
         .def("build", &Planet::build, py::kw_only(),
-             "per_line_segment"_a = false, "force"_a = false)
-        .def("query", &Planet::query, "min"_a, "max"_a)
+             "per_line_segment"_a = false, "force"_a = false,
+             R"docstring(
+             Build the spatial index for the features.
+
+             Args:
+                 per_line_segment (bool, optional): Whether to index each line segment separately. Defaults to False.
+                 force (bool, optional): Whether to force rebuilding the index. Defaults to False.
+
+             Returns:
+                 None
+             )docstring")
+        .def("query", &Planet::query, "min"_a, "max"_a,
+             R"docstring(
+             Query features within the given bounding box.
+
+             Args:
+                 min (array-like): Minimum coordinates of the bounding box.
+                 max (array-like): Maximum coordinates of the bounding box.
+
+             Returns:
+                 list: List of features within the bounding box.
+             )docstring")
         .def("packed_rtree", &Planet::packed_rtree, rvp::reference_internal)
         .def("copy", &Planet::copy)
         .def("crop", &Planet::crop, "polygon"_a, py::kw_only(),
              "clipping_mode"_a = "longest", //
              "strip_properties"_a = false,  //
-             "is_wgs84"_a = true)
+             "is_wgs84"_a = true,
+             R"docstring(
+             Crop features using a polygon.
+
+             Args:
+                 polygon (mapbox::geojson::polygon): Polygon to crop with.
+                 clipping_mode (str, optional): Clipping mode. Defaults to "longest".
+                 strip_properties (bool, optional): Whether to strip properties from cropped features. Defaults to False.
+                 is_wgs84 (bool, optional): Whether the coordinates are in WGS84. Defaults to True.
+
+             Returns:
+                 Planet: New Planet object with cropped features.
+             )docstring")
         //
         ;
 
@@ -378,15 +631,43 @@ PYBIND11_MODULE(_core, m)
             rvp::reference_internal)
         //
         .def("init", py::overload_cast<const std::string &>(&GeobufIndex::init),
-             "index_bytes"_a)
+             "index_bytes"_a,
+             R"docstring(
+             Initialize the GeobufIndex from index bytes.
+
+             Args:
+                 index_bytes (str): Bytes containing the index information.
+
+             Returns:
+                 None
+             )docstring")
         //
         .def("mmap_init",
              py::overload_cast<const std::string &, const std::string &>(
                  &GeobufIndex::mmap_init),
-             "index_path"_a, "geobuf_path"_a)
+             "index_path"_a, "geobuf_path"_a,
+             R"docstring(
+             Initialize the GeobufIndex using memory-mapped files.
+
+             Args:
+                 index_path (str): Path to the index file.
+                 geobuf_path (str): Path to the Geobuf file.
+
+             Returns:
+                 None
+             )docstring")
         .def("mmap_init",
              py::overload_cast<const std::string &>(&GeobufIndex::mmap_init),
-             "geobuf_path"_a)
+             "geobuf_path"_a,
+             R"docstring(
+             Initialize the GeobufIndex using a memory-mapped Geobuf file.
+
+             Args:
+                 geobuf_path (str): Path to the Geobuf file.
+
+             Returns:
+                 None
+             )docstring")
         //
         .def(
             "mmap_bytes",
@@ -398,23 +679,66 @@ PYBIND11_MODULE(_core, m)
                 }
                 return py::bytes(*bytes);
             },
-            "offset"_a, "length"_a)
+            "offset"_a, "length"_a,
+            R"docstring(
+            Read bytes from the memory-mapped file.
+
+            Args:
+                offset (int): Offset in the file.
+                length (int): Number of bytes to read.
+
+            Returns:
+                Optional[bytes]: Read bytes, or None if reading failed.
+            )docstring")
         //
         .def("decode_feature",
              py::overload_cast<uint32_t, bool, bool>(
                  &GeobufIndex::decode_feature),
              "index"_a, py::kw_only(), "only_geometry"_a = false,
-             "only_properties"_a = false)
+             "only_properties"_a = false,
+             R"docstring(
+             Decode a feature from the Geobuf file.
+
+             Args:
+                 index (int): Index of the feature to decode.
+                 only_geometry (bool, optional): Whether to decode only geometry. Defaults to False.
+                 only_properties (bool, optional): Whether to decode only properties. Defaults to False.
+
+             Returns:
+                 mapbox::geojson::feature: Decoded feature.
+             )docstring")
         .def("decode_feature",
              py::overload_cast<const std::string &, bool, bool>(
                  &GeobufIndex::decode_feature),
              "bytes"_a, py::kw_only(), "only_geometry"_a = false,
-             "only_properties"_a = false)
+             "only_properties"_a = false,
+             R"docstring(
+             Decode a feature from bytes.
+
+             Args:
+                 bytes (str): Bytes containing the feature data.
+                 only_geometry (bool, optional): Whether to decode only geometry. Defaults to False.
+                 only_properties (bool, optional): Whether to decode only properties. Defaults to False.
+
+             Returns:
+                 mapbox::geojson::feature: Decoded feature.
+             )docstring")
         .def("decode_feature_of_id",
              py::overload_cast<const std::string &, bool, bool>(
                  &GeobufIndex::decode_feature),
              "id"_a, py::kw_only(), "only_geometry"_a = false,
-             "only_properties"_a = false)
+             "only_properties"_a = false,
+             R"docstring(
+             Decode a feature by its ID.
+
+             Args:
+                 id (str): ID of the feature to decode.
+                 only_geometry (bool, optional): Whether to decode only geometry. Defaults to False.
+                 only_properties (bool, optional): Whether to decode only properties. Defaults to False.
+
+             Returns:
+                 mapbox::geojson::feature: Decoded feature.
+             )docstring")
         .def("decode_features",
              py::overload_cast<const std::vector<int> &, bool, bool>(
                  &GeobufIndex::decode_features),

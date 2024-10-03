@@ -199,19 +199,19 @@ class rapidjson:
     class type:
         """
         Members:
-        
+
           kNullType
-        
+
           kFalseType
-        
+
           kTrueType
-        
+
           kObjectType
-        
+
           kArrayType
-        
+
           kStringType
-        
+
           kNumberType
         """
         __members__: typing.ClassVar[dict[str, rapidjson.type]]  # value = {'kNullType': <type.kNullType: 0>, 'kFalseType': <type.kFalseType: 1>, 'kTrueType': <type.kTrueType: 2>, 'kObjectType': <type.kObjectType: 3>, 'kArrayType': <type.kArrayType: 4>, 'kStringType': <type.kStringType: 5>, 'kNumberType': <type.kNumberType: 6>}
