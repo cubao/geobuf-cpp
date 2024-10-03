@@ -1,5 +1,6 @@
 from __future__ import annotations
 import numpy
+import pybind11_geobuf._core
 import typing
 __all__ = ['Feature', 'FeatureCollection', 'FeatureList', 'GeoJSON', 'Geometry', 'GeometryBase', 'GeometryCollection', 'GeometryList', 'LineString', 'LineStringList', 'LinearRing', 'LinearRingList', 'MultiLineString', 'MultiPoint', 'MultiPolygon', 'Point', 'Polygon', 'PolygonList', 'coordinates', 'value']
 class Feature:
@@ -39,7 +40,7 @@ class Feature:
         Copy constructor for GeoJSON Feature
         """
     @typing.overload
-    def __init__(self, arg0: ..., rapidjson: ...) -> None:
+    def __init__(self, arg0: pybind11_geobuf._core.rapidjson) -> None:
         """
         Construct a GeoJSON Feature from a RapidJSON value
         """
@@ -91,7 +92,7 @@ class Feature:
         Initialize the feature from Geobuf bytes
         """
     @typing.overload
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> Feature:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> Feature:
         """
         Initialize the feature from a RapidJSON value
         """
@@ -196,7 +197,7 @@ class Feature:
         """
         Convert the feature geometry to a numpy array
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert the feature to a RapidJSON value
         """
@@ -295,7 +296,7 @@ class FeatureCollection(FeatureList):
         """
         Load the FeatureCollection from Geobuf bytes
         """
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> FeatureCollection:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> FeatureCollection:
         """
         Load the FeatureCollection from a RapidJSON value
         """
@@ -323,7 +324,7 @@ class FeatureCollection(FeatureList):
         """
         Convert the FeatureCollection to Geobuf bytes
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert the FeatureCollection to a RapidJSON value
         """
@@ -502,7 +503,7 @@ class GeoJSON:
         """
         Decode a Geobuf byte string into a GeoJSON object
         """
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> GeoJSON:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> GeoJSON:
         """
         Convert a RapidJSON value to a GeoJSON object
         """
@@ -530,7 +531,7 @@ class GeoJSON:
         """
         Encode the GeoJSON object to a Geobuf byte string
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert the GeoJSON object to a RapidJSON value
         """
@@ -613,7 +614,7 @@ class Geometry(GeometryBase):
         Initialize from a GeometryCollection
         """
     @typing.overload
-    def __init__(self, arg0: ..., rapidjson: ...) -> None:
+    def __init__(self, arg0: pybind11_geobuf._core.rapidjson) -> None:
         """
         Initialize from a RapidJSON value
         """
@@ -708,7 +709,7 @@ class Geometry(GeometryBase):
         """
         Set geometry coordinates from a numpy array
         """
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> Geometry:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> Geometry:
         """
         Convert a RapidJSON value to a geometry
         """
@@ -810,7 +811,7 @@ class Geometry(GeometryBase):
         """
         Convert geometry coordinates to a numpy array
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert the geometry to a RapidJSON value
         """
@@ -910,7 +911,7 @@ class GeometryCollection(GeometryList):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> GeometryCollection:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> GeometryCollection:
         """
         Set the GeometryCollection from a RapidJSON value
         """
@@ -966,7 +967,7 @@ class GeometryCollection(GeometryList):
         """
         Round the coordinates of all geometries in the GeometryCollection
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert the GeometryCollection to a RapidJSON value
         """
@@ -1160,7 +1161,7 @@ class LineString(coordinates):
         """
         Set the geometry points from a numpy array
         """
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> LineString:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> LineString:
         """
         Initialize from a RapidJSON value
         """
@@ -1190,7 +1191,7 @@ class LineString(coordinates):
         """
         Convert the geometry points to a numpy array
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert to a RapidJSON value
         """
@@ -1565,7 +1566,7 @@ class MultiLineString(LineStringList):
         """
         Set the geometry from a numpy array of points
         """
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> MultiLineString:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> MultiLineString:
         """
         Initialize the geometry from a RapidJSON value
         """
@@ -1591,7 +1592,7 @@ class MultiLineString(LineStringList):
         """
         Convert the geometry to a numpy array
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert the geometry to a RapidJSON value
         """
@@ -1684,7 +1685,7 @@ class MultiPoint(coordinates):
         """
         Set the geometry points from a numpy array
         """
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> MultiPoint:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> MultiPoint:
         """
         Initialize from a RapidJSON value
         """
@@ -1714,7 +1715,7 @@ class MultiPoint(coordinates):
         """
         Convert the geometry points to a numpy array
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert to a RapidJSON value
         """
@@ -1813,7 +1814,7 @@ class MultiPolygon(PolygonList):
         """
         Set MultiPolygon coordinates from a numpy array
         """
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> MultiPolygon:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> MultiPolygon:
         """
         Set the MultiPolygon from a RapidJSON value
         """
@@ -1839,7 +1840,7 @@ class MultiPolygon(PolygonList):
         """
         Convert MultiPolygon to a numpy array
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert the MultiPolygon to a RapidJSON value
         """
@@ -1931,7 +1932,7 @@ class Point:
         """
         Set point coordinates from a numpy array
         """
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> Point:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> Point:
         """
         Create a Point from a RapidJSON value
         """
@@ -1943,7 +1944,7 @@ class Point:
         """
         Convert point coordinates to a numpy array
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert the Point to a RapidJSON value
         """
@@ -2064,7 +2065,7 @@ class Polygon(LinearRingList):
         """
         Set the geometry from a numpy array of points
         """
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> Polygon:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> Polygon:
         """
         Initialize the geometry from a RapidJSON value
         """
@@ -2090,7 +2091,7 @@ class Polygon(LinearRingList):
         """
         Convert the geometry to a numpy array
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert the geometry to a RapidJSON value
         """
@@ -2426,7 +2427,7 @@ class value:
             """
             Extend the list by appending all the items in the given list
             """
-        def from_rapidjson(self, arg0: ..., rapidjson: ...) -> value.array_type:
+        def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> value.array_type:
             """
             Set the GeoJSON array from a RapidJSON value
             """
@@ -2448,7 +2449,7 @@ class value:
             """
             Remove the first item from the list whose value is x. It is an error if there is no such item.
             """
-        def to_rapidjson(self) -> ...:
+        def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
             """
             Convert the GeoJSON array to a RapidJSON value
             """
@@ -2500,7 +2501,7 @@ class value:
             """
             Clear the GeoJSON object
             """
-        def from_rapidjson(self, arg0: ..., rapidjson: ...) -> value.object_type:
+        def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> value.object_type:
             """
             Convert a RapidJSON value to a GeoJSON object
             """
@@ -2520,7 +2521,7 @@ class value:
             """
             Get an iterator over the keys of the GeoJSON object
             """
-        def to_rapidjson(self) -> ...:
+        def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
             """
             Convert the GeoJSON object to a RapidJSON value
             """
@@ -2624,7 +2625,7 @@ class value:
         """
         Clear the GeoJSON value
         """
-    def from_rapidjson(self, arg0: ..., rapidjson: ...) -> value:
+    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> value:
         """
         Set the GeoJSON value from a RapidJSON value
         """
@@ -2660,7 +2661,7 @@ class value:
         """
         Set the GeoJSON value from a Python object
         """
-    def to_rapidjson(self) -> ...:
+    def to_rapidjson(self) -> pybind11_geobuf._core.rapidjson:
         """
         Convert the GeoJSON value to a RapidJSON value
         """
