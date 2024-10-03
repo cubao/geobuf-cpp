@@ -7,7 +7,9 @@ from . import tf
 __all__ = ['Decoder', 'Encoder', 'GeobufIndex', 'NodeItem', 'PackedRTree', 'Planet', 'geojson', 'is_subset_of', 'normalize_json', 'pbf_decode', 'rapidjson', 'str2geojson2str', 'str2json2str', 'tf']
 class Decoder:
     def __init__(self) -> None:
-        ...
+        """
+                     Initialize a Decoder object.
+        """
     @typing.overload
     def decode(self, geobuf: str, *, indent: bool = False, sort_keys: bool = False) -> str:
         """
@@ -89,9 +91,19 @@ class Decoder:
                         RapidjsonValue: Decoded GeoJSON as a RapidjsonValue object.
         """
     def dim(self) -> int:
-        ...
+        """
+                     Get the dimension of the coordinates in the decoded data.
+
+                     Returns:
+                         int: The dimension value (2 for 2D, 3 for 3D).
+        """
     def keys(self) -> list[str]:
-        ...
+        """
+                     Get the keys of the decoded Protocol Buffer (PBF) data.
+
+                     Returns:
+                         list: A list of strings representing the keys in the decoded PBF data.
+        """
     def offsets(self) -> list[int]:
         """
                      Get the offsets of features in the Protocol Buffer (PBF) file.
@@ -100,14 +112,30 @@ class Decoder:
                          list: A list of integer offsets representing the starting positions of features in the PBF file.
         """
     def precision(self) -> int:
-        ...
+        """
+                     Get the precision used in the decoding process.
+
+                     Returns:
+                         int: The precision value.
+        """
 class Encoder:
     def __init__(self, *, max_precision: int = 1000000, only_xy: bool = False, round_z: int | None = None) -> None:
-        ...
+        """
+                     Initialize an Encoder object.
+
+                     Args:
+                         max_precision (int): Maximum precision for coordinate encoding. Default is 10^8.
+                         only_xy (bool): If True, only encode X and Y coordinates. Default is False.
+                         round_z (Optional[int]): Number of decimal places to round Z coordinates. Default is None.
+        """
     def dim(self) -> int:
-        ...
+        """
+        Get the dimension of the encoded coordinates (2 or 3).
+        """
     def e(self) -> int:
-        ...
+        """
+        Get the encoding factor used for coordinate precision.
+        """
     @typing.overload
     def encode(self, geojson: ..., std: ..., mapbox: ..., mapbox: ..., std: ...) -> bytes:
         """
@@ -184,20 +212,33 @@ class Encoder:
                          geobuf (str): Path to output PBF file.
 
                      Returns:
-                         None
+                         Bool: succ or not.
         """
     @typing.overload
     def keys(self) -> dict[str, int]:
-        ...
+        """
+        Get the list of keys used in the encoded data.
+        """
     @typing.overload
     def keys(self) -> dict[str, int]:
-        ...
+        """
+                     Get the list of keys used in the encoding process.
+
+                     Returns:
+                         list: A list of strings representing the keys used during encoding.
+        """
     def max_precision(self) -> int:
-        ...
+        """
+        Get the maximum precision used for coordinate encoding.
+        """
     def only_xy(self) -> bool:
-        ...
+        """
+        Check if only X and Y coordinates are being encoded.
+        """
     def round_z(self) -> float | None:
-        ...
+        """
+        Get the number of decimal places used for rounding Z coordinates.
+        """
 class GeobufIndex:
     @staticmethod
     def indexing(input_geobuf_path: str, output_index_path: str, *, feature_id: str | None = '@', packed_rtree: str | None = '@') -> bool:
