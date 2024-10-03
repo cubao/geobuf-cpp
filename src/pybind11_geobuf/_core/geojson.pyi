@@ -709,7 +709,7 @@ class Geometry(GeometryBase):
         Get the 'custom_properties' attribute
         """
     @typing.overload
-    def custom_properties(self, new_value: ..., std: ..., std: ..., mapbox: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., mapbox: ...) -> Geometry:
+    def custom_properties(self, new_value: ...) -> Geometry:
         """
         Set the 'custom_properties' attribute
         """
