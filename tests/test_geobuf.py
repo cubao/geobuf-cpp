@@ -1666,6 +1666,7 @@ def test_geojson_load_dump():
     assert fc.clone().round(lon=8, lat=8, alt=8).to_rapidjson() == fc_.to_rapidjson()
 
     build_dir = os.path.abspath(f"{__pwd}/../build")
+    os.makedirs(build_dir, exist_ok=True)
     path1 = f"{build_dir}/geometry.json"
     assert g.dump(path1, indent=True, sort_keys=True)
     assert geojson.GeoJSON().load(path1).as_geometry() == g
@@ -1884,6 +1885,7 @@ def test_query():
 def test_geobuf_index():
     ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
     build_dir = os.path.abspath(f"{__pwd}/../build")
+    os.makedirs(build_dir, exist_ok=True)
     opath = f"{build_dir}/suzhoubeizhan.idx"
 
     indexer = GeobufIndex()
@@ -1976,6 +1978,7 @@ def test_geobuf_index():
     ipath = f"{__pwd}/../data/suzhoubeizhan.pbf"
     fc = geojson.GeoJSON().load(ipath)
     build_dir = os.path.abspath(f"{__pwd}/../build")
+    os.makedirs(build_dir, exist_ok=True)
     opath = f"{build_dir}/suzhoubeizhan.pbf"
     fc.as_feature_collection()["number"] = 42
     fc.as_feature_collection()["string"] = "string"
@@ -2017,9 +2020,6 @@ def test_geobuf_index():
 
 
 if __name__ == "__main__":
-    test_geojson_load_dump()
-    print()
-
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
     pytest_main(pwd, test_file=os.path.basename(__file__))
