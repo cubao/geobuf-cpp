@@ -1,5 +1,4 @@
 #include "geobuf/geobuf.hpp"
-#include "geobuf/version.h"
 
 #define DBG_MACRO_NO_WARNING
 #include <dbg.h>

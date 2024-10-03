@@ -20,6 +20,8 @@ configure_version_h()
 
 # MISC
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+add_definitions(-DPROJECT_BINARY_DIR="${PROJECT_BINARY_DIR}")
 
 set(CMAKE_CXX_STANDARD 17)
 include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/headers/include)
