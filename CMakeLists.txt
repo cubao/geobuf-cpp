@@ -23,7 +23,7 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 set(CMAKE_CXX_STANDARD 17)
 include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/headers/include)
-include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/src)
+include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/src/geobuf)
 
 option(BUILD_SHARED_LIBS "Build shared library." OFF)
 set(HEADER_ROOT "${PROJECT_SOURCE_DIR}/src/${PROJECT_NAME}")
