@@ -5,7 +5,9 @@ __all__ = ['Feature', 'FeatureCollection', 'FeatureList', 'GeoJSON', 'Geometry',
 class Feature:
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
-        ...
+        """
+        Convert the feature to a Python dict
+        """
     def __copy__(self, arg0: dict) -> Feature:
         """
         Create a shallow copy of the object
@@ -15,122 +17,206 @@ class Feature:
         Create a deep copy of the object
         """
     def __delitem__(self, arg0: str) -> int:
-        ...
+        """
+        Delete a custom property by key
+        """
     def __eq__(self, arg0: Feature) -> bool:
-        ...
+        """
+        Check if two features are equal
+        """
     def __getitem__(self, arg0: str) -> value:
-        ...
+        """
+        Get a custom property value by key
+        """
     @typing.overload
     def __init__(self) -> None:
-        ...
+        """
+        Default constructor for GeoJSON Feature
+        """
     @typing.overload
     def __init__(self, arg0: Feature) -> None:
-        ...
+        """
+        Copy constructor for GeoJSON Feature
+        """
     @typing.overload
     def __init__(self, arg0: ..., rapidjson: ...) -> None:
-        ...
+        """
+        Construct a GeoJSON Feature from a RapidJSON value
+        """
     @typing.overload
     def __init__(self, arg0: dict) -> None:
-        ...
+        """
+        Construct a GeoJSON Feature from a Python dict
+        """
     def __ne__(self, arg0: Feature) -> bool:
-        ...
+        """
+        Check if two features are not equal
+        """
     def __setitem__(self, arg0: str, arg1: typing.Any) -> typing.Any:
-        ...
+        """
+        Set a custom property value by key
+        """
     def as_numpy(self) -> numpy.ndarray[numpy.float64[m, 3], numpy.ndarray.flags.writeable, numpy.ndarray.flags.c_contiguous]:
-        ...
+        """
+        Get a numpy view of the feature geometry
+        """
     def bbox(self, *, with_z: bool = False) -> numpy.ndarray[numpy.float64[m, 1]]:
-        ...
+        """
+        Compute the bounding box of the feature
+        """
     def clear(self) -> Feature:
-        ...
+        """
+        Clear all properties and geometry of the feature
+        """
     def clone(self) -> Feature:
         """
         Create a clone of the object
         """
     @typing.overload
     def custom_properties(self) -> value.object_type:
-        ...
+        """
+        Get the custom_properties attribute
+        """
     @typing.overload
     def custom_properties(self, arg0: value.object_type) -> Feature:
-        ...
+        """
+        Set the custom_properties attribute
+        """
     def deduplicate_xyz(self) -> bool:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
     def dump(self, path: str, *, indent: bool = False, sort_keys: bool = False, precision: int = 8, only_xy: bool = False) -> bool:
-        ...
+        """
+        Dump the feature to a file (GeoJSON or Geobuf)
+        """
     def from_geobuf(self, arg0: str) -> Feature:
-        ...
+        """
+        Initialize the feature from Geobuf bytes
+        """
     @typing.overload
     def from_rapidjson(self, arg0: ..., rapidjson: ...) -> Feature:
-        ...
+        """
+        Initialize the feature from a RapidJSON value
+        """
     @typing.overload
     def from_rapidjson(self, arg0: typing.Any) -> Feature:
-        ...
+        """
+        Initialize the feature from a Python object
+        """
     @typing.overload
     def geometry(self) -> Geometry:
-        ...
+        """
+        Get the geometry attribute
+        """
     @typing.overload
     def geometry(self, arg0: Geometry) -> Feature:
-        ...
+        """
+        Set the geometry attribute
+        """
     @typing.overload
     def geometry(self, point: Point) -> Feature:
-        ...
+        """
+        Set the geometry of the feature to the given geometry object
+        """
     @typing.overload
     def geometry(self, multi_point: MultiPoint) -> Feature:
-        ...
+        """
+        Set the geometry of the feature to the given geometry object
+        """
     @typing.overload
     def geometry(self, line_string: LineString) -> Feature:
-        ...
+        """
+        Set the geometry of the feature to the given geometry object
+        """
     @typing.overload
     def geometry(self, multi_line_string: MultiLineString) -> Feature:
-        ...
+        """
+        Set the geometry of the feature to the given geometry object
+        """
     @typing.overload
     def geometry(self, polygon: Polygon) -> Feature:
-        ...
+        """
+        Set the geometry of the feature to the given geometry object
+        """
     @typing.overload
     def geometry(self, multi_polygon: MultiPolygon) -> Feature:
-        ...
+        """
+        Set the geometry of the feature to the given geometry object
+        """
     @typing.overload
     def geometry(self, arg0: typing.Any) -> Feature:
-        ...
+        """
+        Set the geometry of the feature from a Python object
+        """
     @typing.overload
     def id(self) -> typing.Any:
-        ...
+        """
+        Get the feature ID
+        """
     @typing.overload
     def id(self, arg0: typing.Any) -> Feature:
-        ...
+        """
+        Set the feature ID
+        """
     def items(self) -> typing.Iterator[tuple[str, value]]:
-        ...
+        """
+        Get an iterator over custom property items
+        """
     def keys(self) -> typing.Iterator[str]:
-        ...
+        """
+        Get an iterator over custom property keys
+        """
     def load(self, arg0: str) -> Feature:
-        ...
+        """
+        Load a feature from a file (GeoJSON or Geobuf)
+        """
     @typing.overload
     def properties(self) -> value.object_type:
-        ...
+        """
+        Get the properties attribute
+        """
     @typing.overload
     def properties(self, arg0: value.object_type) -> Feature:
-        ...
+        """
+        Set the properties attribute
+        """
     @typing.overload
     def properties(self, arg0: typing.Any) -> Feature:
-        ...
+        """
+        Set the properties of the feature from a Python object
+        """
     @typing.overload
     def properties(self, arg0: str) -> value:
-        ...
+        """
+        Get a property value by key
+        """
     @typing.overload
     def properties(self, arg0: str, arg1: typing.Any) -> Feature:
-        ...
+        """
+        Set a property value by key
+        """
     def round(self, *, lon: int = 8, lat: int = 8, alt: int = 3) -> Feature:
-        ...
+        """
+        Round the coordinates of the feature geometry
+        """
     def to_geobuf(self, *, precision: int = 8, only_xy: bool = False, round_z: int | None = None) -> bytes:
-        ...
+        """
+        Convert the feature to Geobuf bytes
+        """
     def to_numpy(self) -> numpy.ndarray[numpy.float64[m, 3]]:
-        ...
+        """
+        Convert the feature geometry to a numpy array
+        """
     def to_rapidjson(self) -> ...:
-        ...
+        """
+        Convert the feature to a RapidJSON value
+        """
 class FeatureCollection(FeatureList):
     def __call__(self) -> typing.Any:
-        ...
+        """
+        Convert the FeatureCollection to a Python dictionary
+        """
     def __copy__(self, arg0: dict) -> FeatureCollection:
         """
         Create a shallow copy of the object
@@ -141,7 +227,9 @@ class FeatureCollection(FeatureList):
         """
     @typing.overload
     def __delitem__(self, arg0: str) -> int:
-        ...
+        """
+        Delete a custom property
+        """
     @typing.overload
     def __delitem__(self, arg0: int) -> None:
         """
@@ -154,10 +242,14 @@ class FeatureCollection(FeatureList):
         """
     @typing.overload
     def __getitem__(self, arg0: str) -> value:
-        ...
+        """
+        Get a custom property by key
+        """
     @typing.overload
     def __getitem__(self, arg0: int) -> Feature:
-        ...
+        """
+        Get a feature from the collection by index
+        """
     @typing.overload
     def __getitem__(self, s: slice) -> FeatureCollection:
         """
@@ -165,19 +257,29 @@ class FeatureCollection(FeatureList):
         """
     @typing.overload
     def __init__(self) -> None:
-        ...
+        """
+        Initialize an empty FeatureCollection
+        """
     @typing.overload
     def __init__(self, arg0: FeatureCollection) -> None:
-        ...
+        """
+        Initialize a FeatureCollection from another FeatureCollection
+        """
     @typing.overload
     def __init__(self, N: int) -> None:
-        ...
+        """
+        Initialize a FeatureCollection with N empty features
+        """
     @typing.overload
     def __setitem__(self, arg0: str, arg1: typing.Any) -> typing.Any:
-        ...
+        """
+        Set a custom property
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: Feature) -> None:
-        ...
+        """
+        Set a feature in the collection at the specified index
+        """
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: FeatureCollection) -> None:
         """
@@ -189,36 +291,62 @@ class FeatureCollection(FeatureList):
         """
     @typing.overload
     def custom_properties(self) -> value.object_type:
-        ...
+        """
+        Get the custom_properties attribute
+        """
     @typing.overload
     def custom_properties(self, arg0: value.object_type) -> FeatureCollection:
-        ...
+        """
+        Set the custom_properties attribute
+        """
     def deduplicate_xyz(self) -> bool:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
     def dump(self, path: str, *, indent: bool = False, sort_keys: bool = False, precision: int = 8, only_xy: bool = False) -> bool:
-        ...
+        """
+        Dump the FeatureCollection to a file (GeoJSON or Geobuf)
+        """
     def from_geobuf(self, arg0: str) -> FeatureCollection:
-        ...
+        """
+        Load the FeatureCollection from Geobuf bytes
+        """
     def from_rapidjson(self, arg0: ..., rapidjson: ...) -> FeatureCollection:
-        ...
+        """
+        Load the FeatureCollection from a RapidJSON value
+        """
     def items(self) -> typing.Iterator[tuple[str, value]]:
-        ...
+        """
+        Return an iterator over the items of custom properties
+        """
     def keys(self) -> typing.Iterator[str]:
-        ...
+        """
+        Return an iterator over the keys of custom properties
+        """
     def load(self, arg0: str) -> FeatureCollection:
-        ...
+        """
+        Load the FeatureCollection from a file (GeoJSON or Geobuf)
+        """
     def resize(self, arg0: int) -> FeatureCollection:
-        ...
+        """
+        Resize the FeatureCollection to contain N features
+        """
     def round(self, *, lon: int = 8, lat: int = 8, alt: int = 3) -> FeatureCollection:
-        ...
+        """
+        Round the coordinates of all features in the collection
+        """
     def to_geobuf(self, *, precision: int = 8, only_xy: bool = False, round_z: int | None = None) -> bytes:
-        ...
+        """
+        Convert the FeatureCollection to Geobuf bytes
+        """
     def to_rapidjson(self) -> ...:
-        ...
+        """
+        Convert the FeatureCollection to a RapidJSON value
+        """
     def values(self) -> typing.Iterator[value]:
-        ...
+        """
+        Return an iterator over the values of custom properties
+        """
 class FeatureList:
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
@@ -331,21 +459,33 @@ class GeoJSON:
         Create a deep copy of the object
         """
     def __eq__(self, arg0: GeoJSON) -> bool:
-        ...
+        """
+        Check if two GeoJSON objects are equal
+        """
     @typing.overload
     def __init__(self) -> None:
-        ...
+        """
+        Create an empty GeoJSON object
+        """
     @typing.overload
     def __init__(self, arg0: ..., std: ...) -> None:
-        ...
+        """
+        Create a GeoJSON object from a geometry
+        """
     @typing.overload
     def __init__(self, arg0: ...) -> None:
-        ...
+        """
+        Create a GeoJSON object from a feature
+        """
     @typing.overload
     def __init__(self, arg0: ..., std: ...) -> None:
-        ...
+        """
+        Create a GeoJSON object from a feature collection
+        """
     def __ne__(self, arg0: GeoJSON) -> bool:
-        ...
+        """
+        Check if two GeoJSON objects are not equal
+        """
     def as_feature(self) -> ...:
         """
         Get this GeoJSON object as a feature (if it is one)
@@ -429,7 +569,9 @@ class Geometry(GeometryBase):
         Delete a custom property
         """
     def __eq__(self, arg0: Geometry) -> bool:
-        ...
+        """
+        Check if two geometries are equal
+        """
     def __getitem__(self, key: str) -> ...:
         """
         Get a custom property value
@@ -438,54 +580,84 @@ class Geometry(GeometryBase):
         ...
     @typing.overload
     def __init__(self) -> None:
-        ...
+        """
+        Initialize an empty geometry
+        """
     @typing.overload
     def __init__(self, arg0: ...) -> None:
-        ...
+        """
+        Initialize from a Point
+        """
     @typing.overload
     def __init__(self, arg0: ..., std: ...) -> None:
-        ...
+        """
+        Initialize from a MultiPoint
+        """
     @typing.overload
     def __init__(self, arg0: ..., std: ...) -> None:
-        ...
+        """
+        Initialize from a LineString
+        """
     @typing.overload
     def __init__(self, arg0: ..., std: ...) -> None:
-        ...
+        """
+        Initialize from a MultiLineString
+        """
     @typing.overload
     def __init__(self, arg0: ..., std: ...) -> None:
-        ...
+        """
+        Initialize from a Polygon
+        """
     @typing.overload
     def __init__(self, arg0: ..., std: ...) -> None:
-        ...
+        """
+        Initialize from a MultiPolygon
+        """
     @typing.overload
     def __init__(self, arg0: ..., std: ...) -> None:
-        ...
+        """
+        Initialize from a GeometryCollection
+        """
     @typing.overload
     def __init__(self, arg0: Geometry) -> None:
-        ...
+        """
+        Initialize from another Geometry
+        """
     @typing.overload
     def __init__(self, arg0: ..., std: ...) -> None:
-        ...
+        """
+        Initialize from a GeometryCollection
+        """
     @typing.overload
     def __init__(self, arg0: ..., rapidjson: ...) -> None:
-        ...
+        """
+        Initialize from a RapidJSON value
+        """
     @typing.overload
     def __init__(self, arg0: dict) -> None:
-        ...
+        """
+        Initialize from a Python dictionary
+        """
     def __iter__(self) -> typing.Iterator[str]:
-        ...
+        """
+        Get an iterator over the custom property keys
+        """
     def __len__(self) -> int:
         """
         Get the number of coordinates or sub-geometries
         """
     def __ne__(self, arg0: Geometry) -> bool:
-        ...
+        """
+        Check if two geometries are not equal
+        """
     def __setitem__(self, arg0: str, arg1: typing.Any) -> typing.Any:
         """
         Set a custom property value
         """
     def __setstate__(self, arg0: typing.Any) -> None:
-        ...
+        """
+        Pickle support for Geometry objects
+        """
     def as_geometry_collection(self) -> ...:
         """
         Get this geometry as a geometry_collection (if it is one)
@@ -532,10 +704,14 @@ class Geometry(GeometryBase):
         """
     @typing.overload
     def custom_properties(self) -> ...:
-        ...
+        """
+        Get the custom_properties attribute
+        """
     @typing.overload
     def custom_properties(self, arg0: ..., std: ..., std: ..., mapbox: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., mapbox: ...) -> Geometry:
-        ...
+        """
+        Set the custom_properties attribute
+        """
     def deduplicate_xyz(self) -> bool:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
@@ -593,9 +769,13 @@ class Geometry(GeometryBase):
         Check if this geometry is of type polygon
         """
     def items(self) -> typing.Iterator[tuple[str, ...]]:
-        ...
+        """
+        Get an iterator over the custom property items
+        """
     def keys(self) -> typing.Iterator[str]:
-        ...
+        """
+        Get an iterator over the custom property keys
+        """
     def load(self, arg0: str) -> Geometry:
         """
         Load a geometry from a file
@@ -659,7 +839,9 @@ class Geometry(GeometryBase):
         Get the type of the geometry
         """
     def values(self) -> typing.Iterator[...]:
-        ...
+        """
+        Get an iterator over the custom property values
+        """
     @property
     def __geo_interface__(self) -> typing.Any:
         ...
@@ -668,91 +850,151 @@ class GeometryBase:
 class GeometryCollection(GeometryList):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
-        ...
+        """
+        Convert the GeometryCollection to a Python object
+        """
     def __eq__(self, arg0: GeometryCollection) -> bool:
-        ...
+        """
+        Check if two GeometryCollections are equal
+        """
     def __getstate__(self) -> typing.Any:
         ...
     @typing.overload
     def __init__(self) -> None:
-        ...
+        """
+        Default constructor for GeometryCollection
+        """
     @typing.overload
     def __init__(self, arg0: GeometryCollection) -> None:
-        ...
+        """
+        Copy constructor for GeometryCollection
+        """
     @typing.overload
     def __init__(self, N: int) -> None:
-        ...
+        """
+        Construct a GeometryCollection with N empty geometries
+        """
     def __ne__(self, arg0: GeometryCollection) -> bool:
-        ...
+        """
+        Check if two GeometryCollections are not equal
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: Geometry) -> GeometryCollection:
-        ...
+        """
+        Set a geometry in the GeometryCollection by index
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: Point) -> GeometryCollection:
-        ...
+        """
+        Set a geometry in the GeometryCollection by index
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: MultiPoint) -> GeometryCollection:
-        ...
+        """
+        Set a geometry in the GeometryCollection by index
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: LineString) -> GeometryCollection:
-        ...
+        """
+        Set a geometry in the GeometryCollection by index
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: MultiLineString) -> GeometryCollection:
-        ...
+        """
+        Set a geometry in the GeometryCollection by index
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: Polygon) -> GeometryCollection:
-        ...
+        """
+        Set a geometry in the GeometryCollection by index
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: MultiPolygon) -> GeometryCollection:
-        ...
+        """
+        Set a geometry in the GeometryCollection by index
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: GeometryCollection) -> GeometryCollection:
-        ...
+        """
+        Set a geometry in the GeometryCollection by index
+        """
     def __setstate__(self, arg0: typing.Any) -> None:
-        ...
+        """
+        Pickle support for GeometryCollection
+        """
     def clear(self) -> GeometryCollection:
-        ...
+        """
+        Clear all geometries from the GeometryCollection
+        """
     def deduplicate_xyz(self) -> bool:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
     def from_rapidjson(self, arg0: ..., rapidjson: ...) -> GeometryCollection:
-        ...
+        """
+        Set the GeometryCollection from a RapidJSON value
+        """
     def pop_back(self) -> GeometryCollection:
-        ...
+        """
+        Remove the last geometry from the GeometryCollection
+        """
     @typing.overload
     def push_back(self, arg0: Geometry) -> GeometryCollection:
-        ...
+        """
+        Add a new geometry to the GeometryCollection
+        """
     @typing.overload
     def push_back(self, arg0: Point) -> GeometryCollection:
-        ...
+        """
+        Add a new geometry to the GeometryCollection
+        """
     @typing.overload
     def push_back(self, arg0: MultiPoint) -> GeometryCollection:
-        ...
+        """
+        Add a new geometry to the GeometryCollection
+        """
     @typing.overload
     def push_back(self, arg0: LineString) -> GeometryCollection:
-        ...
+        """
+        Add a new geometry to the GeometryCollection
+        """
     @typing.overload
     def push_back(self, arg0: MultiLineString) -> GeometryCollection:
-        ...
+        """
+        Add a new geometry to the GeometryCollection
+        """
     @typing.overload
     def push_back(self, arg0: Polygon) -> GeometryCollection:
-        ...
+        """
+        Add a new geometry to the GeometryCollection
+        """
     @typing.overload
     def push_back(self, arg0: MultiPolygon) -> GeometryCollection:
-        ...
+        """
+        Add a new geometry to the GeometryCollection
+        """
     @typing.overload
     def push_back(self, arg0: GeometryCollection) -> GeometryCollection:
-        ...
+        """
+        Add a new geometry to the GeometryCollection
+        """
     def resize(self, arg0: int) -> GeometryCollection:
-        ...
+        """
+        Resize the GeometryCollection to contain N geometries
+        """
     def round(self, *, lon: int = 8, lat: int = 8, alt: int = 3) -> GeometryCollection:
-        ...
+        """
+        Round the coordinates of all geometries in the GeometryCollection
+        """
     def to_rapidjson(self) -> ...:
-        ...
+        """
+        Convert the GeometryCollection to a RapidJSON value
+        """
     @property
     def __geo_interface__(self) -> typing.Any:
-        ...
+        """
+        Return the __geo_interface__ representation of the GeometryCollection
+        """
 class GeometryList:
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
@@ -978,6 +1220,9 @@ class LineString(coordinates):
         Return the __geo_interface__ representation
         """
 class LineStringList:
+    """
+    A list of LineStrings
+    """
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
         """
@@ -1087,13 +1332,17 @@ class LinearRing(coordinates):
         Create a deep copy of the object
         """
     def __eq__(self, arg0: LinearRing) -> bool:
-        ...
+        """
+        Check if two LinearRings are equal
+        """
     def __getitem__(self, arg0: int) -> Point:
         """
         Get a point from the geometry by index
         """
     def __init__(self) -> None:
-        ...
+        """
+        Default constructor for LinearRing
+        """
     def __iter__(self) -> typing.Iterator[Point]:
         """
         Iterate over the points in the geometry
@@ -1103,7 +1352,9 @@ class LinearRing(coordinates):
         Get the number of points in the geometry
         """
     def __ne__(self, arg0: LinearRing) -> bool:
-        ...
+        """
+        Check if two LinearRings are not equal
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: Point) -> Point:
         """
@@ -1149,6 +1400,9 @@ class LinearRing(coordinates):
         Convert the geometry points to a numpy array
         """
 class LinearRingList:
+    """
+    A list of LinearRings
+    """
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
         """
@@ -1258,7 +1512,9 @@ class MultiLineString(LineStringList):
         Create a deep copy of the object
         """
     def __eq__(self, arg0: MultiLineString) -> bool:
-        ...
+        """
+        Check if two MultiLineStrings are equal
+        """
     def __getitem__(self, arg0: int) -> LineString:
         """
         Get a linear ring by index
@@ -1267,13 +1523,19 @@ class MultiLineString(LineStringList):
         ...
     @typing.overload
     def __init__(self) -> None:
-        ...
+        """
+        Default constructor for MultiLineString
+        """
     @typing.overload
     def __init__(self, arg0: LineStringList) -> None:
-        ...
+        """
+        Construct MultiLineString from a container of LineStrings
+        """
     @typing.overload
     def __init__(self, arg0: coordinates) -> None:
-        ...
+        """
+        Construct MultiLineString from a single LineString
+        """
     @typing.overload
     def __init__(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> None:
         """
@@ -1288,7 +1550,9 @@ class MultiLineString(LineStringList):
         Return the number of linear rings in the geometry
         """
     def __ne__(self, arg0: MultiLineString) -> bool:
-        ...
+        """
+        Check if two MultiLineStrings are not equal
+        """
     def __setitem__(self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]:
         """
         Set a linear ring by index using a numpy array of points
@@ -1482,7 +1746,9 @@ class MultiPoint(coordinates):
 class MultiPolygon(PolygonList):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
-        ...
+        """
+        Convert MultiPolygon to a Python object
+        """
     def __copy__(self, arg0: dict) -> MultiPolygon:
         """
         Create a shallow copy of the object
@@ -1492,68 +1758,116 @@ class MultiPolygon(PolygonList):
         Create a deep copy of the object
         """
     def __eq__(self, arg0: MultiPolygon) -> bool:
-        ...
+        """
+        Check if two MultiPolygons are equal
+        """
     def __getitem__(self, arg0: int) -> Polygon:
-        ...
+        """
+        Get a Polygon from the MultiPolygon by index
+        """
     def __getstate__(self) -> typing.Any:
         ...
     @typing.overload
     def __init__(self) -> None:
-        ...
+        """
+        Default constructor for MultiPolygon
+        """
     @typing.overload
     def __init__(self, arg0: MultiPolygon) -> None:
-        ...
+        """
+        Copy constructor for MultiPolygon
+        """
     @typing.overload
     def __init__(self, arg0: PolygonList) -> None:
-        ...
+        """
+        Construct MultiPolygon from a container of Polygons
+        """
     @typing.overload
     def __init__(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> None:
-        ...
+        """
+        Construct MultiPolygon from a numpy array of points
+        """
     def __iter__(self) -> typing.Iterator[Polygon]:
-        ...
+        """
+        Return an iterator over the Polygons in the MultiPolygon
+        """
     def __len__(self) -> int:
-        ...
+        """
+        Return the number of Polygons in the MultiPolygon
+        """
     def __ne__(self, arg0: MultiPolygon) -> bool:
-        ...
+        """
+        Check if two MultiPolygons are not equal
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: Polygon) -> Polygon:
-        ...
+        """
+        Set a Polygon in the MultiPolygon by index
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> Polygon:
-        ...
+        """
+        Set a Polygon in the MultiPolygon by index using a numpy array
+        """
     def __setstate__(self, arg0: typing.Any) -> None:
-        ...
+        """
+        Pickle support for MultiPolygon
+        """
     def as_numpy(self) -> numpy.ndarray[numpy.float64[m, 3], numpy.ndarray.flags.writeable, numpy.ndarray.flags.c_contiguous]:
-        ...
+        """
+        Return a numpy view of the MultiPolygon coordinates
+        """
     def bbox(self, *, with_z: bool = False) -> numpy.ndarray[numpy.float64[m, 1]]:
-        ...
+        """
+        Compute the bounding box of the MultiPolygon
+        """
     def clear(self) -> MultiPolygon:
-        ...
+        """
+        Clear all Polygons from the MultiPolygon
+        """
     def clone(self) -> MultiPolygon:
         """
         Create a clone of the object
         """
     def from_numpy(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> MultiPolygon:
-        ...
+        """
+        Set MultiPolygon coordinates from a numpy array
+        """
     def from_rapidjson(self, arg0: ..., rapidjson: ...) -> MultiPolygon:
-        ...
+        """
+        Set the MultiPolygon from a RapidJSON value
+        """
     def pop_back(self) -> MultiPolygon:
-        ...
+        """
+        Remove the last Polygon from the MultiPolygon
+        """
     @typing.overload
     def push_back(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> MultiPolygon:
-        ...
+        """
+        Add a new Polygon to the MultiPolygon from a numpy array
+        """
     @typing.overload
     def push_back(self, arg0: Polygon) -> MultiPolygon:
-        ...
+        """
+        Add a new Polygon to the MultiPolygon
+        """
     def round(self, *, lon: int = 8, lat: int = 8, alt: int = 3) -> MultiPolygon:
-        ...
+        """
+        Round the coordinates of the MultiPolygon
+        """
     def to_numpy(self: Polygon) -> numpy.ndarray[numpy.float64[m, 3]]:
-        ...
+        """
+        Convert MultiPolygon to a numpy array
+        """
     def to_rapidjson(self) -> ...:
-        ...
+        """
+        Convert the MultiPolygon to a RapidJSON value
+        """
     @property
     def __geo_interface__(self) -> typing.Any:
-        ...
+        """
+        Return the __geo_interface__ representation of the MultiPolygon
+        """
 class Point:
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1580,13 +1894,19 @@ class Point:
         ...
     @typing.overload
     def __init__(self) -> None:
-        ...
+        """
+        Initialize an empty Point
+        """
     @typing.overload
     def __init__(self, x: float, y: float, z: float = 0.0) -> None:
-        ...
+        """
+        Initialize a Point with coordinates (x, y, z)
+        """
     @typing.overload
     def __init__(self, arg0: numpy.ndarray[numpy.float64[m, 1]]) -> None:
-        ...
+        """
+        Initialize a Point from a numpy array or vector
+        """
     def __iter__(self) -> typing.Iterator[float]:
         """
         Return an iterator over the point's coordinates
@@ -1691,7 +2011,9 @@ class Polygon(LinearRingList):
         Create a deep copy of the object
         """
     def __eq__(self, arg0: Polygon) -> bool:
-        ...
+        """
+        Check if two Polygons are equal
+        """
     def __getitem__(self, arg0: int) -> LinearRing:
         """
         Get a linear ring by index
@@ -1700,13 +2022,19 @@ class Polygon(LinearRingList):
         ...
     @typing.overload
     def __init__(self) -> None:
-        ...
+        """
+        Default constructor for Polygon
+        """
     @typing.overload
     def __init__(self, arg0: LinearRingList) -> None:
-        ...
+        """
+        Construct Polygon from a container of LinearRings
+        """
     @typing.overload
     def __init__(self, arg0: coordinates) -> None:
-        ...
+        """
+        Construct Polygon from a single LinearRing (shell)
+        """
     @typing.overload
     def __init__(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> None:
         """
@@ -1721,7 +2049,9 @@ class Polygon(LinearRingList):
         Return the number of linear rings in the geometry
         """
     def __ne__(self, arg0: Polygon) -> bool:
-        ...
+        """
+        Check if two Polygons are not equal
+        """
     def __setitem__(self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]:
         """
         Set a linear ring by index using a numpy array of points
@@ -2016,7 +2346,9 @@ class value:
             Check whether the list is nonempty
             """
         def __call__(self) -> typing.Any:
-            ...
+            """
+            Convert the GeoJSON array to a Python list
+            """
         def __contains__(self, x: value) -> bool:
             """
             Return true the container contains ``x``
@@ -2043,7 +2375,9 @@ class value:
             ...
         @typing.overload
         def __getitem__(self, arg0: int) -> value:
-            ...
+            """
+            Get an item from the GeoJSON array by index
+            """
         @typing.overload
         def __init__(self) -> None:
             ...
@@ -2057,10 +2391,14 @@ class value:
             ...
         @typing.overload
         def __init__(self) -> None:
-            ...
+            """
+            Default constructor for GeoJSON array
+            """
         @typing.overload
         def __init__(self, arg0: typing.Any) -> None:
-            ...
+            """
+            Construct a GeoJSON array from a Python iterable
+            """
         def __iter__(self) -> typing.Iterator[value]:
             ...
         def __len__(self) -> int:
@@ -2077,7 +2415,9 @@ class value:
             """
         @typing.overload
         def __setitem__(self, arg0: int, arg1: typing.Any) -> value:
-            ...
+            """
+            Set an item in the GeoJSON array by index
+            """
         def append(self, x: value) -> None:
             """
             Add an item to the end of the list
@@ -2089,7 +2429,9 @@ class value:
             """
         @typing.overload
         def clear(self) -> value.array_type:
-            ...
+            """
+            Clear the GeoJSON array
+            """
         def count(self, x: value) -> int:
             """
             Return the number of times ``x`` appears in the list
@@ -2105,7 +2447,9 @@ class value:
             Extend the list by appending all the items in the given list
             """
         def from_rapidjson(self, arg0: ..., rapidjson: ...) -> value.array_type:
-            ...
+            """
+            Set the GeoJSON array from a RapidJSON value
+            """
         def insert(self, i: int, x: value) -> None:
             """
             Insert an item at a given position.
@@ -2125,14 +2469,18 @@ class value:
             Remove the first item from the list whose value is x. It is an error if there is no such item.
             """
         def to_rapidjson(self) -> ...:
-            ...
+            """
+            Convert the GeoJSON array to a RapidJSON value
+            """
     class object_type:
         def __bool__(self) -> bool:
             """
             Check whether the map is nonempty
             """
         def __call__(self) -> typing.Any:
-            ...
+            """
+            Convert the GeoJSON object to a Python dict
+            """
         @typing.overload
         def __contains__(self, arg0: str) -> bool:
             ...
@@ -2148,10 +2496,14 @@ class value:
             ...
         @typing.overload
         def __init__(self) -> None:
-            ...
+            """
+            Default constructor for GeoJSON object
+            """
         @typing.overload
         def __init__(self, arg0: typing.Any) -> None:
-            ...
+            """
+            Construct a GeoJSON object from a Python dict
+            """
         def __iter__(self) -> typing.Iterator[str]:
             ...
         def __len__(self) -> int:
@@ -2161,100 +2513,178 @@ class value:
             ...
         @typing.overload
         def __setitem__(self, arg0: str, arg1: typing.Any) -> value:
-            ...
+            """
+            Set an item in the GeoJSON object by key
+            """
         def clear(self) -> value.object_type:
-            ...
+            """
+            Clear the GeoJSON object
+            """
         def from_rapidjson(self, arg0: ..., rapidjson: ...) -> value.object_type:
-            ...
+            """
+            Convert a RapidJSON value to a GeoJSON object
+            """
         @typing.overload
         def items(self) -> value.ItemsView:
             ...
         @typing.overload
         def items(self) -> typing.Iterator[tuple[str, value]]:
-            ...
+            """
+            Get an iterator over the items (key-value pairs) of the GeoJSON object
+            """
         @typing.overload
         def keys(self) -> value.KeysView:
             ...
         @typing.overload
         def keys(self) -> typing.Iterator[str]:
-            ...
+            """
+            Get an iterator over the keys of the GeoJSON object
+            """
         def to_rapidjson(self) -> ...:
-            ...
+            """
+            Convert the GeoJSON object to a RapidJSON value
+            """
         @typing.overload
         def values(self) -> value.ValuesView:
             ...
         @typing.overload
         def values(self) -> typing.Iterator[value]:
-            ...
+            """
+            Get an iterator over the values of the GeoJSON object
+            """
     def Get(self) -> typing.Any:
-        ...
+        """
+        Get the GeoJSON value as a Python object
+        """
     def GetBool(self) -> bool:
-        ...
+        """
+        Get the GeoJSON value as a boolean
+        """
     def GetDouble(self) -> float:
-        ...
+        """
+        Get the GeoJSON value as a double
+        """
     def GetInt64(self) -> int:
-        ...
+        """
+        Get the GeoJSON value as a signed 64-bit integer
+        """
     def GetString(self) -> str:
-        ...
+        """
+        Get the GeoJSON value as a string
+        """
     def GetType(self) -> str:
-        ...
+        """
+        Get the type of the GeoJSON value
+        """
     def GetUint64(self) -> int:
-        ...
+        """
+        Get the GeoJSON value as an unsigned 64-bit integer
+        """
     def __bool__(self) -> bool:
-        ...
+        """
+        Check if the GeoJSON value is truthy
+        """
     def __call__(self) -> typing.Any:
-        ...
+        """
+        Convert the GeoJSON value to a Python object
+        """
     @typing.overload
     def __delitem__(self, arg0: str) -> int:
-        ...
+        """
+        Delete an item from the GeoJSON object by key
+        """
     @typing.overload
     def __delitem__(self, arg0: int) -> None:
-        ...
+        """
+        Delete an item from the GeoJSON array by index
+        """
     @typing.overload
     def __getitem__(self, arg0: int) -> value:
-        ...
+        """
+        Get an item from the GeoJSON array by index
+        """
     @typing.overload
     def __getitem__(self, arg0: str) -> value:
-        ...
+        """
+        Get an item from the GeoJSON object by key
+        """
     @typing.overload
     def __init__(self) -> None:
-        ...
+        """
+        Default constructor for GeoJSON value
+        """
     @typing.overload
     def __init__(self, arg0: typing.Any) -> None:
-        ...
+        """
+        Construct a GeoJSON value from a Python object
+        """
     def __len__(self) -> int:
-        ...
+        """
+        Get the length of the GeoJSON value
+        """
     @typing.overload
     def __setitem__(self, arg0: str, arg1: typing.Any) -> typing.Any:
-        ...
+        """
+        Set an item in the GeoJSON object by key
+        """
     @typing.overload
     def __setitem__(self, arg0: int, arg1: typing.Any) -> typing.Any:
-        ...
+        """
+        Set an item in the GeoJSON array by index
+        """
     def as_array(self) -> ...:
-        ...
+        """
+        Get the GeoJSON value as an array
+        """
     def as_object(self) -> ...:
-        ...
+        """
+        Get the GeoJSON value as an object
+        """
     def clear(self) -> value:
-        ...
+        """
+        Clear the GeoJSON value
+        """
     def from_rapidjson(self, arg0: ..., rapidjson: ...) -> value:
-        ...
+        """
+        Set the GeoJSON value from a RapidJSON value
+        """
     def get(self, key: str) -> value:
-        ...
+        """
+        Get an item from the GeoJSON object by key, returning None if not found
+        """
     def is_array(self) -> bool:
-        ...
+        """
+        Check if the GeoJSON value is an array
+        """
     def is_object(self) -> bool:
-        ...
+        """
+        Check if the GeoJSON value is an object
+        """
     def items(self) -> typing.Iterator[tuple[str, value]]:
-        ...
+        """
+        Get an iterator over the items of the GeoJSON object
+        """
     def keys(self) -> typing.Iterator[str]:
-        ...
+        """
+        Get an iterator over the keys of the GeoJSON object
+        """
     def pop_back(self) -> value:
-        ...
+        """
+        Remove the last value from the GeoJSON array
+        """
     def push_back(self, arg0: typing.Any) -> value:
-        ...
+        """
+        Add a value to the end of the GeoJSON array
+        """
     def set(self, arg0: typing.Any) -> value:
-        ...
+        """
+        Set the GeoJSON value from a Python object
+        """
     def to_rapidjson(self) -> ...:
-        ...
+        """
+        Convert the GeoJSON value to a RapidJSON value
+        """
     def values(self) -> typing.Iterator[value]:
-        ...
+        """
+        Get an iterator over the values of the GeoJSON object
+        """
