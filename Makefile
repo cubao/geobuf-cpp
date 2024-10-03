@@ -21,13 +21,20 @@ clean:
 force_clean:
 	docker run --rm -v `pwd`:`pwd` -w `pwd` -it alpine/make make clean
 
-CMAKE_ARGS ?= \
-	-DCMAKE_INSTALL_PREFIX=$(INSTALL_DIR) \
-	-DBUILD_SHARED_LIBS=OFF
+PYTHON ?= python3
 build:
-	mkdir -p $(BUILD_DIR) && cd $(BUILD_DIR) && \
-	cmake $(PROJECT_SOURCE_DIR) $(CMAKE_ARGS) && \
-	make -j$(NUM_JOB) && make install
+	$(PYTHON) -m pip install scikit_build_core pyproject_metadata pathspec pybind11
+	CMAKE_BUILD_PARALLEL_LEVEL=$(NUM_JOBS) $(PYTHON) -m pip install --no-build-isolation -Ceditable.rebuild=true -Cbuild-dir=build -ve.
+python_install:
+	$(PYTHON) -m pip install . --verbose
+python_wheel:
+	$(PYTHON) -m pip wheel . -w build --verbose
+python_sdist:
+	$(PYTHON) -m pip sdist . --verbose
+python_test: pytest
+pytest:
+	python3 -m pip install pytest
+	pytest tests/test_basic.py
 .PHONY: build
 
 restub:

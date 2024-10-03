@@ -1,5 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
-project(geobuf)
+cmake_minimum_required(VERSION 3.15...3.27)
+
+project(
+  ${SKBUILD_PROJECT_NAME}
+  VERSION ${SKBUILD_PROJECT_VERSION}
+  LANGUAGES CXX)
 
 set(CUBAO_INCLUDE ${PROJECT_SOURCE_DIR}/headers/include)
 include(${CUBAO_INCLUDE}/utils.cmake)
@@ -31,22 +35,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_VISIBILITY_PRESET "hidden")
 print_all_linked_libraries(${PROJECT_NAME})
 install(
     TARGETS ${PROJECT_NAME}
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
-foreach(file ${HEADERS})
-    get_filename_component(dir ${file} DIRECTORY)
-    string(
-        REGEX
-        REPLACE "${HEADER_ROOT}"
-                ""
-                dir
-                ${dir})
-    install(FILES ${file} DESTINATION "include/${PROJECT_NAME}/${dir}")
-endforeach()
+    DESTINATION ${PROJECT_NAME})
 
 add_executable(pbf_decoder src/geobuf/pbf_decoder.cpp)
 target_compile_definitions(pbf_decoder PUBLIC -DPBF_DECODER_ENABLE_MAIN)
-install(TARGETS pbf_decoder RUNTIME DESTINATION bin)
+install(TARGETS pbf_decoder RUNTIME DESTINATION ${PROJECT_NAME})
 
 option(BUILD_EXAMPLES "Build examples." ON)
 if(BUILD_EXAMPLES)
@@ -60,7 +53,7 @@ if(BUILD_EXAMPLES)
                     ${src})
         add_executable(${exe} ${src})
         target_link_libraries(${exe} ${PROJECT_NAME})
-        install(TARGETS ${exe} RUNTIME DESTINATION bin)
+        install(TARGETS ${exe} RUNTIME DESTINATION ${PROJECT_NAME})
     endforeach(src)
 endif()
 
@@ -76,22 +69,17 @@ if(BUILD_TESTS)
                     ${src})
         add_executable(${exe} ${src})
         target_link_libraries(${exe} ${PROJECT_NAME})
-        install(TARGETS ${exe} RUNTIME DESTINATION bin)
+        install(TARGETS ${exe} RUNTIME DESTINATION ${PROJECT_NAME})
     endforeach(src)
 endif()
 add_custom_target(test_all COMMAND make -C .. test_all)
 
-# print_include_directories()
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(pybind11 CONFIG REQUIRED)
 
-# print_all_variables()
 
-set(PYBIND11_CPP_STANDARD -std=c++17)
-add_subdirectory(pybind11)
-pybind11_add_module(
-    _pybind11_geobuf
-    src/main.cpp
-    src/pybind11_rapidjson.cpp
-    src/pybind11_geojson.cpp)
-target_include_directories(_pybind11_geobuf PRIVATE ${HEADER_ROOT})
-target_link_libraries(_pybind11_geobuf PRIVATE ${PROJECT_NAME})
-target_compile_definitions(_pybind11_geobuf PRIVATE VERSION_INFO=${PYBIND11_GEOBUF_VERSION_INFO})
+set(PYBIND_SRCS src/main.cpp src/pybind11_rapidjson.cpp src/pybind11_geojson.cpp)
+python_add_library(_core MODULE ${PYBIND_SRCS} WITH_SOABI)
+target_link_libraries(_core PRIVATE pybind11::headers ${PROJECT_NAME})
+target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
+install(TARGETS _core DESTINATION ${PROJECT_NAME})
