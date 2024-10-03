@@ -28,14 +28,20 @@ using rvp = py::return_value_policy;
 
 namespace cubao
 {
-void bind_geojson(py::module &m);
 void bind_rapidjson(py::module &m);
+void bind_geojson(py::module &m);
 void bind_crs_transform(py::module &m);
 } // namespace cubao
 
 PYBIND11_MODULE(_core, m)
 {
     using namespace mapbox::geobuf;
+
+    cubao::bind_rapidjson(m);
+    auto geojson = m.def_submodule("geojson");
+    cubao::bind_geojson(geojson);
+    auto tf = m.def_submodule("tf");
+    cubao::bind_crs_transform(tf);
 
     m.def(
          "normalize_json",
@@ -247,8 +253,7 @@ PYBIND11_MODULE(_core, m)
              "Get the dimension of the encoded coordinates (2 or 3).")
         .def("e", &Encoder::__e,
              "Get the encoding factor used for coordinate precision.")
-        .def("keys", &Encoder::__keys,
-             "Get the list of keys used in the encoded data.")
+        .def("keys", &Encoder::__keys, "Get keys used in the encoded data.")
         .def(
             "encode",
             [](Encoder &self, const mapbox::geojson::geojson &geojson) {
@@ -357,13 +362,6 @@ PYBIND11_MODULE(_core, m)
 
              Returns:
                  Bool: succ or not.
-             )docstring")
-        .def("keys", &Encoder::__keys,
-             R"docstring(
-             Get the list of keys used in the encoding process.
-
-             Returns:
-                 list: A list of strings representing the keys used during encoding.
              )docstring")
         //
         ;
@@ -525,9 +523,6 @@ PYBIND11_MODULE(_core, m)
              )docstring")
         //
         ;
-
-    auto geojson = m.def_submodule("geojson");
-    cubao::bind_geojson(geojson);
 
     using namespace FlatGeobuf;
     py::class_<NodeItem>(m, "NodeItem", py::module_local())
@@ -939,11 +934,6 @@ PYBIND11_MODULE(_core, m)
                     )docstring")
         //
         ;
-
-    cubao::bind_rapidjson(m);
-
-    auto tf = m.def_submodule("tf");
-    cubao::bind_crs_transform(tf);
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
