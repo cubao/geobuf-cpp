@@ -1687,19 +1687,14 @@ def test_geojson_load_dump():
     assert geojson.GeoJSON().load(path3) == fc_
 
     # to/from_geobuf
-    encoded = g_.to_geobuf()
-    assert encoded == g_.as_geometry().to_geobuf()
-    decoded = geojson.GeoJSON().from_geobuf(encoded)
+    # (geojson keys may not in sorted order)
+    decoded = geojson.GeoJSON().from_geobuf(g_.as_geometry().to_geobuf())
     assert decoded == g_
 
-    encoded = f_.to_geobuf()
-    assert encoded == f_.as_feature().to_geobuf()
-    decoded = geojson.GeoJSON().from_geobuf(encoded)
+    decoded = geojson.GeoJSON().from_geobuf(f_.as_feature().to_geobuf())
     assert decoded == f_
 
-    encoded = fc_.to_geobuf()
-    assert encoded == fc_.as_feature_collection().to_geobuf()
-    decoded = geojson.GeoJSON().from_geobuf(encoded)
+    decoded = geojson.GeoJSON().from_geobuf(fc_.as_feature_collection().to_geobuf())
     assert decoded == fc_
 
     # onlyXY
@@ -2024,7 +2019,6 @@ def test_geobuf_index():
 if __name__ == "__main__":
     test_geojson_load_dump()
     print()
-
 
     np.set_printoptions(suppress=True)
     pwd = os.path.abspath(os.path.dirname(__file__))
