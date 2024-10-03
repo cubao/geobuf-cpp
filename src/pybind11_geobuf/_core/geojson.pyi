@@ -75,10 +75,14 @@ class Feature:
         """
     @typing.overload
     def custom_properties(self) -> value.object_type:
-        ...
+        """
+        Get the 'custom_properties' attribute
+        """
     @typing.overload
     def custom_properties(self, arg0: value.object_type) -> Feature:
-        ...
+        """
+        Set the 'custom_properties' attribute
+        """
     def deduplicate_xyz(self) -> bool:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
@@ -103,10 +107,14 @@ class Feature:
         """
     @typing.overload
     def geometry(self) -> Geometry:
-        ...
+        """
+        Get the 'geometry' attribute
+        """
     @typing.overload
     def geometry(self, arg0: Geometry) -> Feature:
-        ...
+        """
+        Set the 'geometry' attribute
+        """
     @typing.overload
     def geometry(self, point: Point) -> Feature:
         """
@@ -166,10 +174,14 @@ class Feature:
         """
     @typing.overload
     def properties(self) -> value.object_type:
-        ...
+        """
+        Get the 'properties' attribute
+        """
     @typing.overload
     def properties(self, arg0: value.object_type) -> Feature:
-        ...
+        """
+        Set the 'properties' attribute
+        """
     @typing.overload
     def properties(self, arg0: typing.Any) -> Feature:
         """
@@ -280,10 +292,14 @@ class FeatureCollection(FeatureList):
         """
     @typing.overload
     def custom_properties(self) -> value.object_type:
-        ...
+        """
+        Get the 'custom_properties' attribute
+        """
     @typing.overload
     def custom_properties(self, arg0: value.object_type) -> FeatureCollection:
-        ...
+        """
+        Set the 'custom_properties' attribute
+        """
     def deduplicate_xyz(self) -> bool:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
@@ -689,10 +705,14 @@ class Geometry(GeometryBase):
         """
     @typing.overload
     def custom_properties(self) -> ...:
-        ...
+        """
+        Get the 'custom_properties' attribute
+        """
     @typing.overload
     def custom_properties(self, arg0: ..., std: ..., std: ..., mapbox: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., mapbox: ...) -> Geometry:
-        ...
+        """
+        Set the 'custom_properties' attribute
+        """
     def deduplicate_xyz(self) -> bool:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
