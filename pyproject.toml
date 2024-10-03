@@ -80,13 +80,24 @@ extend-select = [
   "PD",          # pandas-vet
 ]
 ignore = [
+  "NPY002",
   "PLR09",    # Too many X
   "PLR2004",  # Magic comparison
+  "PLW2901",
+  "PT011",
+  "PT018",
   "PTH100",
   "PTH103",
+  "PTH107",
+  "PTH112",
+  "PTH113",
+  "PTH118",
+  "PTH119",
   "PTH120",
+  "PTH123",
+  "RUF013",
 ]
 isort.required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["T20"]
+"tests/**" = ["T20", "E501"]

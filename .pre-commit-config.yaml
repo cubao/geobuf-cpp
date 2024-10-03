@@ -49,12 +49,6 @@ repos:
   - id: remove-tabs
     exclude: ^(docs|Makefile|benchmarks/Makefile)
 
-- repo: https://github.com/PyCQA/flake8
-  rev: 6.1.0
-  hooks:
-  - id: flake8
-    additional_dependencies: [flake8-bugbear]
-
 # CMake formatting
 - repo: https://github.com/cheshirekow/cmake-format-precommit
   rev: v0.6.13

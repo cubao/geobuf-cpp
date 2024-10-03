@@ -35,7 +35,7 @@ def test_version():
 
 
 def sample_geojson():
-    geojson = {
+    return {
         "type": "Feature",
         "properties": {
             "string": "string",
@@ -57,7 +57,6 @@ def sample_geojson():
         },
         "my_key": "my_value",
     }
-    return geojson
 
 
 def test_geobuf():
@@ -164,10 +163,9 @@ def test_rapidjson_obj():
     assert obj["type"]
     assert obj["type"]() == "Feature"
     assert id(obj["type"]) == id(obj["type"])
-    try:
-        assert obj["missing_key"]
-    except KeyError as e:
-        assert "missing_key" in repr(e)
+    with pytest.raises(KeyError) as e:
+        obj["missing_key"]
+    assert "missing_key" in repr(e)
     assert obj.get("missing_key") is None
     assert obj.keys()
     assert obj.values()
