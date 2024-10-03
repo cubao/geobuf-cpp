@@ -17,7 +17,7 @@ reset_submodules:
 	git submodule update --init --recursive
 
 clean:
-	rm -rf $(BUILD_DIR) *.egg-info dist
+	rm -rf $(BUILD_DIR) *.egg-info dist stubs
 force_clean:
 	docker run --rm -v `pwd`:`pwd` -w `pwd` -it alpine/make make clean
 
