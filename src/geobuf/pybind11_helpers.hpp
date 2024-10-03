@@ -467,5 +467,6 @@ inline geojson_value to_geojson_value(const py::handle &obj)
                 self.var = v;                                                  \
                 return self;                                                   \
             },                                                                 \
-            rvp::reference_internal, "Set the '" #var "' attribute")
+            "new_value"_a, rvp::reference_internal,                            \
+            "Set the '" #var "' attribute")
 #endif

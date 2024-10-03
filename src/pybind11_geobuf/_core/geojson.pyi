@@ -79,7 +79,7 @@ class Feature:
         Get the 'custom_properties' attribute
         """
     @typing.overload
-    def custom_properties(self, arg0: value.object_type) -> Feature:
+    def custom_properties(self, new_value: value.object_type) -> Feature:
         """
         Set the 'custom_properties' attribute
         """
@@ -111,7 +111,7 @@ class Feature:
         Get the 'geometry' attribute
         """
     @typing.overload
-    def geometry(self, arg0: Geometry) -> Feature:
+    def geometry(self, new_value: Geometry) -> Feature:
         """
         Set the 'geometry' attribute
         """
@@ -178,7 +178,7 @@ class Feature:
         Get the 'properties' attribute
         """
     @typing.overload
-    def properties(self, arg0: value.object_type) -> Feature:
+    def properties(self, new_value: value.object_type) -> Feature:
         """
         Set the 'properties' attribute
         """
@@ -296,7 +296,7 @@ class FeatureCollection(FeatureList):
         Get the 'custom_properties' attribute
         """
     @typing.overload
-    def custom_properties(self, arg0: value.object_type) -> FeatureCollection:
+    def custom_properties(self, new_value: value.object_type) -> FeatureCollection:
         """
         Set the 'custom_properties' attribute
         """
@@ -709,7 +709,7 @@ class Geometry(GeometryBase):
         Get the 'custom_properties' attribute
         """
     @typing.overload
-    def custom_properties(self, arg0: ..., std: ..., std: ..., mapbox: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., mapbox: ...) -> Geometry:
+    def custom_properties(self, new_value: ..., std: ..., std: ..., mapbox: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., mapbox: ...) -> Geometry:
         """
         Set the 'custom_properties' attribute
         """
