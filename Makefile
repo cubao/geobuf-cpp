@@ -32,10 +32,14 @@ python_wheel:
 python_sdist:
 	$(PYTHON) -m pip sdist . --verbose
 python_test: pytest
+test:
+	# make roundtrip_test_js roundtrip_test_cpp diff
+	python3 geobuf-roundtrip-test.py pygeobuf/test/fixtures
 pytest:
-	python3 -m pip install pytest
+	python3 -m pip install pytest numpy
 	pytest tests/test_basic.py
-.PHONY: build
+cli_test: cli_test1 cli_test2 cli_test3 cli_test4
+.PHONY: build python_install python_wheel python_sdist test pytest cli_test
 
 restub:
 	pybind11-stubgen pybind11_geobuf._core -o stubs/pybind11_geobuf
@@ -78,13 +82,6 @@ diff:
 	# code --diff $(OUTPUT_TXT_JS) $(OUTPUT_TXT_CPP)
 	code --diff $(OUTPUT_JSN_JS) $(OUTPUT_JSN_CPP)
 
-test:
-	# make roundtrip_test_js roundtrip_test_cpp diff
-	python3 geobuf-roundtrip-test.py pygeobuf/test/fixtures
-pytest:
-	python3 -m pip install pytest numpy
-	pytest tests # --capture=tee-sys
-.PHONY: test pytest
 
 clean_test:
 	rm -rf $(OUTPUT_DIR_JS) $(OUTPUT_DIR_CPP) build/roundtrip_test
@@ -114,18 +111,6 @@ test_in_dev_container:
 			--network host --security-opt seccomp=unconfined \
 			-v `pwd`:`pwd` -w `pwd` -it $(DEV_CONTAINER_IMAG) bash
 
-PYTHON ?= python3
-python_install:
-	$(PYTHON) setup.py install --force
-python_build:
-	$(PYTHON) setup.py bdist_wheel
-python_sdist:
-	$(PYTHON) setup.py sdist
-	# tar -tvf dist/geobuf-*.tar.gz
-python_test: pytest
-
-cli_test: cli_test1 cli_test2 cli_test3 cli_test4
-
 cli_test1:
 	python3 -m pybind11_geobuf
 	python3 -m pybind11_geobuf --help
@@ -154,32 +139,32 @@ cli_test3:
 cli_test4:
 	python3 -m pybind11_geobuf is_subset_of data/feature_collection.json data/feature_collection.json
 
-.PHONY: cli_test cli_test1 cli_test2 cli_test3
+.PHONY: cli_test1 cli_test2 cli_test3
 
 geobuf_index.js: geobuf_index.proto
 	pbf $< > $@
 
-# conda create -y -n py36 python=3.6
-# conda create -y -n py37 python=3.7
 # conda create -y -n py38 python=3.8
 # conda create -y -n py39 python=3.9
 # conda create -y -n py310 python=3.10
+# conda create -y -n py311 python=3.11
+# conda create -y -n py312 python=3.12
 # conda env list
-python_build_py36:
-	PYTHON=python conda run --no-capture-output -n py36 make python_build
-python_build_py37:
-	PYTHON=python conda run --no-capture-output -n py37 make python_build
 python_build_py38:
 	PYTHON=python conda run --no-capture-output -n py38 make python_build
 python_build_py39:
 	PYTHON=python conda run --no-capture-output -n py39 make python_build
 python_build_py310:
 	PYTHON=python conda run --no-capture-output -n py310 make python_build
-python_build_all: python_build_py36 python_build_py37 python_build_py38 python_build_py39 python_build_py310
+python_build_py311:
+	PYTHON=python conda run --no-capture-output -n py311 make python_build
+python_build_py312:
+	PYTHON=python conda run --no-capture-output -n py312 make python_build
+python_build_all: python_build_py38 python_build_py39 python_build_py310 python_build_py311 python_build_py312
 python_build_all_in_linux:
 	docker run --rm -w `pwd` -v `pwd`:`pwd` -v `pwd`/build/linux:`pwd`/build -it $(DOCKER_TAG_LINUX) make python_build_all
 	make repair_wheels && rm -rf dist/*.whl && mv wheelhouse/*.whl dist && rm -rf wheelhouse
-python_build_all_in_macos: python_build_py38 python_build_py39 python_build_py310
+python_build_all_in_macos: python_build_py38 python_build_py39 python_build_py310 python_build_py311 python_build_py312
 python_build_all_in_windows: python_build_all
 
 repair_wheels:

@@ -5,24 +5,30 @@ project(
     VERSION ${SKBUILD_PROJECT_VERSION}
     LANGUAGES CXX)
 
-set(CUBAO_INCLUDE ${PROJECT_SOURCE_DIR}/headers/include)
-include(${CUBAO_INCLUDE}/utils.cmake)
-# set(CMAKE_BUILD_TYPE Debug)
-
-activate_common_configuration()
-auto_build_type_and_compile_flags()
-configure_output_directories()
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    set(CUBAO_USE_DUMMY_VERSION_H "True")
+# set(CMAKE_BUILD_TYPE "Debug")
+if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
+    set(CMAKE_BUILD_TYPE
+        "Release"
+        CACHE STRING "" FORCE)
+    message(STATUS "Set build type to default: ${CMAKE_BUILD_TYPE}")
+else()
+    message(STATUS "Your build type: ${CMAKE_BUILD_TYPE}")
 endif()
-configure_version_h()
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -ggdb")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -ggdb")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+endif()
 
-# MISC
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-DPROJECT_BINARY_DIR="${PROJECT_BINARY_DIR}")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 17)
 include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/headers/include)
 include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/src/geobuf)
@@ -34,7 +40,6 @@ file(GLOB_RECURSE SOURCES src/**/*.cpp)
 add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_VISIBILITY_PRESET "hidden")
-print_all_linked_libraries(${PROJECT_NAME})
 install(TARGETS ${PROJECT_NAME} DESTINATION ${PROJECT_NAME})
 
 add_executable(pbf_decoder src/geobuf/pbf_decoder.cpp)
