@@ -2,7 +2,30 @@ from __future__ import annotations
 import numpy
 import pybind11_geobuf._core
 import typing
-__all__ = ['Feature', 'FeatureCollection', 'FeatureList', 'GeoJSON', 'Geometry', 'GeometryBase', 'GeometryCollection', 'GeometryList', 'LineString', 'LineStringList', 'LinearRing', 'LinearRingList', 'MultiLineString', 'MultiPoint', 'MultiPolygon', 'Point', 'Polygon', 'PolygonList', 'coordinates', 'value']
+
+__all__ = [
+    "Feature",
+    "FeatureCollection",
+    "FeatureList",
+    "GeoJSON",
+    "Geometry",
+    "GeometryBase",
+    "GeometryCollection",
+    "GeometryList",
+    "LineString",
+    "LineStringList",
+    "LinearRing",
+    "LinearRingList",
+    "MultiLineString",
+    "MultiPoint",
+    "MultiPolygon",
+    "Point",
+    "Polygon",
+    "PolygonList",
+    "coordinates",
+    "value",
+]
+
 class Feature:
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -57,7 +80,13 @@ class Feature:
         """
         Set a custom property value by key
         """
-    def as_numpy(self) -> numpy.ndarray[numpy.float64[m, 3], numpy.ndarray.flags.writeable, numpy.ndarray.flags.c_contiguous]:
+    def as_numpy(
+        self,
+    ) -> numpy.ndarray[
+        numpy.float64[m, 3],
+        numpy.ndarray.flags.writeable,
+        numpy.ndarray.flags.c_contiguous,
+    ]:
         """
         Get a numpy view of the feature geometry
         """
@@ -87,7 +116,15 @@ class Feature:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def dump(self, path: str, *, indent: bool = False, sort_keys: bool = False, precision: int = 8, only_xy: bool = False) -> bool:
+    def dump(
+        self,
+        path: str,
+        *,
+        indent: bool = False,
+        sort_keys: bool = False,
+        precision: int = 8,
+        only_xy: bool = False,
+    ) -> bool:
         """
         Dump the feature to a file (GeoJSON or Geobuf)
         """
@@ -201,7 +238,9 @@ class Feature:
         """
         Round the coordinates of the feature geometry
         """
-    def to_geobuf(self, *, precision: int = 8, only_xy: bool = False, round_z: int | None = None) -> bytes:
+    def to_geobuf(
+        self, *, precision: int = 8, only_xy: bool = False, round_z: int | None = None
+    ) -> bytes:
         """
         Convert the feature to Geobuf bytes
         """
@@ -213,6 +252,7 @@ class Feature:
         """
         Convert the feature to a RapidJSON value
         """
+
 class FeatureCollection(FeatureList):
     def __call__(self) -> typing.Any:
         """
@@ -304,7 +344,15 @@ class FeatureCollection(FeatureList):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def dump(self, path: str, *, indent: bool = False, sort_keys: bool = False, precision: int = 8, only_xy: bool = False) -> bool:
+    def dump(
+        self,
+        path: str,
+        *,
+        indent: bool = False,
+        sort_keys: bool = False,
+        precision: int = 8,
+        only_xy: bool = False,
+    ) -> bool:
         """
         Dump the FeatureCollection to a file (GeoJSON or Geobuf)
         """
@@ -312,7 +360,9 @@ class FeatureCollection(FeatureList):
         """
         Load the FeatureCollection from Geobuf bytes
         """
-    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> FeatureCollection:
+    def from_rapidjson(
+        self, arg0: pybind11_geobuf._core.rapidjson
+    ) -> FeatureCollection:
         """
         Load the FeatureCollection from a RapidJSON value
         """
@@ -336,7 +386,9 @@ class FeatureCollection(FeatureList):
         """
         Round the coordinates of all features in the collection
         """
-    def to_geobuf(self, *, precision: int = 8, only_xy: bool = False, round_z: int | None = None) -> bytes:
+    def to_geobuf(
+        self, *, precision: int = 8, only_xy: bool = False, round_z: int | None = None
+    ) -> bytes:
         """
         Convert the FeatureCollection to Geobuf bytes
         """
@@ -348,14 +400,14 @@ class FeatureCollection(FeatureList):
         """
         Return an iterator over the values of custom properties
         """
+
 class FeatureList:
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
         """
         Check whether the list is nonempty
         """
-    def __call__(self) -> typing.Any:
-        ...
+    def __call__(self) -> typing.Any: ...
     def __contains__(self, x: Feature) -> bool:
         """
         Return true the container contains ``x``
@@ -370,36 +422,28 @@ class FeatureList:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: FeatureList) -> bool:
-        ...
+    def __eq__(self, arg0: FeatureList) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> FeatureList:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: int) -> Feature:
-        ...
+    def __getitem__(self, arg0: int) -> Feature: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: FeatureList) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: typing.Iterable) -> None:
-        ...
-    def __iter__(self) -> typing.Iterator[Feature]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: FeatureList) -> bool:
-        ...
+    def __init__(self, arg0: typing.Iterable) -> None: ...
+    def __iter__(self) -> typing.Iterator[Feature]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: FeatureList) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: int, arg1: Feature) -> None:
-        ...
+    def __setitem__(self, arg0: int, arg1: Feature) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: FeatureList) -> None:
         """
@@ -445,6 +489,7 @@ class FeatureList:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
+
 class GeoJSON:
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -503,7 +548,13 @@ class GeoJSON:
         """
         Create a clone of the object
         """
-    def crop(self, polygon: numpy.ndarray[numpy.float64[m, 3]], *, clipping_mode: str = 'longest', max_z_offset: float | None = None) -> ...:
+    def crop(
+        self,
+        polygon: numpy.ndarray[numpy.float64[m, 3]],
+        *,
+        clipping_mode: str = "longest",
+        max_z_offset: float | None = None,
+    ) -> ...:
         """
         Crop the GeoJSON object using a polygon
         """
@@ -511,7 +562,15 @@ class GeoJSON:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def dump(self, path: str, *, indent: bool = False, sort_keys: bool = False, precision: int = 8, only_xy: bool = False) -> bool:
+    def dump(
+        self,
+        path: str,
+        *,
+        indent: bool = False,
+        sort_keys: bool = False,
+        precision: int = 8,
+        only_xy: bool = False,
+    ) -> bool:
         """
         Dump the GeoJSON object to a file
         """
@@ -543,7 +602,9 @@ class GeoJSON:
         """
         Round coordinates to specified decimal places
         """
-    def to_geobuf(self, *, precision: int = 8, only_xy: bool = False, round_z: int | None = None) -> bytes:
+    def to_geobuf(
+        self, *, precision: int = 8, only_xy: bool = False, round_z: int | None = None
+    ) -> bytes:
         """
         Encode the GeoJSON object to a Geobuf byte string
         """
@@ -551,6 +612,7 @@ class GeoJSON:
         """
         Convert the GeoJSON object to a RapidJSON value
         """
+
 class Geometry(GeometryBase):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -577,8 +639,7 @@ class Geometry(GeometryBase):
         """
         Get a custom property value
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
@@ -679,7 +740,13 @@ class Geometry(GeometryBase):
         """
         Get this geometry as a multi_polygon (if it is one)
         """
-    def as_numpy(self) -> numpy.ndarray[numpy.float64[m, 3], numpy.ndarray.flags.writeable, numpy.ndarray.flags.c_contiguous]:
+    def as_numpy(
+        self,
+    ) -> numpy.ndarray[
+        numpy.float64[m, 3],
+        numpy.ndarray.flags.writeable,
+        numpy.ndarray.flags.c_contiguous,
+    ]:
         """
         Get a numpy view of the geometry coordinates
         """
@@ -717,7 +784,15 @@ class Geometry(GeometryBase):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def dump(self, path: str, *, indent: bool = False, sort_keys: bool = False, precision: int = 8, only_xy: bool = False) -> bool:
+    def dump(
+        self,
+        path: str,
+        *,
+        indent: bool = False,
+        sort_keys: bool = False,
+        precision: int = 8,
+        only_xy: bool = False,
+    ) -> bool:
         """
         Dump the geometry to a file
         """
@@ -725,7 +800,9 @@ class Geometry(GeometryBase):
         """
         Decode a Geobuf byte string into a geometry
         """
-    def from_numpy(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> Geometry:
+    def from_numpy(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> Geometry:
         """
         Set geometry coordinates from a numpy array
         """
@@ -796,7 +873,9 @@ class Geometry(GeometryBase):
         Add a point to the geometry
         """
     @typing.overload
-    def push_back(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> Geometry:
+    def push_back(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> Geometry:
         """
         Add multiple points to the geometry
         """
@@ -823,7 +902,9 @@ class Geometry(GeometryBase):
         """
         Round coordinates to specified decimal places
         """
-    def to_geobuf(self, *, precision: int = 8, only_xy: bool = False, round_z: int | None = None) -> bytes:
+    def to_geobuf(
+        self, *, precision: int = 8, only_xy: bool = False, round_z: int | None = None
+    ) -> bytes:
         """
         Encode the geometry to a Geobuf byte string
         """
@@ -844,10 +925,11 @@ class Geometry(GeometryBase):
         Get an iterator over the custom property values
         """
     @property
-    def __geo_interface__(self) -> typing.Any:
-        ...
+    def __geo_interface__(self) -> typing.Any: ...
+
 class GeometryBase:
     pass
+
 class GeometryCollection(GeometryList):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -858,8 +940,7 @@ class GeometryCollection(GeometryList):
         """
         Check if two GeometryCollections are equal
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
@@ -931,7 +1012,9 @@ class GeometryCollection(GeometryList):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> GeometryCollection:
+    def from_rapidjson(
+        self, arg0: pybind11_geobuf._core.rapidjson
+    ) -> GeometryCollection:
         """
         Set the GeometryCollection from a RapidJSON value
         """
@@ -996,6 +1079,7 @@ class GeometryCollection(GeometryList):
         """
         Return the __geo_interface__ representation of the GeometryCollection
         """
+
 class GeometryList:
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
@@ -1016,36 +1100,28 @@ class GeometryList:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: GeometryList) -> bool:
-        ...
+    def __eq__(self, arg0: GeometryList) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> GeometryList:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: int) -> Geometry:
-        ...
+    def __getitem__(self, arg0: int) -> Geometry: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: GeometryList) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: typing.Iterable) -> None:
-        ...
-    def __iter__(self) -> typing.Iterator[Geometry]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: GeometryList) -> bool:
-        ...
+    def __init__(self, arg0: typing.Iterable) -> None: ...
+    def __iter__(self) -> typing.Iterator[Geometry]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: GeometryList) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: int, arg1: Geometry) -> None:
-        ...
+    def __setitem__(self, arg0: int, arg1: Geometry) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: GeometryList) -> None:
         """
@@ -1091,6 +1167,7 @@ class GeometryList:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
+
 class LineString(coordinates):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1113,15 +1190,16 @@ class LineString(coordinates):
         """
         Get a point from the geometry by index
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
         Default constructor for LineString
         """
     @typing.overload
-    def __init__(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> None:
+    def __init__(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> None:
         """
         Initialize from a numpy array of points
         """
@@ -1143,7 +1221,9 @@ class LineString(coordinates):
         Set a point in the geometry by index
         """
     @typing.overload
-    def __setitem__(self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, 1]]) -> numpy.ndarray[numpy.float64[m, 1]]:
+    def __setitem__(
+        self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, 1]]
+    ) -> numpy.ndarray[numpy.float64[m, 1]]:
         """
         Set a point in the geometry by index using a vector
         """
@@ -1151,7 +1231,13 @@ class LineString(coordinates):
         """
         Pickle support for serialization
         """
-    def as_numpy(self) -> numpy.ndarray[numpy.float64[m, 3], numpy.ndarray.flags.writeable, numpy.ndarray.flags.c_contiguous]:
+    def as_numpy(
+        self,
+    ) -> numpy.ndarray[
+        numpy.float64[m, 3],
+        numpy.ndarray.flags.writeable,
+        numpy.ndarray.flags.c_contiguous,
+    ]:
         """
         Get a numpy view of the geometry points
         """
@@ -1177,7 +1263,9 @@ class LineString(coordinates):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_numpy(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> LineString:
+    def from_numpy(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> LineString:
         """
         Set the geometry points from a numpy array
         """
@@ -1220,10 +1308,12 @@ class LineString(coordinates):
         """
         Return the __geo_interface__ representation
         """
+
 class LineStringList:
     """
     A list of LineStrings
     """
+
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
         """
@@ -1243,36 +1333,28 @@ class LineStringList:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: LineStringList) -> bool:
-        ...
+    def __eq__(self, arg0: LineStringList) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> LineStringList:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: int) -> LineString:
-        ...
+    def __getitem__(self, arg0: int) -> LineString: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: LineStringList) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: typing.Iterable) -> None:
-        ...
-    def __iter__(self) -> typing.Iterator[LineString]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: LineStringList) -> bool:
-        ...
+    def __init__(self, arg0: typing.Iterable) -> None: ...
+    def __iter__(self) -> typing.Iterator[LineString]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: LineStringList) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: int, arg1: LineString) -> None:
-        ...
+    def __setitem__(self, arg0: int, arg1: LineString) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: LineStringList) -> None:
         """
@@ -1318,6 +1400,7 @@ class LineStringList:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
+
 class LinearRing(coordinates):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1362,11 +1445,19 @@ class LinearRing(coordinates):
         Set a point in the geometry by index
         """
     @typing.overload
-    def __setitem__(self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, 1]]) -> numpy.ndarray[numpy.float64[m, 1]]:
+    def __setitem__(
+        self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, 1]]
+    ) -> numpy.ndarray[numpy.float64[m, 1]]:
         """
         Set a point in the geometry by index using a vector
         """
-    def as_numpy(self) -> numpy.ndarray[numpy.float64[m, 3], numpy.ndarray.flags.writeable, numpy.ndarray.flags.c_contiguous]:
+    def as_numpy(
+        self,
+    ) -> numpy.ndarray[
+        numpy.float64[m, 3],
+        numpy.ndarray.flags.writeable,
+        numpy.ndarray.flags.c_contiguous,
+    ]:
         """
         Get a numpy view of the geometry points
         """
@@ -1378,7 +1469,9 @@ class LinearRing(coordinates):
         """
         Create a clone of the object
         """
-    def from_numpy(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> LinearRing:
+    def from_numpy(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> LinearRing:
         """
         Set the geometry points from a numpy array
         """
@@ -1400,10 +1493,12 @@ class LinearRing(coordinates):
         """
         Convert the geometry points to a numpy array
         """
+
 class LinearRingList:
     """
     A list of LinearRings
     """
+
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
         """
@@ -1423,36 +1518,28 @@ class LinearRingList:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: LinearRingList) -> bool:
-        ...
+    def __eq__(self, arg0: LinearRingList) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> LinearRingList:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: int) -> LinearRing:
-        ...
+    def __getitem__(self, arg0: int) -> LinearRing: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: LinearRingList) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: typing.Iterable) -> None:
-        ...
-    def __iter__(self) -> typing.Iterator[LinearRing]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: LinearRingList) -> bool:
-        ...
+    def __init__(self, arg0: typing.Iterable) -> None: ...
+    def __iter__(self) -> typing.Iterator[LinearRing]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: LinearRingList) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: int, arg1: LinearRing) -> None:
-        ...
+    def __setitem__(self, arg0: int, arg1: LinearRing) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: LinearRingList) -> None:
         """
@@ -1498,6 +1585,7 @@ class LinearRingList:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
+
 class MultiLineString(LineStringList):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1520,8 +1608,7 @@ class MultiLineString(LineStringList):
         """
         Get a linear ring by index
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
@@ -1538,7 +1625,9 @@ class MultiLineString(LineStringList):
         Construct MultiLineString from a single LineString
         """
     @typing.overload
-    def __init__(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> None:
+    def __init__(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> None:
         """
         Initialize from a numpy array of points
         """
@@ -1554,7 +1643,11 @@ class MultiLineString(LineStringList):
         """
         Check if two MultiLineStrings are not equal
         """
-    def __setitem__(self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]:
+    def __setitem__(
+        self,
+        arg0: int,
+        arg1: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous],
+    ) -> numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]:
         """
         Set a linear ring by index using a numpy array of points
         """
@@ -1562,7 +1655,13 @@ class MultiLineString(LineStringList):
         """
         Pickle support for the geometry
         """
-    def as_numpy(self) -> numpy.ndarray[numpy.float64[m, 3], numpy.ndarray.flags.writeable, numpy.ndarray.flags.c_contiguous]:
+    def as_numpy(
+        self,
+    ) -> numpy.ndarray[
+        numpy.float64[m, 3],
+        numpy.ndarray.flags.writeable,
+        numpy.ndarray.flags.c_contiguous,
+    ]:
         """
         Return a numpy view of the geometry's points
         """
@@ -1582,7 +1681,9 @@ class MultiLineString(LineStringList):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_numpy(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> MultiLineString:
+    def from_numpy(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> MultiLineString:
         """
         Set the geometry from a numpy array of points
         """
@@ -1595,7 +1696,9 @@ class MultiLineString(LineStringList):
         Remove the last point from the last linear ring
         """
     @typing.overload
-    def push_back(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> MultiLineString:
+    def push_back(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> MultiLineString:
         """
         Add a new linear ring from a numpy array of points
         """
@@ -1621,6 +1724,7 @@ class MultiLineString(LineStringList):
         """
         Return the __geo_interface__ representation of the geometry
         """
+
 class MultiPoint(coordinates):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1643,15 +1747,16 @@ class MultiPoint(coordinates):
         """
         Get a point from the geometry by index
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
         Default constructor for MultiPoint
         """
     @typing.overload
-    def __init__(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> None:
+    def __init__(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> None:
         """
         Initialize from a numpy array of points
         """
@@ -1673,7 +1778,9 @@ class MultiPoint(coordinates):
         Set a point in the geometry by index
         """
     @typing.overload
-    def __setitem__(self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, 1]]) -> numpy.ndarray[numpy.float64[m, 1]]:
+    def __setitem__(
+        self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, 1]]
+    ) -> numpy.ndarray[numpy.float64[m, 1]]:
         """
         Set a point in the geometry by index using a vector
         """
@@ -1681,7 +1788,13 @@ class MultiPoint(coordinates):
         """
         Pickle support for serialization
         """
-    def as_numpy(self) -> numpy.ndarray[numpy.float64[m, 3], numpy.ndarray.flags.writeable, numpy.ndarray.flags.c_contiguous]:
+    def as_numpy(
+        self,
+    ) -> numpy.ndarray[
+        numpy.float64[m, 3],
+        numpy.ndarray.flags.writeable,
+        numpy.ndarray.flags.c_contiguous,
+    ]:
         """
         Get a numpy view of the geometry points
         """
@@ -1701,7 +1814,9 @@ class MultiPoint(coordinates):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_numpy(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> MultiPoint:
+    def from_numpy(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> MultiPoint:
         """
         Set the geometry points from a numpy array
         """
@@ -1744,6 +1859,7 @@ class MultiPoint(coordinates):
         """
         Return the __geo_interface__ representation
         """
+
 class MultiPolygon(PolygonList):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1766,8 +1882,7 @@ class MultiPolygon(PolygonList):
         """
         Get a Polygon from the MultiPolygon by index
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
@@ -1784,7 +1899,9 @@ class MultiPolygon(PolygonList):
         Construct MultiPolygon from a container of Polygons
         """
     @typing.overload
-    def __init__(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> None:
+    def __init__(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> None:
         """
         Construct MultiPolygon from a numpy array of points
         """
@@ -1806,7 +1923,11 @@ class MultiPolygon(PolygonList):
         Set a Polygon in the MultiPolygon by index
         """
     @typing.overload
-    def __setitem__(self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> Polygon:
+    def __setitem__(
+        self,
+        arg0: int,
+        arg1: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous],
+    ) -> Polygon:
         """
         Set a Polygon in the MultiPolygon by index using a numpy array
         """
@@ -1814,7 +1935,13 @@ class MultiPolygon(PolygonList):
         """
         Pickle support for MultiPolygon
         """
-    def as_numpy(self) -> numpy.ndarray[numpy.float64[m, 3], numpy.ndarray.flags.writeable, numpy.ndarray.flags.c_contiguous]:
+    def as_numpy(
+        self,
+    ) -> numpy.ndarray[
+        numpy.float64[m, 3],
+        numpy.ndarray.flags.writeable,
+        numpy.ndarray.flags.c_contiguous,
+    ]:
         """
         Return a numpy view of the MultiPolygon coordinates
         """
@@ -1830,7 +1957,9 @@ class MultiPolygon(PolygonList):
         """
         Create a clone of the object
         """
-    def from_numpy(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> MultiPolygon:
+    def from_numpy(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> MultiPolygon:
         """
         Set MultiPolygon coordinates from a numpy array
         """
@@ -1843,7 +1972,9 @@ class MultiPolygon(PolygonList):
         Remove the last Polygon from the MultiPolygon
         """
     @typing.overload
-    def push_back(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> MultiPolygon:
+    def push_back(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> MultiPolygon:
         """
         Add a new Polygon to the MultiPolygon from a numpy array
         """
@@ -1869,6 +2000,7 @@ class MultiPolygon(PolygonList):
         """
         Return the __geo_interface__ representation of the MultiPolygon
         """
+
 class Point:
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1891,8 +2023,7 @@ class Point:
         """
         Get the coordinate value at the specified index (0: x, 1: y, 2: z)
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
@@ -1928,7 +2059,9 @@ class Point:
         """
         Enable pickling support for Point objects
         """
-    def as_numpy(self) -> numpy.ndarray[numpy.float64[3, 1], numpy.ndarray.flags.writeable]:
+    def as_numpy(
+        self,
+    ) -> numpy.ndarray[numpy.float64[3, 1], numpy.ndarray.flags.writeable]:
         """
         Get a numpy view of the point coordinates
         """
@@ -1979,24 +2112,22 @@ class Point:
         Get or set the x-coordinate of the point
         """
     @x.setter
-    def x(self, arg1: float) -> None:
-        ...
+    def x(self, arg1: float) -> None: ...
     @property
     def y(self) -> float:
         """
         Get or set the y-coordinate of the point
         """
     @y.setter
-    def y(self, arg1: float) -> None:
-        ...
+    def y(self, arg1: float) -> None: ...
     @property
     def z(self) -> float:
         """
         Get or set the z-coordinate of the point
         """
     @z.setter
-    def z(self, arg1: float) -> None:
-        ...
+    def z(self, arg1: float) -> None: ...
+
 class Polygon(LinearRingList):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -2019,8 +2150,7 @@ class Polygon(LinearRingList):
         """
         Get a linear ring by index
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
@@ -2037,7 +2167,9 @@ class Polygon(LinearRingList):
         Construct Polygon from a single LinearRing (shell)
         """
     @typing.overload
-    def __init__(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> None:
+    def __init__(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> None:
         """
         Initialize from a numpy array of points
         """
@@ -2053,7 +2185,11 @@ class Polygon(LinearRingList):
         """
         Check if two Polygons are not equal
         """
-    def __setitem__(self, arg0: int, arg1: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]:
+    def __setitem__(
+        self,
+        arg0: int,
+        arg1: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous],
+    ) -> numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]:
         """
         Set a linear ring by index using a numpy array of points
         """
@@ -2061,7 +2197,13 @@ class Polygon(LinearRingList):
         """
         Pickle support for the geometry
         """
-    def as_numpy(self) -> numpy.ndarray[numpy.float64[m, 3], numpy.ndarray.flags.writeable, numpy.ndarray.flags.c_contiguous]:
+    def as_numpy(
+        self,
+    ) -> numpy.ndarray[
+        numpy.float64[m, 3],
+        numpy.ndarray.flags.writeable,
+        numpy.ndarray.flags.c_contiguous,
+    ]:
         """
         Return a numpy view of the geometry's points
         """
@@ -2081,7 +2223,9 @@ class Polygon(LinearRingList):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_numpy(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> Polygon:
+    def from_numpy(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> Polygon:
         """
         Set the geometry from a numpy array of points
         """
@@ -2094,7 +2238,9 @@ class Polygon(LinearRingList):
         Remove the last point from the last linear ring
         """
     @typing.overload
-    def push_back(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> Polygon:
+    def push_back(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> Polygon:
         """
         Add a new linear ring from a numpy array of points
         """
@@ -2120,6 +2266,7 @@ class Polygon(LinearRingList):
         """
         Return the __geo_interface__ representation of the geometry
         """
+
 class PolygonList:
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
@@ -2140,36 +2287,28 @@ class PolygonList:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: PolygonList) -> bool:
-        ...
+    def __eq__(self, arg0: PolygonList) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> PolygonList:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: int) -> Polygon:
-        ...
+    def __getitem__(self, arg0: int) -> Polygon: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: PolygonList) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: typing.Iterable) -> None:
-        ...
-    def __iter__(self) -> typing.Iterator[Polygon]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: PolygonList) -> bool:
-        ...
+    def __init__(self, arg0: typing.Iterable) -> None: ...
+    def __iter__(self) -> typing.Iterator[Polygon]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: PolygonList) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: int, arg1: Polygon) -> None:
-        ...
+    def __setitem__(self, arg0: int, arg1: Polygon) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: PolygonList) -> None:
         """
@@ -2215,6 +2354,7 @@ class PolygonList:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
+
 class coordinates:
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
@@ -2235,36 +2375,28 @@ class coordinates:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: coordinates) -> bool:
-        ...
+    def __eq__(self, arg0: coordinates) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> coordinates:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: int) -> ...:
-        ...
+    def __getitem__(self, arg0: int) -> ...: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: coordinates) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: typing.Iterable) -> None:
-        ...
-    def __iter__(self) -> typing.Iterator[...]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: coordinates) -> bool:
-        ...
+    def __init__(self, arg0: typing.Iterable) -> None: ...
+    def __iter__(self) -> typing.Iterator[...]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: coordinates) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: int, arg1: ...) -> None:
-        ...
+    def __setitem__(self, arg0: int, arg1: ...) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: coordinates) -> None:
         """
@@ -2274,7 +2406,13 @@ class coordinates:
         """
         Add an item to the end of the list
         """
-    def as_numpy(self) -> numpy.ndarray[numpy.float64[m, 3], numpy.ndarray.flags.writeable, numpy.ndarray.flags.c_contiguous]:
+    def as_numpy(
+        self,
+    ) -> numpy.ndarray[
+        numpy.float64[m, 3],
+        numpy.ndarray.flags.writeable,
+        numpy.ndarray.flags.c_contiguous,
+    ]:
         """
         Get a numpy view of the coordinates
         """
@@ -2296,7 +2434,9 @@ class coordinates:
         """
         Extend the list by appending all the items in the given list
         """
-    def from_numpy(self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]) -> coordinates:
+    def from_numpy(
+        self, arg0: numpy.ndarray[numpy.float64[m, n], numpy.ndarray.flags.c_contiguous]
+    ) -> coordinates:
         """
         Set coordinates from a numpy array
         """
@@ -2322,24 +2462,21 @@ class coordinates:
         """
         Convert coordinates to a numpy array
         """
+
 class value:
     class ItemsView:
-        def __iter__(self) -> typing.Iterator:
-            ...
-        def __len__(self) -> int:
-            ...
+        def __iter__(self) -> typing.Iterator: ...
+        def __len__(self) -> int: ...
+
     class KeysView:
-        def __contains__(self, arg0: typing.Any) -> bool:
-            ...
-        def __iter__(self) -> typing.Iterator:
-            ...
-        def __len__(self) -> int:
-            ...
+        def __contains__(self, arg0: typing.Any) -> bool: ...
+        def __iter__(self) -> typing.Iterator: ...
+        def __len__(self) -> int: ...
+
     class ValuesView:
-        def __iter__(self) -> typing.Iterator:
-            ...
-        def __len__(self) -> int:
-            ...
+        def __iter__(self) -> typing.Iterator: ...
+        def __len__(self) -> int: ...
+
     class array_type:
         __hash__: typing.ClassVar[None] = None
         def __bool__(self) -> bool:
@@ -2364,32 +2501,28 @@ class value:
             """
             Delete list elements using a slice object
             """
-        def __eq__(self, arg0: value.array_type) -> bool:
-            ...
+        def __eq__(self, arg0: value.array_type) -> bool: ...
         @typing.overload
         def __getitem__(self, s: slice) -> value.array_type:
             """
             Retrieve list elements using a slice object
             """
         @typing.overload
-        def __getitem__(self, arg0: int) -> value:
-            ...
+        def __getitem__(self, arg0: int) -> value: ...
         @typing.overload
         def __getitem__(self, arg0: int) -> value:
             """
             Get an item from the GeoJSON array by index
             """
         @typing.overload
-        def __init__(self) -> None:
-            ...
+        def __init__(self) -> None: ...
         @typing.overload
         def __init__(self, arg0: value.array_type) -> None:
             """
             Copy constructor
             """
         @typing.overload
-        def __init__(self, arg0: typing.Iterable) -> None:
-            ...
+        def __init__(self, arg0: typing.Iterable) -> None: ...
         @typing.overload
         def __init__(self) -> None:
             """
@@ -2400,15 +2533,11 @@ class value:
             """
             Construct a GeoJSON array from a Python iterable
             """
-        def __iter__(self) -> typing.Iterator[value]:
-            ...
-        def __len__(self) -> int:
-            ...
-        def __ne__(self, arg0: value.array_type) -> bool:
-            ...
+        def __iter__(self) -> typing.Iterator[value]: ...
+        def __len__(self) -> int: ...
+        def __ne__(self, arg0: value.array_type) -> bool: ...
         @typing.overload
-        def __setitem__(self, arg0: int, arg1: value) -> None:
-            ...
+        def __setitem__(self, arg0: int, arg1: value) -> None: ...
         @typing.overload
         def __setitem__(self, arg0: slice, arg1: value.array_type) -> None:
             """
@@ -2447,7 +2576,9 @@ class value:
             """
             Extend the list by appending all the items in the given list
             """
-        def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> value.array_type:
+        def from_rapidjson(
+            self, arg0: pybind11_geobuf._core.rapidjson
+        ) -> value.array_type:
             """
             Set the GeoJSON array from a RapidJSON value
             """
@@ -2473,6 +2604,7 @@ class value:
             """
             Convert the GeoJSON array to a RapidJSON value
             """
+
     class object_type:
         def __bool__(self) -> bool:
             """
@@ -2483,18 +2615,13 @@ class value:
             Convert the GeoJSON object to a Python dict
             """
         @typing.overload
-        def __contains__(self, arg0: str) -> bool:
-            ...
+        def __contains__(self, arg0: str) -> bool: ...
         @typing.overload
-        def __contains__(self, arg0: typing.Any) -> bool:
-            ...
-        def __delitem__(self, arg0: str) -> None:
-            ...
-        def __getitem__(self, arg0: str) -> value:
-            ...
+        def __contains__(self, arg0: typing.Any) -> bool: ...
+        def __delitem__(self, arg0: str) -> None: ...
+        def __getitem__(self, arg0: str) -> value: ...
         @typing.overload
-        def __init__(self) -> None:
-            ...
+        def __init__(self) -> None: ...
         @typing.overload
         def __init__(self) -> None:
             """
@@ -2505,13 +2632,10 @@ class value:
             """
             Construct a GeoJSON object from a Python dict
             """
-        def __iter__(self) -> typing.Iterator[str]:
-            ...
-        def __len__(self) -> int:
-            ...
+        def __iter__(self) -> typing.Iterator[str]: ...
+        def __len__(self) -> int: ...
         @typing.overload
-        def __setitem__(self, arg0: str, arg1: value) -> None:
-            ...
+        def __setitem__(self, arg0: str, arg1: value) -> None: ...
         @typing.overload
         def __setitem__(self, arg0: str, arg1: typing.Any) -> value:
             """
@@ -2521,21 +2645,21 @@ class value:
             """
             Clear the GeoJSON object
             """
-        def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> value.object_type:
+        def from_rapidjson(
+            self, arg0: pybind11_geobuf._core.rapidjson
+        ) -> value.object_type:
             """
             Convert a RapidJSON value to a GeoJSON object
             """
         @typing.overload
-        def items(self) -> value.ItemsView:
-            ...
+        def items(self) -> value.ItemsView: ...
         @typing.overload
         def items(self) -> typing.Iterator[tuple[str, value]]:
             """
             Get an iterator over the items (key-value pairs) of the GeoJSON object
             """
         @typing.overload
-        def keys(self) -> value.KeysView:
-            ...
+        def keys(self) -> value.KeysView: ...
         @typing.overload
         def keys(self) -> typing.Iterator[str]:
             """
@@ -2546,13 +2670,13 @@ class value:
             Convert the GeoJSON object to a RapidJSON value
             """
         @typing.overload
-        def values(self) -> value.ValuesView:
-            ...
+        def values(self) -> value.ValuesView: ...
         @typing.overload
         def values(self) -> typing.Iterator[value]:
             """
             Get an iterator over the values of the GeoJSON object
             """
+
     def Get(self) -> typing.Any:
         """
         Get the GeoJSON value as a Python object
