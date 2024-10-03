@@ -182,10 +182,12 @@ tar.gz:
 	tar -cvz --exclude .git -f ../$(PROJECT_NAME).tar.gz .
 	ls -alh ../$(PROJECT_NAME).tar.gz
 
-
 SYNC_OUTPUT_DIR ?= headers/include/cubao
 sync_headers:
-	cp src/pybind11_geojson.cpp $(SYNC_OUTPUT_DIR)/pybind11_geojson.hpp
+	cp src/pybind11_rapidjson.cpp $(SYNC_OUTPUT_DIR)/pybind11_rapidjson.hpp
+	cp src/geobuf/geojson_helpers.hpp $(SYNC_OUTPUT_DIR)
+	cp src/geobuf/pybind11_helpers.hpp $(SYNC_OUTPUT_DIR)
+	cp src/geobuf/rapidjson_helpers.hpp $(SYNC_OUTPUT_DIR)
 
 # https://stackoverflow.com/a/25817631
 echo-%  : ; @echo -n $($*)

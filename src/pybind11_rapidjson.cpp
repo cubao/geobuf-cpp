@@ -1,3 +1,5 @@
+#pragma once
+
 #include <mapbox/geojson.hpp>
 #include <mapbox/geojson/rapidjson.hpp>
 
