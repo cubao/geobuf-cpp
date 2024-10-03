@@ -8,7 +8,6 @@ import os
 import shutil
 import sys
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple, Union  # noqa
 
 from loguru import logger
 
@@ -35,11 +34,11 @@ def system(
         assert ret == 0, f"failed at {cmd} -> {ret}"
 
 
-def hash(data: Union[List, Dict, str, bytes, bytearray, memoryview]) -> str:  # noqa: UP006, UP007
+def hash(data: list | dict | str | bytes | bytearray | memoryview) -> str:
     if isinstance(data, list):
         digests = [hash(d) for d in data]
         return hash(";".join(digests))
-    if isinstance(data, Dict):
+    if isinstance(data, dict):
         data = json.dumps(data)
     if isinstance(data, str):
         data = str.encode(data)
