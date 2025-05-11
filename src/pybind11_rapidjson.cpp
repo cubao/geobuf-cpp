@@ -402,7 +402,7 @@ void bind_rapidjson(py::module &m)
             .def(py::self != py::self, "Compare two RapidJSON values for inequality")
         //
         ;
-    py::enum_<rapidjson::Type>(rj, "type")
+    py::enum_<rapidjson::Type>(rj, "type", py::module_local())
         .value("kNullType", rapidjson::kNullType, "Null type")
         .value("kFalseType", rapidjson::kFalseType, "False type")
         .value("kTrueType", rapidjson::kTrueType, "True type")
