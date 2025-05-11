@@ -32,7 +32,7 @@ using RapidjsonDocument = mapbox::geojson::rapidjson_document;
 void bind_rapidjson(py::module &m)
 {
     auto rj =
-        py::class_<RapidjsonValue>(m, "rapidjson") //
+        py::class_<RapidjsonValue>(m, "rapidjson", py::module_local) //
             .def(py::init<>(), "Initialize an empty RapidJSON value")
             .def(py::init(
                 [](const py::object &obj) { return to_rapidjson(obj); }),
