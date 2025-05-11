@@ -32,7 +32,7 @@ using RapidjsonDocument = mapbox::geojson::rapidjson_document;
 void bind_rapidjson(py::module &m)
 {
     auto rj =
-        py::class_<RapidjsonValue>(m, "rapidjson") //
+        py::class_<RapidjsonValue>(m, "rapidjson", py::module_local()) //
             .def(py::init<>(), "Initialize an empty RapidJSON value")
             .def(py::init(
                 [](const py::object &obj) { return to_rapidjson(obj); }),
@@ -402,7 +402,7 @@ void bind_rapidjson(py::module &m)
             .def(py::self != py::self, "Compare two RapidJSON values for inequality")
         //
         ;
-    py::enum_<rapidjson::Type>(rj, "type")
+    py::enum_<rapidjson::Type>(rj, "type", py::module_local())
         .value("kNullType", rapidjson::kNullType, "Null type")
         .value("kFalseType", rapidjson::kFalseType, "False type")
         .value("kTrueType", rapidjson::kTrueType, "True type")

@@ -226,8 +226,8 @@ PYBIND11_MODULE(_core, m)
             str: Decoded and formatted PBF content as a string.
         )docstring");
 
-    py::class_<Encoder>(m, "Encoder", py::module_local())    //
-        .def(py::init<uint32_t, bool, std::optional<int>>(), //
+    py::class_<Encoder>(m, "Encoder", py::module_local(), py::dynamic_attr()) //
+        .def(py::init<uint32_t, bool, std::optional<int>>(),                  //
              py::kw_only(),
              "max_precision"_a = static_cast<uint32_t>(
                  std::pow(10, MAPBOX_GEOBUF_DEFAULT_PRECISION)),
@@ -366,7 +366,7 @@ PYBIND11_MODULE(_core, m)
         //
         ;
 
-    py::class_<Decoder>(m, "Decoder", py::module_local()) //
+    py::class_<Decoder>(m, "Decoder", py::module_local(), py::dynamic_attr()) //
         .def(py::init<>(),
              R"docstring(
              Initialize a Decoder object.
@@ -566,7 +566,8 @@ PYBIND11_MODULE(_core, m)
         ;
 
     using PackedRTree = FlatGeobuf::PackedRTree;
-    py::class_<PackedRTree>(m, "PackedRTree", py::module_local())
+    py::class_<PackedRTree>(m, "PackedRTree", py::module_local(),
+                            py::dynamic_attr())
         .def(
             "search",
             [](const PackedRTree &self, double minX, double minY, double maxX,
@@ -613,7 +614,7 @@ PYBIND11_MODULE(_core, m)
         ;
 
     using Planet = cubao::Planet;
-    py::class_<Planet>(m, "Planet", py::module_local())
+    py::class_<Planet>(m, "Planet", py::module_local(), py::dynamic_attr())
         .def(py::init<>(), R"docstring(
             Initialize an empty Planet object.
         )docstring")
@@ -697,7 +698,8 @@ PYBIND11_MODULE(_core, m)
         ;
 
     using GeobufIndex = cubao::GeobufIndex;
-    py::class_<GeobufIndex>(m, "GeobufIndex", py::module_local()) //
+    py::class_<GeobufIndex>(m, "GeobufIndex", py::module_local(),
+                            py::dynamic_attr()) //
         .def(py::init<>(), R"docstring(
             Default constructor for GeobufIndex.
         )docstring")

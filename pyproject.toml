@@ -5,8 +5,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pybind11_geobuf"
-version = "0.2.2"
-url = "https://geobuf-cpp.readthedocs.io"
+version = "0.2.3"
 description="c++ geobuf with python binding"
 readme = "README.md"
 authors = [
@@ -24,6 +23,11 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
 ]
+
+
+[project.urls]
+Homepage = "https://geobuf-cpp.readthedocs.io"
+
 
 [project.optional-dependencies]
 test = ["pytest", "scipy"]
