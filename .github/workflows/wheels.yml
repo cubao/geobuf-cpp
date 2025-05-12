@@ -95,6 +95,7 @@ jobs:
     - uses: actions/download-artifact@v4
       with:
         pattern: cibw-*
+        merge-multiple: true
         path: dist
 
     - name: Generate artifact attestation for sdist and wheels
@@ -103,7 +104,6 @@ jobs:
         subject-path: "dist/*"
 
     - uses: pypa/gh-action-pypi-publish@release/v1
-      if: github.event_name == 'release' && github.event.action == 'published'
       with:
         attestations: true
         password: ${{ secrets.PYPI_API_TOKEN }}
