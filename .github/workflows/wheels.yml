@@ -78,12 +78,14 @@ jobs:
         name: cibw-wheels-${{ matrix.os }}
         path: wheelhouse/*.whl
 
-
   upload_all:
     name: Upload if release
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'published'
+    environment: pypi
+    permissions:
+      id-token: write
+      attestations: write
 
     steps:
     - uses: actions/setup-python@v5
@@ -92,9 +94,16 @@ jobs:
 
     - uses: actions/download-artifact@v4
       with:
-        name: artifact
+        pattern: cibw-*
         path: dist
 
-    - uses: pypa/gh-action-pypi-publish@release/v1
+    - name: Generate artifact attestation for sdist and wheels
+      uses: actions/attest-build-provenance@v1
       with:
+        subject-path: "dist/*"
+
+    - uses: pypa/gh-action-pypi-publish@release/v1
+      if: github.event_name == 'release' && github.event.action == 'published'
+      with:
+        attestations: true
         password: ${{ secrets.PYPI_API_TOKEN }}
