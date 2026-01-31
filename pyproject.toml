@@ -32,7 +32,7 @@ Homepage = "https://geobuf-cpp.readthedocs.io"
 
 
 [project.optional-dependencies]
-test = ["pytest", "scipy"]
+test = ["pytest"]
 
 
 [tool.scikit-build]
