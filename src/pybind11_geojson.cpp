@@ -8,6 +8,7 @@
 
 #include "geobuf/geojson_cropping.hpp"
 #include "geobuf/geojson_helpers.hpp"
+#include "geobuf/geojson_transform.hpp"
 #include "geobuf/pybind11_helpers.hpp"
 #include "geobuf/rapidjson_helpers.hpp"
 
@@ -104,6 +105,112 @@ void bind_geojson(py::module &geojson)
             "clone", [](const Type &self) -> Type { return self; },            \
             "Create a clone of the object")
 
+// Transform methods macros
+#define GEOMETRY_TRANSFORM(geom_type)                                          \
+    .def(                                                                      \
+        "transform",                                                           \
+        [](mapbox::geojson::geom_type &self,                                   \
+           const py::object &fn) -> mapbox::geojson::geom_type & {             \
+            transform_coords(self, [&](Eigen::Ref<RowVectors> coords) {        \
+                py::gil_scoped_acquire acquire;                                \
+                auto arr = py::array_t<double>(                                \
+                    {coords.rows(), (Eigen::Index)3},                          \
+                    {sizeof(double) * 3, sizeof(double)}, coords.data(),       \
+                    py::none());                                               \
+                auto result = fn(arr);                                         \
+                if (!result.is_none()) {                                       \
+                    auto mat = result.cast<RowVectors>();                      \
+                    coords = mat;                                              \
+                }                                                              \
+            });                                                                \
+            return self;                                                       \
+        },                                                                     \
+        "fn"_a, rvp::reference_internal,                                       \
+        "Apply transform function to all coordinates (Nx3 numpy array)")
+
+#define GEOMETRY_TO_ENU(geom_type)                                             \
+    .def(                                                                      \
+        "to_enu",                                                              \
+        [](mapbox::geojson::geom_type &self, const Eigen::Vector3d &anchor,    \
+           bool cheap_ruler) -> mapbox::geojson::geom_type & {                 \
+            Wgs84ToEnu xform{anchor, cheap_ruler};                             \
+            transform_coords(self, xform);                                     \
+            return self;                                                       \
+        },                                                                     \
+        "anchor"_a, py::kw_only(), "cheap_ruler"_a = true,                     \
+        rvp::reference_internal,                                               \
+        "Convert WGS84 (lon,lat,alt) to ENU coordinates")
+
+#define GEOMETRY_TO_WGS84(geom_type)                                           \
+    .def(                                                                      \
+        "to_wgs84",                                                            \
+        [](mapbox::geojson::geom_type &self, const Eigen::Vector3d &anchor,    \
+           bool cheap_ruler) -> mapbox::geojson::geom_type & {                 \
+            EnuToWgs84 xform{anchor, cheap_ruler};                             \
+            transform_coords(self, xform);                                     \
+            return self;                                                       \
+        },                                                                     \
+        "anchor"_a, py::kw_only(), "cheap_ruler"_a = true,                     \
+        rvp::reference_internal,                                               \
+        "Convert ENU coordinates to WGS84 (lon,lat,alt)")
+
+#define GEOMETRY_ROTATE(geom_type)                                             \
+    .def(                                                                      \
+        "rotate",                                                              \
+        [](mapbox::geojson::geom_type &self, const Eigen::Matrix3d &R)         \
+            -> mapbox::geojson::geom_type & {                                  \
+            Rotation3D xform{R};                                               \
+            transform_coords(self, xform);                                     \
+            return self;                                                       \
+        },                                                                     \
+        "R"_a, rvp::reference_internal,                                        \
+        "Apply 3x3 rotation matrix to all coordinates")
+
+#define GEOMETRY_TRANSLATE(geom_type)                                          \
+    .def(                                                                      \
+        "translate",                                                           \
+        [](mapbox::geojson::geom_type &self, const Eigen::Vector3d &offset)    \
+            -> mapbox::geojson::geom_type & {                                  \
+            Translation3D xform{offset};                                       \
+            transform_coords(self, xform);                                     \
+            return self;                                                       \
+        },                                                                     \
+        "offset"_a, rvp::reference_internal,                                   \
+        "Translate all coordinates by offset vector")
+
+#define GEOMETRY_SCALE(geom_type)                                              \
+    .def(                                                                      \
+        "scale",                                                               \
+        [](mapbox::geojson::geom_type &self, const Eigen::Vector3d &s)         \
+            -> mapbox::geojson::geom_type & {                                  \
+            Scale3D xform{s};                                                  \
+            transform_coords(self, xform);                                     \
+            return self;                                                       \
+        },                                                                     \
+        "scale"_a, rvp::reference_internal,                                    \
+        "Scale all coordinates by factors [sx, sy, sz]")
+
+#define GEOMETRY_AFFINE(geom_type)                                             \
+    .def(                                                                      \
+        "affine",                                                              \
+        [](mapbox::geojson::geom_type &self, const Eigen::Matrix4d &T)         \
+            -> mapbox::geojson::geom_type & {                                  \
+            AffineTransform xform{T};                                          \
+            transform_coords(self, xform);                                     \
+            return self;                                                       \
+        },                                                                     \
+        "T"_a, rvp::reference_internal,                                        \
+        "Apply 4x4 affine transformation matrix")
+
+#define GEOMETRY_TRANSFORM_METHODS(geom_type)                                  \
+    GEOMETRY_TRANSFORM(geom_type)                                              \
+    GEOMETRY_TO_ENU(geom_type)                                                 \
+    GEOMETRY_TO_WGS84(geom_type)                                               \
+    GEOMETRY_ROTATE(geom_type)                                                 \
+    GEOMETRY_TRANSLATE(geom_type)                                              \
+    GEOMETRY_SCALE(geom_type)                                                  \
+    GEOMETRY_AFFINE(geom_type)
+
     py::class_<mapbox::geojson::geojson>(geojson, "GeoJSON", py::module_local())
         is_geojson_type(geometry)           //
         is_geojson_type(feature)            //
@@ -147,6 +254,7 @@ void bind_geojson(py::module &geojson)
                 rvp::reference_internal,
                 "Round coordinates to specified decimal places") //
         GEOMETRY_DEDUPLICATE_XYZ(geojson)                        //
+        GEOMETRY_TRANSFORM_METHODS(geojson)                      //
             .def(
                 "from_rapidjson",
                 [](mapbox::geojson::geojson &self,
@@ -581,6 +689,7 @@ void bind_geojson(py::module &geojson)
             "Get an iterator over the custom property keys")
         GEOMETRY_ROUND_COORDS(geometry)
         GEOMETRY_DEDUPLICATE_XYZ(geometry)
+        GEOMETRY_TRANSFORM_METHODS(geometry)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::geometry &self) -> py::object {
@@ -762,6 +871,7 @@ void bind_geojson(py::module &geojson)
              "Enable pickling support for Point objects") //
         GEOMETRY_ROUND_COORDS(point)                      //
         GEOMETRY_DEDUPLICATE_XYZ(point)                   //
+        GEOMETRY_TRANSFORM_METHODS(point)                 //
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::point &self) -> py::object {
@@ -948,6 +1058,7 @@ void bind_geojson(py::module &geojson)
              "Pickle support for serialization")                               \
             GEOMETRY_ROUND_COORDS(geom_type)                                   \
                 GEOMETRY_DEDUPLICATE_XYZ(geom_type)                            \
+                    GEOMETRY_TRANSFORM_METHODS(geom_type)                      \
         .def_property_readonly(                                                \
             "__geo_interface__",                                               \
             [](const mapbox::geojson::geom_type &self) -> py::object {         \
@@ -1157,6 +1268,7 @@ void bind_geojson(py::module &geojson)
             py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,              \
             rvp::reference_internal, "Round the coordinates of the geometry")  \
             GEOMETRY_DEDUPLICATE_XYZ(geom_type)                                \
+            GEOMETRY_TRANSFORM_METHODS(geom_type)                              \
         .def(                                                                  \
             "bbox",                                                            \
             [](const mapbox::geojson::geom_type &self, bool with_z)            \
@@ -1364,6 +1476,7 @@ void bind_geojson(py::module &geojson)
             py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
             rvp::reference_internal,
             "Round the coordinates of the MultiPolygon")
+        GEOMETRY_TRANSFORM_METHODS(multi_polygon)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::multi_polygon &self) -> py::object {
@@ -1505,6 +1618,7 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal,
             "Round the coordinates of all geometries in the GeometryCollection")
             GEOMETRY_DEDUPLICATE_XYZ(geometry_collection)
+            GEOMETRY_TRANSFORM_METHODS(geometry_collection)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::geometry_collection &self) -> py::object {
@@ -2187,6 +2301,7 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal,
             "Round the coordinates of the feature geometry") //
         GEOMETRY_DEDUPLICATE_XYZ(feature)
+        GEOMETRY_TRANSFORM_METHODS(feature)
         //
         ;
 
@@ -2239,6 +2354,7 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal,
             "Round the coordinates of all features in the collection")
             GEOMETRY_DEDUPLICATE_XYZ(feature_collection)
+            GEOMETRY_TRANSFORM_METHODS(feature_collection)
         // round
         //
         .def(
