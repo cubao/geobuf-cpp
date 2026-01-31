@@ -51,6 +51,17 @@ jobs:
       with:
         submodules: true
 
+    - name: Cache cibuildwheel
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/Library/Caches/pip
+          ~/.cache/pip
+          ~/AppData/Local/pip/Cache
+        key: cibw-pip-${{ matrix.os }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          cibw-pip-${{ matrix.os }}-
+
     - uses: pypa/cibuildwheel@v2.22
       env:
         CIBW_ARCHS_MACOS: universal2
