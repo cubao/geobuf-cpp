@@ -129,22 +129,21 @@ inline void transform_coords(mapbox::geojson::geometry_collection &gc,
 inline void transform_coords(mapbox::geojson::geometry &g,
                              const MatrixTransformFn &fn)
 {
-    g.match(
-        [&](mapbox::geojson::point &pt) { transform_coords(pt, fn); },
-        [&](mapbox::geojson::multi_point &mp) { transform_coords(mp, fn); },
-        [&](mapbox::geojson::line_string &ls) { transform_coords(ls, fn); },
-        [&](mapbox::geojson::linear_ring &lr) { transform_coords(lr, fn); },
-        [&](mapbox::geojson::multi_line_string &mls) {
-            transform_coords(mls, fn);
-        },
-        [&](mapbox::geojson::polygon &poly) { transform_coords(poly, fn); },
-        [&](mapbox::geojson::multi_polygon &mpoly) {
-            transform_coords(mpoly, fn);
-        },
-        [&](mapbox::geojson::geometry_collection &gc) {
-            transform_coords(gc, fn);
-        },
-        [](auto &) {});
+    g.match([&](mapbox::geojson::point &pt) { transform_coords(pt, fn); },
+            [&](mapbox::geojson::multi_point &mp) { transform_coords(mp, fn); },
+            [&](mapbox::geojson::line_string &ls) { transform_coords(ls, fn); },
+            [&](mapbox::geojson::linear_ring &lr) { transform_coords(lr, fn); },
+            [&](mapbox::geojson::multi_line_string &mls) {
+                transform_coords(mls, fn);
+            },
+            [&](mapbox::geojson::polygon &poly) { transform_coords(poly, fn); },
+            [&](mapbox::geojson::multi_polygon &mpoly) {
+                transform_coords(mpoly, fn);
+            },
+            [&](mapbox::geojson::geometry_collection &gc) {
+                transform_coords(gc, fn);
+            },
+            [](auto &) {});
 }
 
 // Implementation for feature

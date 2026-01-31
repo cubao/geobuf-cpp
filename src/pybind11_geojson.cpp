@@ -113,10 +113,10 @@ void bind_geojson(py::module &geojson)
            const py::object &fn) -> mapbox::geojson::geom_type & {             \
             transform_coords(self, [&](Eigen::Ref<RowVectors> coords) {        \
                 py::gil_scoped_acquire acquire;                                \
-                auto arr = py::array_t<double>(                                \
-                    {coords.rows(), (Eigen::Index)3},                          \
-                    {sizeof(double) * 3, sizeof(double)}, coords.data(),       \
-                    py::none());                                               \
+                auto arr =                                                     \
+                    py::array_t<double>({coords.rows(), (Eigen::Index)3},      \
+                                        {sizeof(double) * 3, sizeof(double)},  \
+                                        coords.data(), py::none());            \
                 auto result = fn(arr);                                         \
                 if (!result.is_none()) {                                       \
                     auto mat = result.cast<RowVectors>();                      \
@@ -157,8 +157,8 @@ void bind_geojson(py::module &geojson)
 #define GEOMETRY_ROTATE(geom_type)                                             \
     .def(                                                                      \
         "rotate",                                                              \
-        [](mapbox::geojson::geom_type &self, const Eigen::Matrix3d &R)         \
-            -> mapbox::geojson::geom_type & {                                  \
+        [](mapbox::geojson::geom_type &self,                                   \
+           const Eigen::Matrix3d &R) -> mapbox::geojson::geom_type & {         \
             Rotation3D xform{R};                                               \
             transform_coords(self, xform);                                     \
             return self;                                                       \
@@ -169,8 +169,8 @@ void bind_geojson(py::module &geojson)
 #define GEOMETRY_TRANSLATE(geom_type)                                          \
     .def(                                                                      \
         "translate",                                                           \
-        [](mapbox::geojson::geom_type &self, const Eigen::Vector3d &offset)    \
-            -> mapbox::geojson::geom_type & {                                  \
+        [](mapbox::geojson::geom_type &self,                                   \
+           const Eigen::Vector3d &offset) -> mapbox::geojson::geom_type & {    \
             Translation3D xform{offset};                                       \
             transform_coords(self, xform);                                     \
             return self;                                                       \
@@ -181,8 +181,8 @@ void bind_geojson(py::module &geojson)
 #define GEOMETRY_SCALE(geom_type)                                              \
     .def(                                                                      \
         "scale",                                                               \
-        [](mapbox::geojson::geom_type &self, const Eigen::Vector3d &s)         \
-            -> mapbox::geojson::geom_type & {                                  \
+        [](mapbox::geojson::geom_type &self,                                   \
+           const Eigen::Vector3d &s) -> mapbox::geojson::geom_type & {         \
             Scale3D xform{s};                                                  \
             transform_coords(self, xform);                                     \
             return self;                                                       \
@@ -193,8 +193,8 @@ void bind_geojson(py::module &geojson)
 #define GEOMETRY_AFFINE(geom_type)                                             \
     .def(                                                                      \
         "affine",                                                              \
-        [](mapbox::geojson::geom_type &self, const Eigen::Matrix4d &T)         \
-            -> mapbox::geojson::geom_type & {                                  \
+        [](mapbox::geojson::geom_type &self,                                   \
+           const Eigen::Matrix4d &T) -> mapbox::geojson::geom_type & {         \
             AffineTransform xform{T};                                          \
             transform_coords(self, xform);                                     \
             return self;                                                       \
@@ -1268,7 +1268,7 @@ void bind_geojson(py::module &geojson)
             py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,              \
             rvp::reference_internal, "Round the coordinates of the geometry")  \
             GEOMETRY_DEDUPLICATE_XYZ(geom_type)                                \
-            GEOMETRY_TRANSFORM_METHODS(geom_type)                              \
+                GEOMETRY_TRANSFORM_METHODS(geom_type)                          \
         .def(                                                                  \
             "bbox",                                                            \
             [](const mapbox::geojson::geom_type &self, bool with_z)            \
@@ -1476,7 +1476,7 @@ void bind_geojson(py::module &geojson)
             py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
             rvp::reference_internal,
             "Round the coordinates of the MultiPolygon")
-        GEOMETRY_TRANSFORM_METHODS(multi_polygon)
+            GEOMETRY_TRANSFORM_METHODS(multi_polygon)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::multi_polygon &self) -> py::object {
@@ -1618,7 +1618,7 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal,
             "Round the coordinates of all geometries in the GeometryCollection")
             GEOMETRY_DEDUPLICATE_XYZ(geometry_collection)
-            GEOMETRY_TRANSFORM_METHODS(geometry_collection)
+                GEOMETRY_TRANSFORM_METHODS(geometry_collection)
         .def_property_readonly(
             "__geo_interface__",
             [](const mapbox::geojson::geometry_collection &self) -> py::object {
@@ -2300,8 +2300,7 @@ void bind_geojson(py::module &geojson)
             py::kw_only(), "lon"_a = 8, "lat"_a = 8, "alt"_a = 3,
             rvp::reference_internal,
             "Round the coordinates of the feature geometry") //
-        GEOMETRY_DEDUPLICATE_XYZ(feature)
-        GEOMETRY_TRANSFORM_METHODS(feature)
+        GEOMETRY_DEDUPLICATE_XYZ(feature) GEOMETRY_TRANSFORM_METHODS(feature)
         //
         ;
 
@@ -2354,7 +2353,7 @@ void bind_geojson(py::module &geojson)
             rvp::reference_internal,
             "Round the coordinates of all features in the collection")
             GEOMETRY_DEDUPLICATE_XYZ(feature_collection)
-            GEOMETRY_TRANSFORM_METHODS(feature_collection)
+                GEOMETRY_TRANSFORM_METHODS(feature_collection)
         // round
         //
         .def(
