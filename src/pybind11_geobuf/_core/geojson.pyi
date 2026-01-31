@@ -4,7 +4,30 @@ import numpy
 import numpy.typing
 import pybind11_geobuf._core
 import typing
-__all__: list[str] = ['Feature', 'FeatureCollection', 'FeatureList', 'GeoJSON', 'Geometry', 'GeometryBase', 'GeometryCollection', 'GeometryList', 'LineString', 'LineStringList', 'LinearRing', 'LinearRingList', 'MultiLineString', 'MultiPoint', 'MultiPolygon', 'Point', 'Polygon', 'PolygonList', 'coordinates', 'value']
+
+__all__: list[str] = [
+    "Feature",
+    "FeatureCollection",
+    "FeatureList",
+    "GeoJSON",
+    "Geometry",
+    "GeometryBase",
+    "GeometryCollection",
+    "GeometryList",
+    "LineString",
+    "LineStringList",
+    "LinearRing",
+    "LinearRingList",
+    "MultiLineString",
+    "MultiPoint",
+    "MultiPolygon",
+    "Point",
+    "Polygon",
+    "PolygonList",
+    "coordinates",
+    "value",
+]
+
 class Feature:
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -59,15 +82,26 @@ class Feature:
         """
         Set a custom property value by key
         """
-    def affine(self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> Feature:
+    def affine(
+        self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]
+    ) -> Feature:
         """
         Apply 4x4 affine transformation matrix
         """
-    def as_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]", "flags.writeable", "flags.c_contiguous"]:
+    def as_numpy(
+        self,
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64],
+        "[m, 3]",
+        "flags.writeable",
+        "flags.c_contiguous",
+    ]:
         """
         Get a numpy view of the feature geometry
         """
-    def bbox(self, *, with_z: bool = False) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
+    def bbox(
+        self, *, with_z: bool = False
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
         """
         Compute the bounding box of the feature
         """
@@ -93,7 +127,15 @@ class Feature:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def dump(self, path: str, *, indent: bool = False, sort_keys: bool = False, precision: typing.SupportsInt = 8, only_xy: bool = False) -> bool:
+    def dump(
+        self,
+        path: str,
+        *,
+        indent: bool = False,
+        sort_keys: bool = False,
+        precision: typing.SupportsInt = 8,
+        only_xy: bool = False,
+    ) -> bool:
         """
         Dump the feature to a file (GeoJSON or Geobuf)
         """
@@ -203,27 +245,50 @@ class Feature:
         """
         Set a property value by key
         """
-    def rotate(self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]) -> Feature:
+    def rotate(
+        self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]
+    ) -> Feature:
         """
         Apply 3x3 rotation matrix to all coordinates
         """
-    def round(self, *, lon: typing.SupportsInt = 8, lat: typing.SupportsInt = 8, alt: typing.SupportsInt = 3) -> Feature:
+    def round(
+        self,
+        *,
+        lon: typing.SupportsInt = 8,
+        lat: typing.SupportsInt = 8,
+        alt: typing.SupportsInt = 3,
+    ) -> Feature:
         """
         Round the coordinates of the feature geometry
         """
-    def scale(self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> Feature:
+    def scale(
+        self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> Feature:
         """
         Scale all coordinates by factors [sx, sy, sz]
         """
-    def to_enu(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> Feature:
+    def to_enu(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> Feature:
         """
         Convert WGS84 (lon,lat,alt) to ENU coordinates
         """
-    def to_geobuf(self, *, precision: typing.SupportsInt = 8, only_xy: bool = False, round_z: typing.SupportsInt | None = None) -> bytes:
+    def to_geobuf(
+        self,
+        *,
+        precision: typing.SupportsInt = 8,
+        only_xy: bool = False,
+        round_z: typing.SupportsInt | None = None,
+    ) -> bytes:
         """
         Convert the feature to Geobuf bytes
         """
-    def to_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
+    def to_numpy(
+        self,
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
         """
         Convert the feature geometry to a numpy array
         """
@@ -231,7 +296,12 @@ class Feature:
         """
         Convert the feature to a RapidJSON value
         """
-    def to_wgs84(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> Feature:
+    def to_wgs84(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> Feature:
         """
         Convert ENU coordinates to WGS84 (lon,lat,alt)
         """
@@ -239,10 +309,13 @@ class Feature:
         """
         Apply transform function to all coordinates (Nx3 numpy array)
         """
-    def translate(self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> Feature:
+    def translate(
+        self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> Feature:
         """
         Translate all coordinates by offset vector
         """
+
 class FeatureCollection(FeatureList):
     def __call__(self) -> typing.Any:
         """
@@ -316,7 +389,9 @@ class FeatureCollection(FeatureList):
         """
         Assign list elements using a slice object
         """
-    def affine(self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> FeatureCollection:
+    def affine(
+        self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]
+    ) -> FeatureCollection:
         """
         Apply 4x4 affine transformation matrix
         """
@@ -338,7 +413,15 @@ class FeatureCollection(FeatureList):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def dump(self, path: str, *, indent: bool = False, sort_keys: bool = False, precision: typing.SupportsInt = 8, only_xy: bool = False) -> bool:
+    def dump(
+        self,
+        path: str,
+        *,
+        indent: bool = False,
+        sort_keys: bool = False,
+        precision: typing.SupportsInt = 8,
+        only_xy: bool = False,
+    ) -> bool:
         """
         Dump the FeatureCollection to a file (GeoJSON or Geobuf)
         """
@@ -346,7 +429,9 @@ class FeatureCollection(FeatureList):
         """
         Load the FeatureCollection from Geobuf bytes
         """
-    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> FeatureCollection:
+    def from_rapidjson(
+        self, arg0: pybind11_geobuf._core.rapidjson
+    ) -> FeatureCollection:
         """
         Load the FeatureCollection from a RapidJSON value
         """
@@ -366,23 +451,44 @@ class FeatureCollection(FeatureList):
         """
         Resize the FeatureCollection to contain N features
         """
-    def rotate(self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]) -> FeatureCollection:
+    def rotate(
+        self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]
+    ) -> FeatureCollection:
         """
         Apply 3x3 rotation matrix to all coordinates
         """
-    def round(self, *, lon: typing.SupportsInt = 8, lat: typing.SupportsInt = 8, alt: typing.SupportsInt = 3) -> FeatureCollection:
+    def round(
+        self,
+        *,
+        lon: typing.SupportsInt = 8,
+        lat: typing.SupportsInt = 8,
+        alt: typing.SupportsInt = 3,
+    ) -> FeatureCollection:
         """
         Round the coordinates of all features in the collection
         """
-    def scale(self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> FeatureCollection:
+    def scale(
+        self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> FeatureCollection:
         """
         Scale all coordinates by factors [sx, sy, sz]
         """
-    def to_enu(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> FeatureCollection:
+    def to_enu(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> FeatureCollection:
         """
         Convert WGS84 (lon,lat,alt) to ENU coordinates
         """
-    def to_geobuf(self, *, precision: typing.SupportsInt = 8, only_xy: bool = False, round_z: typing.SupportsInt | None = None) -> bytes:
+    def to_geobuf(
+        self,
+        *,
+        precision: typing.SupportsInt = 8,
+        only_xy: bool = False,
+        round_z: typing.SupportsInt | None = None,
+    ) -> bytes:
         """
         Convert the FeatureCollection to Geobuf bytes
         """
@@ -390,7 +496,12 @@ class FeatureCollection(FeatureList):
         """
         Convert the FeatureCollection to a RapidJSON value
         """
-    def to_wgs84(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> FeatureCollection:
+    def to_wgs84(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> FeatureCollection:
         """
         Convert ENU coordinates to WGS84 (lon,lat,alt)
         """
@@ -398,7 +509,9 @@ class FeatureCollection(FeatureList):
         """
         Apply transform function to all coordinates (Nx3 numpy array)
         """
-    def translate(self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> FeatureCollection:
+    def translate(
+        self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> FeatureCollection:
         """
         Translate all coordinates by offset vector
         """
@@ -406,14 +519,14 @@ class FeatureCollection(FeatureList):
         """
         Return an iterator over the values of custom properties
         """
+
 class FeatureList:
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
         """
         Check whether the list is nonempty
         """
-    def __call__(self) -> typing.Any:
-        ...
+    def __call__(self) -> typing.Any: ...
     def __contains__(self, x: Feature) -> bool:
         """
         Return true the container contains ``x``
@@ -428,36 +541,28 @@ class FeatureList:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: FeatureList) -> bool:
-        ...
+    def __eq__(self, arg0: FeatureList) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> FeatureList:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: typing.SupportsInt) -> Feature:
-        ...
+    def __getitem__(self, arg0: typing.SupportsInt) -> Feature: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: FeatureList) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: collections.abc.Iterable) -> None:
-        ...
-    def __iter__(self) -> collections.abc.Iterator[Feature]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: FeatureList) -> bool:
-        ...
+    def __init__(self, arg0: collections.abc.Iterable) -> None: ...
+    def __iter__(self) -> collections.abc.Iterator[Feature]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: FeatureList) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: Feature) -> None:
-        ...
+    def __setitem__(self, arg0: typing.SupportsInt, arg1: Feature) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: FeatureList) -> None:
         """
@@ -503,6 +608,7 @@ class FeatureList:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
+
 class GeoJSON:
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -545,7 +651,9 @@ class GeoJSON:
         """
         Check if two GeoJSON objects are not equal
         """
-    def affine(self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> GeoJSON:
+    def affine(
+        self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]
+    ) -> GeoJSON:
         """
         Apply 4x4 affine transformation matrix
         """
@@ -565,7 +673,13 @@ class GeoJSON:
         """
         Create a clone of the object
         """
-    def crop(self, polygon: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 3]"], *, clipping_mode: str = 'longest', max_z_offset: typing.SupportsFloat | None = None) -> ...:
+    def crop(
+        self,
+        polygon: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 3]"],
+        *,
+        clipping_mode: str = "longest",
+        max_z_offset: typing.SupportsFloat | None = None,
+    ) -> ...:
         """
         Crop the GeoJSON object using a polygon
         """
@@ -573,7 +687,15 @@ class GeoJSON:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def dump(self, path: str, *, indent: bool = False, sort_keys: bool = False, precision: typing.SupportsInt = 8, only_xy: bool = False) -> bool:
+    def dump(
+        self,
+        path: str,
+        *,
+        indent: bool = False,
+        sort_keys: bool = False,
+        precision: typing.SupportsInt = 8,
+        only_xy: bool = False,
+    ) -> bool:
         """
         Dump the GeoJSON object to a file
         """
@@ -601,23 +723,44 @@ class GeoJSON:
         """
         Load a GeoJSON object from a file
         """
-    def rotate(self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]) -> GeoJSON:
+    def rotate(
+        self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]
+    ) -> GeoJSON:
         """
         Apply 3x3 rotation matrix to all coordinates
         """
-    def round(self, *, lon: typing.SupportsInt = 8, lat: typing.SupportsInt = 8, alt: typing.SupportsInt = 3) -> GeoJSON:
+    def round(
+        self,
+        *,
+        lon: typing.SupportsInt = 8,
+        lat: typing.SupportsInt = 8,
+        alt: typing.SupportsInt = 3,
+    ) -> GeoJSON:
         """
         Round coordinates to specified decimal places
         """
-    def scale(self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> GeoJSON:
+    def scale(
+        self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> GeoJSON:
         """
         Scale all coordinates by factors [sx, sy, sz]
         """
-    def to_enu(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> GeoJSON:
+    def to_enu(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> GeoJSON:
         """
         Convert WGS84 (lon,lat,alt) to ENU coordinates
         """
-    def to_geobuf(self, *, precision: typing.SupportsInt = 8, only_xy: bool = False, round_z: typing.SupportsInt | None = None) -> bytes:
+    def to_geobuf(
+        self,
+        *,
+        precision: typing.SupportsInt = 8,
+        only_xy: bool = False,
+        round_z: typing.SupportsInt | None = None,
+    ) -> bytes:
         """
         Encode the GeoJSON object to a Geobuf byte string
         """
@@ -625,7 +768,12 @@ class GeoJSON:
         """
         Convert the GeoJSON object to a RapidJSON value
         """
-    def to_wgs84(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> GeoJSON:
+    def to_wgs84(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> GeoJSON:
         """
         Convert ENU coordinates to WGS84 (lon,lat,alt)
         """
@@ -633,10 +781,13 @@ class GeoJSON:
         """
         Apply transform function to all coordinates (Nx3 numpy array)
         """
-    def translate(self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> GeoJSON:
+    def translate(
+        self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> GeoJSON:
         """
         Translate all coordinates by offset vector
         """
+
 class Geometry(GeometryBase):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -663,8 +814,7 @@ class Geometry(GeometryBase):
         """
         Get a custom property value
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
@@ -745,7 +895,9 @@ class Geometry(GeometryBase):
         """
         Pickle support for Geometry objects
         """
-    def affine(self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> Geometry:
+    def affine(
+        self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]
+    ) -> Geometry:
         """
         Apply 4x4 affine transformation matrix
         """
@@ -769,7 +921,14 @@ class Geometry(GeometryBase):
         """
         Get this geometry as a multi_polygon (if it is one)
         """
-    def as_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]", "flags.writeable", "flags.c_contiguous"]:
+    def as_numpy(
+        self,
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64],
+        "[m, 3]",
+        "flags.writeable",
+        "flags.c_contiguous",
+    ]:
         """
         Get a numpy view of the geometry coordinates
         """
@@ -781,7 +940,9 @@ class Geometry(GeometryBase):
         """
         Get this geometry as a polygon (if it is one)
         """
-    def bbox(self, *, with_z: bool = False) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
+    def bbox(
+        self, *, with_z: bool = False
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
         """
         Get the bounding box of the geometry
         """
@@ -799,7 +960,7 @@ class Geometry(GeometryBase):
         Get the 'custom_properties' attribute
         """
     @typing.overload
-    def custom_properties(self, new_value: ..., std: ..., std: ..., mapbox: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., std: ..., mapbox: ...) -> Geometry:
+    def custom_properties(self, new_value: ...) -> Geometry:
         """
         Set the 'custom_properties' attribute
         """
@@ -807,7 +968,15 @@ class Geometry(GeometryBase):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def dump(self, path: str, *, indent: bool = False, sort_keys: bool = False, precision: typing.SupportsInt = 8, only_xy: bool = False) -> bool:
+    def dump(
+        self,
+        path: str,
+        *,
+        indent: bool = False,
+        sort_keys: bool = False,
+        precision: typing.SupportsInt = 8,
+        only_xy: bool = False,
+    ) -> bool:
         """
         Dump the geometry to a file
         """
@@ -815,7 +984,12 @@ class Geometry(GeometryBase):
         """
         Decode a Geobuf byte string into a geometry
         """
-    def from_numpy(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> Geometry:
+    def from_numpy(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> Geometry:
         """
         Set geometry coordinates from a numpy array
         """
@@ -881,12 +1055,19 @@ class Geometry(GeometryBase):
         Add a point to the geometry
         """
     @typing.overload
-    def push_back(self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]) -> Geometry:
+    def push_back(
+        self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]
+    ) -> Geometry:
         """
         Add a point to the geometry
         """
     @typing.overload
-    def push_back(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> Geometry:
+    def push_back(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> Geometry:
         """
         Add multiple points to the geometry
         """
@@ -909,27 +1090,50 @@ class Geometry(GeometryBase):
         """
         Resize the geometry
         """
-    def rotate(self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]) -> Geometry:
+    def rotate(
+        self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]
+    ) -> Geometry:
         """
         Apply 3x3 rotation matrix to all coordinates
         """
-    def round(self, *, lon: typing.SupportsInt = 8, lat: typing.SupportsInt = 8, alt: typing.SupportsInt = 3) -> Geometry:
+    def round(
+        self,
+        *,
+        lon: typing.SupportsInt = 8,
+        lat: typing.SupportsInt = 8,
+        alt: typing.SupportsInt = 3,
+    ) -> Geometry:
         """
         Round coordinates to specified decimal places
         """
-    def scale(self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> Geometry:
+    def scale(
+        self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> Geometry:
         """
         Scale all coordinates by factors [sx, sy, sz]
         """
-    def to_enu(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> Geometry:
+    def to_enu(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> Geometry:
         """
         Convert WGS84 (lon,lat,alt) to ENU coordinates
         """
-    def to_geobuf(self, *, precision: typing.SupportsInt = 8, only_xy: bool = False, round_z: typing.SupportsInt | None = None) -> bytes:
+    def to_geobuf(
+        self,
+        *,
+        precision: typing.SupportsInt = 8,
+        only_xy: bool = False,
+        round_z: typing.SupportsInt | None = None,
+    ) -> bytes:
         """
         Encode the geometry to a Geobuf byte string
         """
-    def to_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
+    def to_numpy(
+        self,
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
         """
         Convert geometry coordinates to a numpy array
         """
@@ -937,7 +1141,12 @@ class Geometry(GeometryBase):
         """
         Convert the geometry to a RapidJSON value
         """
-    def to_wgs84(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> Geometry:
+    def to_wgs84(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> Geometry:
         """
         Convert ENU coordinates to WGS84 (lon,lat,alt)
         """
@@ -945,7 +1154,9 @@ class Geometry(GeometryBase):
         """
         Apply transform function to all coordinates (Nx3 numpy array)
         """
-    def translate(self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> Geometry:
+    def translate(
+        self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> Geometry:
         """
         Translate all coordinates by offset vector
         """
@@ -958,10 +1169,11 @@ class Geometry(GeometryBase):
         Get an iterator over the custom property values
         """
     @property
-    def __geo_interface__(self) -> typing.Any:
-        ...
+    def __geo_interface__(self) -> typing.Any: ...
+
 class GeometryBase:
     pass
+
 class GeometryCollection(GeometryList):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -972,8 +1184,7 @@ class GeometryCollection(GeometryList):
         """
         Check if two GeometryCollections are equal
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
@@ -994,7 +1205,9 @@ class GeometryCollection(GeometryList):
         Check if two GeometryCollections are not equal
         """
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: Geometry) -> GeometryCollection:
+    def __setitem__(
+        self, arg0: typing.SupportsInt, arg1: Geometry
+    ) -> GeometryCollection:
         """
         Set a geometry in the GeometryCollection by index
         """
@@ -1004,32 +1217,44 @@ class GeometryCollection(GeometryList):
         Set a geometry in the GeometryCollection by index
         """
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: MultiPoint) -> GeometryCollection:
+    def __setitem__(
+        self, arg0: typing.SupportsInt, arg1: MultiPoint
+    ) -> GeometryCollection:
         """
         Set a geometry in the GeometryCollection by index
         """
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: LineString) -> GeometryCollection:
+    def __setitem__(
+        self, arg0: typing.SupportsInt, arg1: LineString
+    ) -> GeometryCollection:
         """
         Set a geometry in the GeometryCollection by index
         """
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: MultiLineString) -> GeometryCollection:
+    def __setitem__(
+        self, arg0: typing.SupportsInt, arg1: MultiLineString
+    ) -> GeometryCollection:
         """
         Set a geometry in the GeometryCollection by index
         """
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: Polygon) -> GeometryCollection:
+    def __setitem__(
+        self, arg0: typing.SupportsInt, arg1: Polygon
+    ) -> GeometryCollection:
         """
         Set a geometry in the GeometryCollection by index
         """
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: MultiPolygon) -> GeometryCollection:
+    def __setitem__(
+        self, arg0: typing.SupportsInt, arg1: MultiPolygon
+    ) -> GeometryCollection:
         """
         Set a geometry in the GeometryCollection by index
         """
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: GeometryCollection) -> GeometryCollection:
+    def __setitem__(
+        self, arg0: typing.SupportsInt, arg1: GeometryCollection
+    ) -> GeometryCollection:
         """
         Set a geometry in the GeometryCollection by index
         """
@@ -1037,7 +1262,9 @@ class GeometryCollection(GeometryList):
         """
         Pickle support for GeometryCollection
         """
-    def affine(self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> GeometryCollection:
+    def affine(
+        self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]
+    ) -> GeometryCollection:
         """
         Apply 4x4 affine transformation matrix
         """
@@ -1049,7 +1276,9 @@ class GeometryCollection(GeometryList):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> GeometryCollection:
+    def from_rapidjson(
+        self, arg0: pybind11_geobuf._core.rapidjson
+    ) -> GeometryCollection:
         """
         Set the GeometryCollection from a RapidJSON value
         """
@@ -1101,19 +1330,34 @@ class GeometryCollection(GeometryList):
         """
         Resize the GeometryCollection to contain N geometries
         """
-    def rotate(self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]) -> GeometryCollection:
+    def rotate(
+        self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]
+    ) -> GeometryCollection:
         """
         Apply 3x3 rotation matrix to all coordinates
         """
-    def round(self, *, lon: typing.SupportsInt = 8, lat: typing.SupportsInt = 8, alt: typing.SupportsInt = 3) -> GeometryCollection:
+    def round(
+        self,
+        *,
+        lon: typing.SupportsInt = 8,
+        lat: typing.SupportsInt = 8,
+        alt: typing.SupportsInt = 3,
+    ) -> GeometryCollection:
         """
         Round the coordinates of all geometries in the GeometryCollection
         """
-    def scale(self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> GeometryCollection:
+    def scale(
+        self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> GeometryCollection:
         """
         Scale all coordinates by factors [sx, sy, sz]
         """
-    def to_enu(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> GeometryCollection:
+    def to_enu(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> GeometryCollection:
         """
         Convert WGS84 (lon,lat,alt) to ENU coordinates
         """
@@ -1121,7 +1365,12 @@ class GeometryCollection(GeometryList):
         """
         Convert the GeometryCollection to a RapidJSON value
         """
-    def to_wgs84(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> GeometryCollection:
+    def to_wgs84(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> GeometryCollection:
         """
         Convert ENU coordinates to WGS84 (lon,lat,alt)
         """
@@ -1129,7 +1378,9 @@ class GeometryCollection(GeometryList):
         """
         Apply transform function to all coordinates (Nx3 numpy array)
         """
-    def translate(self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> GeometryCollection:
+    def translate(
+        self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> GeometryCollection:
         """
         Translate all coordinates by offset vector
         """
@@ -1138,6 +1389,7 @@ class GeometryCollection(GeometryList):
         """
         Return the __geo_interface__ representation of the GeometryCollection
         """
+
 class GeometryList:
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
@@ -1158,36 +1410,28 @@ class GeometryList:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: GeometryList) -> bool:
-        ...
+    def __eq__(self, arg0: GeometryList) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> GeometryList:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: typing.SupportsInt) -> Geometry:
-        ...
+    def __getitem__(self, arg0: typing.SupportsInt) -> Geometry: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: GeometryList) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: collections.abc.Iterable) -> None:
-        ...
-    def __iter__(self) -> collections.abc.Iterator[Geometry]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: GeometryList) -> bool:
-        ...
+    def __init__(self, arg0: collections.abc.Iterable) -> None: ...
+    def __iter__(self) -> collections.abc.Iterator[Geometry]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: GeometryList) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: Geometry) -> None:
-        ...
+    def __setitem__(self, arg0: typing.SupportsInt, arg1: Geometry) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: GeometryList) -> None:
         """
@@ -1233,6 +1477,7 @@ class GeometryList:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
+
 class LineString(coordinates):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1255,15 +1500,19 @@ class LineString(coordinates):
         """
         Get a point from the geometry by index
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
         Default constructor for LineString
         """
     @typing.overload
-    def __init__(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> None:
+    def __init__(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> None:
         """
         Initialize from a numpy array of points
         """
@@ -1285,7 +1534,11 @@ class LineString(coordinates):
         Set a point in the geometry by index
         """
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
+    def __setitem__(
+        self,
+        arg0: typing.SupportsInt,
+        arg1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"],
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
         """
         Set a point in the geometry by index using a vector
         """
@@ -1293,15 +1546,26 @@ class LineString(coordinates):
         """
         Pickle support for serialization
         """
-    def affine(self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> LineString:
+    def affine(
+        self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]
+    ) -> LineString:
         """
         Apply 4x4 affine transformation matrix
         """
-    def as_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]", "flags.writeable", "flags.c_contiguous"]:
+    def as_numpy(
+        self,
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64],
+        "[m, 3]",
+        "flags.writeable",
+        "flags.c_contiguous",
+    ]:
         """
         Get a numpy view of the geometry points
         """
-    def bbox(self, *, with_z: bool = False) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
+    def bbox(
+        self, *, with_z: bool = False
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
         """
         Compute the bounding box of the geometry
         """
@@ -1323,7 +1587,12 @@ class LineString(coordinates):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_numpy(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> LineString:
+    def from_numpy(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> LineString:
         """
         Set the geometry points from a numpy array
         """
@@ -1341,7 +1610,9 @@ class LineString(coordinates):
         Add a point to the end of the geometry
         """
     @typing.overload
-    def push_back(self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]) -> LineString:
+    def push_back(
+        self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]
+    ) -> LineString:
         """
         Add a point to the end of the geometry using a vector
         """
@@ -1349,23 +1620,40 @@ class LineString(coordinates):
         """
         Resize the geometry to the specified size
         """
-    def rotate(self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]) -> LineString:
+    def rotate(
+        self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]
+    ) -> LineString:
         """
         Apply 3x3 rotation matrix to all coordinates
         """
-    def round(self, *, lon: typing.SupportsInt = 8, lat: typing.SupportsInt = 8, alt: typing.SupportsInt = 3) -> LineString:
+    def round(
+        self,
+        *,
+        lon: typing.SupportsInt = 8,
+        lat: typing.SupportsInt = 8,
+        alt: typing.SupportsInt = 3,
+    ) -> LineString:
         """
         Round coordinates to specified decimal places
         """
-    def scale(self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> LineString:
+    def scale(
+        self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> LineString:
         """
         Scale all coordinates by factors [sx, sy, sz]
         """
-    def to_enu(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> LineString:
+    def to_enu(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> LineString:
         """
         Convert WGS84 (lon,lat,alt) to ENU coordinates
         """
-    def to_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
+    def to_numpy(
+        self,
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
         """
         Convert the geometry points to a numpy array
         """
@@ -1373,7 +1661,12 @@ class LineString(coordinates):
         """
         Convert to a RapidJSON value
         """
-    def to_wgs84(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> LineString:
+    def to_wgs84(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> LineString:
         """
         Convert ENU coordinates to WGS84 (lon,lat,alt)
         """
@@ -1381,7 +1674,9 @@ class LineString(coordinates):
         """
         Apply transform function to all coordinates (Nx3 numpy array)
         """
-    def translate(self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> LineString:
+    def translate(
+        self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> LineString:
         """
         Translate all coordinates by offset vector
         """
@@ -1390,10 +1685,12 @@ class LineString(coordinates):
         """
         Return the __geo_interface__ representation
         """
+
 class LineStringList:
     """
     A list of LineStrings
     """
+
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
         """
@@ -1413,36 +1710,28 @@ class LineStringList:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: LineStringList) -> bool:
-        ...
+    def __eq__(self, arg0: LineStringList) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> LineStringList:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: typing.SupportsInt) -> LineString:
-        ...
+    def __getitem__(self, arg0: typing.SupportsInt) -> LineString: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: LineStringList) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: collections.abc.Iterable) -> None:
-        ...
-    def __iter__(self) -> collections.abc.Iterator[LineString]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: LineStringList) -> bool:
-        ...
+    def __init__(self, arg0: collections.abc.Iterable) -> None: ...
+    def __iter__(self) -> collections.abc.Iterator[LineString]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: LineStringList) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: LineString) -> None:
-        ...
+    def __setitem__(self, arg0: typing.SupportsInt, arg1: LineString) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: LineStringList) -> None:
         """
@@ -1488,6 +1777,7 @@ class LineStringList:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
+
 class LinearRing(coordinates):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1532,11 +1822,22 @@ class LinearRing(coordinates):
         Set a point in the geometry by index
         """
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
+    def __setitem__(
+        self,
+        arg0: typing.SupportsInt,
+        arg1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"],
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
         """
         Set a point in the geometry by index using a vector
         """
-    def as_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]", "flags.writeable", "flags.c_contiguous"]:
+    def as_numpy(
+        self,
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64],
+        "[m, 3]",
+        "flags.writeable",
+        "flags.c_contiguous",
+    ]:
         """
         Get a numpy view of the geometry points
         """
@@ -1548,7 +1849,12 @@ class LinearRing(coordinates):
         """
         Create a clone of the object
         """
-    def from_numpy(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> LinearRing:
+    def from_numpy(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> LinearRing:
         """
         Set the geometry points from a numpy array
         """
@@ -1562,18 +1868,24 @@ class LinearRing(coordinates):
         Add a point to the end of the geometry
         """
     @typing.overload
-    def push_back(self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]) -> LinearRing:
+    def push_back(
+        self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]
+    ) -> LinearRing:
         """
         Add a point to the end of the geometry using a vector
         """
-    def to_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
+    def to_numpy(
+        self,
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
         """
         Convert the geometry points to a numpy array
         """
+
 class LinearRingList:
     """
     A list of LinearRings
     """
+
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
         """
@@ -1593,36 +1905,28 @@ class LinearRingList:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: LinearRingList) -> bool:
-        ...
+    def __eq__(self, arg0: LinearRingList) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> LinearRingList:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: typing.SupportsInt) -> LinearRing:
-        ...
+    def __getitem__(self, arg0: typing.SupportsInt) -> LinearRing: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: LinearRingList) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: collections.abc.Iterable) -> None:
-        ...
-    def __iter__(self) -> collections.abc.Iterator[LinearRing]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: LinearRingList) -> bool:
-        ...
+    def __init__(self, arg0: collections.abc.Iterable) -> None: ...
+    def __iter__(self) -> collections.abc.Iterator[LinearRing]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: LinearRingList) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: LinearRing) -> None:
-        ...
+    def __setitem__(self, arg0: typing.SupportsInt, arg1: LinearRing) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: LinearRingList) -> None:
         """
@@ -1668,6 +1972,7 @@ class LinearRingList:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
+
 class MultiLineString(LineStringList):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1690,8 +1995,7 @@ class MultiLineString(LineStringList):
         """
         Get a linear ring by index
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
@@ -1708,7 +2012,12 @@ class MultiLineString(LineStringList):
         Construct MultiLineString from a single LineString
         """
     @typing.overload
-    def __init__(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> None:
+    def __init__(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> None:
         """
         Initialize from a numpy array of points
         """
@@ -1724,7 +2033,15 @@ class MultiLineString(LineStringList):
         """
         Check if two MultiLineStrings are not equal
         """
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]:
+    def __setitem__(
+        self,
+        arg0: typing.SupportsInt,
+        arg1: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+    ]:
         """
         Set a linear ring by index using a numpy array of points
         """
@@ -1732,15 +2049,26 @@ class MultiLineString(LineStringList):
         """
         Pickle support for the geometry
         """
-    def affine(self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> MultiLineString:
+    def affine(
+        self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]
+    ) -> MultiLineString:
         """
         Apply 4x4 affine transformation matrix
         """
-    def as_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]", "flags.writeable", "flags.c_contiguous"]:
+    def as_numpy(
+        self,
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64],
+        "[m, 3]",
+        "flags.writeable",
+        "flags.c_contiguous",
+    ]:
         """
         Return a numpy view of the geometry's points
         """
-    def bbox(self, *, with_z: bool = False) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
+    def bbox(
+        self, *, with_z: bool = False
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
         """
         Compute the bounding box of the geometry
         """
@@ -1756,7 +2084,12 @@ class MultiLineString(LineStringList):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_numpy(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> MultiLineString:
+    def from_numpy(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> MultiLineString:
         """
         Set the geometry from a numpy array of points
         """
@@ -1769,7 +2102,12 @@ class MultiLineString(LineStringList):
         Remove the last point from the last linear ring
         """
     @typing.overload
-    def push_back(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> MultiLineString:
+    def push_back(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> MultiLineString:
         """
         Add a new linear ring from a numpy array of points
         """
@@ -1778,23 +2116,40 @@ class MultiLineString(LineStringList):
         """
         Add a new linear ring
         """
-    def rotate(self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]) -> MultiLineString:
+    def rotate(
+        self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]
+    ) -> MultiLineString:
         """
         Apply 3x3 rotation matrix to all coordinates
         """
-    def round(self, *, lon: typing.SupportsInt = 8, lat: typing.SupportsInt = 8, alt: typing.SupportsInt = 3) -> MultiLineString:
+    def round(
+        self,
+        *,
+        lon: typing.SupportsInt = 8,
+        lat: typing.SupportsInt = 8,
+        alt: typing.SupportsInt = 3,
+    ) -> MultiLineString:
         """
         Round the coordinates of the geometry
         """
-    def scale(self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> MultiLineString:
+    def scale(
+        self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> MultiLineString:
         """
         Scale all coordinates by factors [sx, sy, sz]
         """
-    def to_enu(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> MultiLineString:
+    def to_enu(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> MultiLineString:
         """
         Convert WGS84 (lon,lat,alt) to ENU coordinates
         """
-    def to_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
+    def to_numpy(
+        self,
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
         """
         Convert the geometry to a numpy array
         """
@@ -1802,7 +2157,12 @@ class MultiLineString(LineStringList):
         """
         Convert the geometry to a RapidJSON value
         """
-    def to_wgs84(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> MultiLineString:
+    def to_wgs84(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> MultiLineString:
         """
         Convert ENU coordinates to WGS84 (lon,lat,alt)
         """
@@ -1810,7 +2170,9 @@ class MultiLineString(LineStringList):
         """
         Apply transform function to all coordinates (Nx3 numpy array)
         """
-    def translate(self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> MultiLineString:
+    def translate(
+        self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> MultiLineString:
         """
         Translate all coordinates by offset vector
         """
@@ -1819,6 +2181,7 @@ class MultiLineString(LineStringList):
         """
         Return the __geo_interface__ representation of the geometry
         """
+
 class MultiPoint(coordinates):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1841,15 +2204,19 @@ class MultiPoint(coordinates):
         """
         Get a point from the geometry by index
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
         Default constructor for MultiPoint
         """
     @typing.overload
-    def __init__(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> None:
+    def __init__(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> None:
         """
         Initialize from a numpy array of points
         """
@@ -1871,7 +2238,11 @@ class MultiPoint(coordinates):
         Set a point in the geometry by index
         """
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
+    def __setitem__(
+        self,
+        arg0: typing.SupportsInt,
+        arg1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"],
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
         """
         Set a point in the geometry by index using a vector
         """
@@ -1879,15 +2250,26 @@ class MultiPoint(coordinates):
         """
         Pickle support for serialization
         """
-    def affine(self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> MultiPoint:
+    def affine(
+        self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]
+    ) -> MultiPoint:
         """
         Apply 4x4 affine transformation matrix
         """
-    def as_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]", "flags.writeable", "flags.c_contiguous"]:
+    def as_numpy(
+        self,
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64],
+        "[m, 3]",
+        "flags.writeable",
+        "flags.c_contiguous",
+    ]:
         """
         Get a numpy view of the geometry points
         """
-    def bbox(self, *, with_z: bool = False) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
+    def bbox(
+        self, *, with_z: bool = False
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
         """
         Compute the bounding box of the geometry
         """
@@ -1903,7 +2285,12 @@ class MultiPoint(coordinates):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_numpy(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> MultiPoint:
+    def from_numpy(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> MultiPoint:
         """
         Set the geometry points from a numpy array
         """
@@ -1921,7 +2308,9 @@ class MultiPoint(coordinates):
         Add a point to the end of the geometry
         """
     @typing.overload
-    def push_back(self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]) -> MultiPoint:
+    def push_back(
+        self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]
+    ) -> MultiPoint:
         """
         Add a point to the end of the geometry using a vector
         """
@@ -1929,23 +2318,40 @@ class MultiPoint(coordinates):
         """
         Resize the geometry to the specified size
         """
-    def rotate(self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]) -> MultiPoint:
+    def rotate(
+        self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]
+    ) -> MultiPoint:
         """
         Apply 3x3 rotation matrix to all coordinates
         """
-    def round(self, *, lon: typing.SupportsInt = 8, lat: typing.SupportsInt = 8, alt: typing.SupportsInt = 3) -> MultiPoint:
+    def round(
+        self,
+        *,
+        lon: typing.SupportsInt = 8,
+        lat: typing.SupportsInt = 8,
+        alt: typing.SupportsInt = 3,
+    ) -> MultiPoint:
         """
         Round coordinates to specified decimal places
         """
-    def scale(self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> MultiPoint:
+    def scale(
+        self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> MultiPoint:
         """
         Scale all coordinates by factors [sx, sy, sz]
         """
-    def to_enu(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> MultiPoint:
+    def to_enu(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> MultiPoint:
         """
         Convert WGS84 (lon,lat,alt) to ENU coordinates
         """
-    def to_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
+    def to_numpy(
+        self,
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
         """
         Convert the geometry points to a numpy array
         """
@@ -1953,7 +2359,12 @@ class MultiPoint(coordinates):
         """
         Convert to a RapidJSON value
         """
-    def to_wgs84(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> MultiPoint:
+    def to_wgs84(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> MultiPoint:
         """
         Convert ENU coordinates to WGS84 (lon,lat,alt)
         """
@@ -1961,7 +2372,9 @@ class MultiPoint(coordinates):
         """
         Apply transform function to all coordinates (Nx3 numpy array)
         """
-    def translate(self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> MultiPoint:
+    def translate(
+        self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> MultiPoint:
         """
         Translate all coordinates by offset vector
         """
@@ -1970,6 +2383,7 @@ class MultiPoint(coordinates):
         """
         Return the __geo_interface__ representation
         """
+
 class MultiPolygon(PolygonList):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -1992,8 +2406,7 @@ class MultiPolygon(PolygonList):
         """
         Get a Polygon from the MultiPolygon by index
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
@@ -2010,7 +2423,12 @@ class MultiPolygon(PolygonList):
         Construct MultiPolygon from a container of Polygons
         """
     @typing.overload
-    def __init__(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> None:
+    def __init__(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> None:
         """
         Construct MultiPolygon from a numpy array of points
         """
@@ -2032,7 +2450,13 @@ class MultiPolygon(PolygonList):
         Set a Polygon in the MultiPolygon by index
         """
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> Polygon:
+    def __setitem__(
+        self,
+        arg0: typing.SupportsInt,
+        arg1: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> Polygon:
         """
         Set a Polygon in the MultiPolygon by index using a numpy array
         """
@@ -2040,15 +2464,26 @@ class MultiPolygon(PolygonList):
         """
         Pickle support for MultiPolygon
         """
-    def affine(self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> MultiPolygon:
+    def affine(
+        self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]
+    ) -> MultiPolygon:
         """
         Apply 4x4 affine transformation matrix
         """
-    def as_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]", "flags.writeable", "flags.c_contiguous"]:
+    def as_numpy(
+        self,
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64],
+        "[m, 3]",
+        "flags.writeable",
+        "flags.c_contiguous",
+    ]:
         """
         Return a numpy view of the MultiPolygon coordinates
         """
-    def bbox(self, *, with_z: bool = False) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
+    def bbox(
+        self, *, with_z: bool = False
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
         """
         Compute the bounding box of the MultiPolygon
         """
@@ -2060,7 +2495,12 @@ class MultiPolygon(PolygonList):
         """
         Create a clone of the object
         """
-    def from_numpy(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> MultiPolygon:
+    def from_numpy(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> MultiPolygon:
         """
         Set MultiPolygon coordinates from a numpy array
         """
@@ -2073,7 +2513,12 @@ class MultiPolygon(PolygonList):
         Remove the last Polygon from the MultiPolygon
         """
     @typing.overload
-    def push_back(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> MultiPolygon:
+    def push_back(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> MultiPolygon:
         """
         Add a new Polygon to the MultiPolygon from a numpy array
         """
@@ -2082,23 +2527,40 @@ class MultiPolygon(PolygonList):
         """
         Add a new Polygon to the MultiPolygon
         """
-    def rotate(self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]) -> MultiPolygon:
+    def rotate(
+        self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]
+    ) -> MultiPolygon:
         """
         Apply 3x3 rotation matrix to all coordinates
         """
-    def round(self, *, lon: typing.SupportsInt = 8, lat: typing.SupportsInt = 8, alt: typing.SupportsInt = 3) -> MultiPolygon:
+    def round(
+        self,
+        *,
+        lon: typing.SupportsInt = 8,
+        lat: typing.SupportsInt = 8,
+        alt: typing.SupportsInt = 3,
+    ) -> MultiPolygon:
         """
         Round the coordinates of the MultiPolygon
         """
-    def scale(self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> MultiPolygon:
+    def scale(
+        self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> MultiPolygon:
         """
         Scale all coordinates by factors [sx, sy, sz]
         """
-    def to_enu(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> MultiPolygon:
+    def to_enu(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> MultiPolygon:
         """
         Convert WGS84 (lon,lat,alt) to ENU coordinates
         """
-    def to_numpy(self: Polygon) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
+    def to_numpy(
+        self: Polygon,
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
         """
         Convert MultiPolygon to a numpy array
         """
@@ -2106,7 +2568,12 @@ class MultiPolygon(PolygonList):
         """
         Convert the MultiPolygon to a RapidJSON value
         """
-    def to_wgs84(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> MultiPolygon:
+    def to_wgs84(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> MultiPolygon:
         """
         Convert ENU coordinates to WGS84 (lon,lat,alt)
         """
@@ -2114,7 +2581,9 @@ class MultiPolygon(PolygonList):
         """
         Apply transform function to all coordinates (Nx3 numpy array)
         """
-    def translate(self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> MultiPolygon:
+    def translate(
+        self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> MultiPolygon:
         """
         Translate all coordinates by offset vector
         """
@@ -2123,6 +2592,7 @@ class MultiPolygon(PolygonList):
         """
         Return the __geo_interface__ representation of the MultiPolygon
         """
+
 class Point:
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -2145,20 +2615,26 @@ class Point:
         """
         Get the coordinate value at the specified index (0: x, 1: y, 2: z)
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
         Initialize an empty Point
         """
     @typing.overload
-    def __init__(self, x: typing.SupportsFloat, y: typing.SupportsFloat, z: typing.SupportsFloat = 0.0) -> None:
+    def __init__(
+        self,
+        x: typing.SupportsFloat,
+        y: typing.SupportsFloat,
+        z: typing.SupportsFloat = 0.0,
+    ) -> None:
         """
         Initialize a Point with coordinates (x, y, z)
         """
     @typing.overload
-    def __init__(self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]) -> None:
+    def __init__(
+        self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]
+    ) -> None:
         """
         Initialize a Point from a numpy array or vector
         """
@@ -2174,7 +2650,9 @@ class Point:
         """
         Check if two Points are not equal
         """
-    def __setitem__(self, index: typing.SupportsInt, value: typing.SupportsFloat) -> float:
+    def __setitem__(
+        self, index: typing.SupportsInt, value: typing.SupportsFloat
+    ) -> float:
         """
         Set the coordinate value at the specified index (0: x, 1: y, 2: z)
         """
@@ -2182,15 +2660,23 @@ class Point:
         """
         Enable pickling support for Point objects
         """
-    def affine(self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> Point:
+    def affine(
+        self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]
+    ) -> Point:
         """
         Apply 4x4 affine transformation matrix
         """
-    def as_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[3, 1]", "flags.writeable"]:
+    def as_numpy(
+        self,
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64], "[3, 1]", "flags.writeable"
+    ]:
         """
         Get a numpy view of the point coordinates
         """
-    def bbox(self, *, with_z: bool = False) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
+    def bbox(
+        self, *, with_z: bool = False
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
         """
         Get the bounding box of the point
         """
@@ -2206,7 +2692,9 @@ class Point:
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_numpy(self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]) -> Point:
+    def from_numpy(
+        self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, 1]"]
+    ) -> Point:
         """
         Set point coordinates from a numpy array
         """
@@ -2214,23 +2702,40 @@ class Point:
         """
         Create a Point from a RapidJSON value
         """
-    def rotate(self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]) -> Point:
+    def rotate(
+        self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]
+    ) -> Point:
         """
         Apply 3x3 rotation matrix to all coordinates
         """
-    def round(self, *, lon: typing.SupportsInt = 8, lat: typing.SupportsInt = 8, alt: typing.SupportsInt = 3) -> Point:
+    def round(
+        self,
+        *,
+        lon: typing.SupportsInt = 8,
+        lat: typing.SupportsInt = 8,
+        alt: typing.SupportsInt = 3,
+    ) -> Point:
         """
         Round coordinates to specified decimal places
         """
-    def scale(self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> Point:
+    def scale(
+        self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> Point:
         """
         Scale all coordinates by factors [sx, sy, sz]
         """
-    def to_enu(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> Point:
+    def to_enu(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> Point:
         """
         Convert WGS84 (lon,lat,alt) to ENU coordinates
         """
-    def to_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[3, 1]"]:
+    def to_numpy(
+        self,
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[3, 1]"]:
         """
         Convert point coordinates to a numpy array
         """
@@ -2238,7 +2743,12 @@ class Point:
         """
         Convert the Point to a RapidJSON value
         """
-    def to_wgs84(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> Point:
+    def to_wgs84(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> Point:
         """
         Convert ENU coordinates to WGS84 (lon,lat,alt)
         """
@@ -2246,7 +2756,9 @@ class Point:
         """
         Apply transform function to all coordinates (Nx3 numpy array)
         """
-    def translate(self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> Point:
+    def translate(
+        self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> Point:
         """
         Translate all coordinates by offset vector
         """
@@ -2261,24 +2773,22 @@ class Point:
         Get or set the x-coordinate of the point
         """
     @x.setter
-    def x(self, arg1: typing.SupportsFloat) -> None:
-        ...
+    def x(self, arg1: typing.SupportsFloat) -> None: ...
     @property
     def y(self) -> float:
         """
         Get or set the y-coordinate of the point
         """
     @y.setter
-    def y(self, arg1: typing.SupportsFloat) -> None:
-        ...
+    def y(self, arg1: typing.SupportsFloat) -> None: ...
     @property
     def z(self) -> float:
         """
         Get or set the z-coordinate of the point
         """
     @z.setter
-    def z(self, arg1: typing.SupportsFloat) -> None:
-        ...
+    def z(self, arg1: typing.SupportsFloat) -> None: ...
+
 class Polygon(LinearRingList):
     __hash__: typing.ClassVar[None] = None
     def __call__(self) -> typing.Any:
@@ -2301,8 +2811,7 @@ class Polygon(LinearRingList):
         """
         Get a linear ring by index
         """
-    def __getstate__(self) -> typing.Any:
-        ...
+    def __getstate__(self) -> typing.Any: ...
     @typing.overload
     def __init__(self) -> None:
         """
@@ -2319,7 +2828,12 @@ class Polygon(LinearRingList):
         Construct Polygon from a single LinearRing (shell)
         """
     @typing.overload
-    def __init__(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> None:
+    def __init__(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> None:
         """
         Initialize from a numpy array of points
         """
@@ -2335,7 +2849,15 @@ class Polygon(LinearRingList):
         """
         Check if two Polygons are not equal
         """
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]:
+    def __setitem__(
+        self,
+        arg0: typing.SupportsInt,
+        arg1: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+    ]:
         """
         Set a linear ring by index using a numpy array of points
         """
@@ -2343,15 +2865,26 @@ class Polygon(LinearRingList):
         """
         Pickle support for the geometry
         """
-    def affine(self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]) -> Polygon:
+    def affine(
+        self, T: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[4, 4]"]
+    ) -> Polygon:
         """
         Apply 4x4 affine transformation matrix
         """
-    def as_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]", "flags.writeable", "flags.c_contiguous"]:
+    def as_numpy(
+        self,
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64],
+        "[m, 3]",
+        "flags.writeable",
+        "flags.c_contiguous",
+    ]:
         """
         Return a numpy view of the geometry's points
         """
-    def bbox(self, *, with_z: bool = False) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
+    def bbox(
+        self, *, with_z: bool = False
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 1]"]:
         """
         Compute the bounding box of the geometry
         """
@@ -2367,7 +2900,12 @@ class Polygon(LinearRingList):
         """
         Remove duplicate consecutive points based on their XYZ coordinates
         """
-    def from_numpy(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> Polygon:
+    def from_numpy(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> Polygon:
         """
         Set the geometry from a numpy array of points
         """
@@ -2380,7 +2918,12 @@ class Polygon(LinearRingList):
         Remove the last point from the last linear ring
         """
     @typing.overload
-    def push_back(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> Polygon:
+    def push_back(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> Polygon:
         """
         Add a new linear ring from a numpy array of points
         """
@@ -2389,23 +2932,40 @@ class Polygon(LinearRingList):
         """
         Add a new linear ring
         """
-    def rotate(self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]) -> Polygon:
+    def rotate(
+        self, R: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 3]"]
+    ) -> Polygon:
         """
         Apply 3x3 rotation matrix to all coordinates
         """
-    def round(self, *, lon: typing.SupportsInt = 8, lat: typing.SupportsInt = 8, alt: typing.SupportsInt = 3) -> Polygon:
+    def round(
+        self,
+        *,
+        lon: typing.SupportsInt = 8,
+        lat: typing.SupportsInt = 8,
+        alt: typing.SupportsInt = 3,
+    ) -> Polygon:
         """
         Round the coordinates of the geometry
         """
-    def scale(self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> Polygon:
+    def scale(
+        self, scale: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> Polygon:
         """
         Scale all coordinates by factors [sx, sy, sz]
         """
-    def to_enu(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> Polygon:
+    def to_enu(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> Polygon:
         """
         Convert WGS84 (lon,lat,alt) to ENU coordinates
         """
-    def to_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
+    def to_numpy(
+        self,
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
         """
         Convert the geometry to a numpy array
         """
@@ -2413,7 +2973,12 @@ class Polygon(LinearRingList):
         """
         Convert the geometry to a RapidJSON value
         """
-    def to_wgs84(self, anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"], *, cheap_ruler: bool = True) -> Polygon:
+    def to_wgs84(
+        self,
+        anchor: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"],
+        *,
+        cheap_ruler: bool = True,
+    ) -> Polygon:
         """
         Convert ENU coordinates to WGS84 (lon,lat,alt)
         """
@@ -2421,7 +2986,9 @@ class Polygon(LinearRingList):
         """
         Apply transform function to all coordinates (Nx3 numpy array)
         """
-    def translate(self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]) -> Polygon:
+    def translate(
+        self, offset: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[3, 1]"]
+    ) -> Polygon:
         """
         Translate all coordinates by offset vector
         """
@@ -2430,6 +2997,7 @@ class Polygon(LinearRingList):
         """
         Return the __geo_interface__ representation of the geometry
         """
+
 class PolygonList:
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
@@ -2450,36 +3018,28 @@ class PolygonList:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: PolygonList) -> bool:
-        ...
+    def __eq__(self, arg0: PolygonList) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> PolygonList:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: typing.SupportsInt) -> Polygon:
-        ...
+    def __getitem__(self, arg0: typing.SupportsInt) -> Polygon: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: PolygonList) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: collections.abc.Iterable) -> None:
-        ...
-    def __iter__(self) -> collections.abc.Iterator[Polygon]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: PolygonList) -> bool:
-        ...
+    def __init__(self, arg0: collections.abc.Iterable) -> None: ...
+    def __iter__(self) -> collections.abc.Iterator[Polygon]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: PolygonList) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: Polygon) -> None:
-        ...
+    def __setitem__(self, arg0: typing.SupportsInt, arg1: Polygon) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: PolygonList) -> None:
         """
@@ -2525,6 +3085,7 @@ class PolygonList:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
+
 class coordinates:
     __hash__: typing.ClassVar[None] = None
     def __bool__(self) -> bool:
@@ -2545,36 +3106,28 @@ class coordinates:
         """
         Delete list elements using a slice object
         """
-    def __eq__(self, arg0: coordinates) -> bool:
-        ...
+    def __eq__(self, arg0: coordinates) -> bool: ...
     @typing.overload
     def __getitem__(self, s: slice) -> coordinates:
         """
         Retrieve list elements using a slice object
         """
     @typing.overload
-    def __getitem__(self, arg0: typing.SupportsInt) -> ...:
-        ...
+    def __getitem__(self, arg0: typing.SupportsInt) -> ...: ...
     @typing.overload
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, arg0: coordinates) -> None:
         """
         Copy constructor
         """
     @typing.overload
-    def __init__(self, arg0: collections.abc.Iterable) -> None:
-        ...
-    def __iter__(self) -> collections.abc.Iterator[...]:
-        ...
-    def __len__(self) -> int:
-        ...
-    def __ne__(self, arg0: coordinates) -> bool:
-        ...
+    def __init__(self, arg0: collections.abc.Iterable) -> None: ...
+    def __iter__(self) -> collections.abc.Iterator[...]: ...
+    def __len__(self) -> int: ...
+    def __ne__(self, arg0: coordinates) -> bool: ...
     @typing.overload
-    def __setitem__(self, arg0: typing.SupportsInt, arg1: ...) -> None:
-        ...
+    def __setitem__(self, arg0: typing.SupportsInt, arg1: ...) -> None: ...
     @typing.overload
     def __setitem__(self, arg0: slice, arg1: coordinates) -> None:
         """
@@ -2584,7 +3137,14 @@ class coordinates:
         """
         Add an item to the end of the list
         """
-    def as_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]", "flags.writeable", "flags.c_contiguous"]:
+    def as_numpy(
+        self,
+    ) -> typing.Annotated[
+        numpy.typing.NDArray[numpy.float64],
+        "[m, 3]",
+        "flags.writeable",
+        "flags.c_contiguous",
+    ]:
         """
         Get a numpy view of the coordinates
         """
@@ -2606,7 +3166,12 @@ class coordinates:
         """
         Extend the list by appending all the items in the given list
         """
-    def from_numpy(self, arg0: typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"]) -> coordinates:
+    def from_numpy(
+        self,
+        arg0: typing.Annotated[
+            numpy.typing.NDArray[numpy.float64], "[m, n]", "flags.c_contiguous"
+        ],
+    ) -> coordinates:
         """
         Set coordinates from a numpy array
         """
@@ -2628,28 +3193,27 @@ class coordinates:
         """
         Remove the first item from the list whose value is x. It is an error if there is no such item.
         """
-    def to_numpy(self) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
+    def to_numpy(
+        self,
+    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[m, 3]"]:
         """
         Convert coordinates to a numpy array
         """
+
 class value:
     class ItemsView:
-        def __iter__(self) -> collections.abc.Iterator:
-            ...
-        def __len__(self) -> int:
-            ...
+        def __iter__(self) -> collections.abc.Iterator: ...
+        def __len__(self) -> int: ...
+
     class KeysView:
-        def __contains__(self, arg0: typing.Any) -> bool:
-            ...
-        def __iter__(self) -> collections.abc.Iterator:
-            ...
-        def __len__(self) -> int:
-            ...
+        def __contains__(self, arg0: typing.Any) -> bool: ...
+        def __iter__(self) -> collections.abc.Iterator: ...
+        def __len__(self) -> int: ...
+
     class ValuesView:
-        def __iter__(self) -> collections.abc.Iterator:
-            ...
-        def __len__(self) -> int:
-            ...
+        def __iter__(self) -> collections.abc.Iterator: ...
+        def __len__(self) -> int: ...
+
     class array_type:
         __hash__: typing.ClassVar[None] = None
         def __bool__(self) -> bool:
@@ -2674,32 +3238,28 @@ class value:
             """
             Delete list elements using a slice object
             """
-        def __eq__(self, arg0: value.array_type) -> bool:
-            ...
+        def __eq__(self, arg0: value.array_type) -> bool: ...
         @typing.overload
         def __getitem__(self, s: slice) -> value.array_type:
             """
             Retrieve list elements using a slice object
             """
         @typing.overload
-        def __getitem__(self, arg0: typing.SupportsInt) -> value:
-            ...
+        def __getitem__(self, arg0: typing.SupportsInt) -> value: ...
         @typing.overload
         def __getitem__(self, arg0: typing.SupportsInt) -> value:
             """
             Get an item from the GeoJSON array by index
             """
         @typing.overload
-        def __init__(self) -> None:
-            ...
+        def __init__(self) -> None: ...
         @typing.overload
         def __init__(self, arg0: value.array_type) -> None:
             """
             Copy constructor
             """
         @typing.overload
-        def __init__(self, arg0: collections.abc.Iterable) -> None:
-            ...
+        def __init__(self, arg0: collections.abc.Iterable) -> None: ...
         @typing.overload
         def __init__(self) -> None:
             """
@@ -2710,15 +3270,11 @@ class value:
             """
             Construct a GeoJSON array from a Python iterable
             """
-        def __iter__(self) -> collections.abc.Iterator[value]:
-            ...
-        def __len__(self) -> int:
-            ...
-        def __ne__(self, arg0: value.array_type) -> bool:
-            ...
+        def __iter__(self) -> collections.abc.Iterator[value]: ...
+        def __len__(self) -> int: ...
+        def __ne__(self, arg0: value.array_type) -> bool: ...
         @typing.overload
-        def __setitem__(self, arg0: typing.SupportsInt, arg1: value) -> None:
-            ...
+        def __setitem__(self, arg0: typing.SupportsInt, arg1: value) -> None: ...
         @typing.overload
         def __setitem__(self, arg0: slice, arg1: value.array_type) -> None:
             """
@@ -2757,7 +3313,9 @@ class value:
             """
             Extend the list by appending all the items in the given list
             """
-        def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> value.array_type:
+        def from_rapidjson(
+            self, arg0: pybind11_geobuf._core.rapidjson
+        ) -> value.array_type:
             """
             Set the GeoJSON array from a RapidJSON value
             """
@@ -2783,6 +3341,7 @@ class value:
             """
             Convert the GeoJSON array to a RapidJSON value
             """
+
     class object_type:
         def __bool__(self) -> bool:
             """
@@ -2793,18 +3352,13 @@ class value:
             Convert the GeoJSON object to a Python dict
             """
         @typing.overload
-        def __contains__(self, arg0: str) -> bool:
-            ...
+        def __contains__(self, arg0: str) -> bool: ...
         @typing.overload
-        def __contains__(self, arg0: typing.Any) -> bool:
-            ...
-        def __delitem__(self, arg0: str) -> None:
-            ...
-        def __getitem__(self, arg0: str) -> value:
-            ...
+        def __contains__(self, arg0: typing.Any) -> bool: ...
+        def __delitem__(self, arg0: str) -> None: ...
+        def __getitem__(self, arg0: str) -> value: ...
         @typing.overload
-        def __init__(self) -> None:
-            ...
+        def __init__(self) -> None: ...
         @typing.overload
         def __init__(self) -> None:
             """
@@ -2815,13 +3369,10 @@ class value:
             """
             Construct a GeoJSON object from a Python dict
             """
-        def __iter__(self) -> collections.abc.Iterator[str]:
-            ...
-        def __len__(self) -> int:
-            ...
+        def __iter__(self) -> collections.abc.Iterator[str]: ...
+        def __len__(self) -> int: ...
         @typing.overload
-        def __setitem__(self, arg0: str, arg1: value) -> None:
-            ...
+        def __setitem__(self, arg0: str, arg1: value) -> None: ...
         @typing.overload
         def __setitem__(self, arg0: str, arg1: typing.Any) -> value:
             """
@@ -2831,21 +3382,21 @@ class value:
             """
             Clear the GeoJSON object
             """
-        def from_rapidjson(self, arg0: pybind11_geobuf._core.rapidjson) -> value.object_type:
+        def from_rapidjson(
+            self, arg0: pybind11_geobuf._core.rapidjson
+        ) -> value.object_type:
             """
             Convert a RapidJSON value to a GeoJSON object
             """
         @typing.overload
-        def items(self) -> value.ItemsView:
-            ...
+        def items(self) -> value.ItemsView: ...
         @typing.overload
         def items(self) -> collections.abc.Iterator[tuple[str, value]]:
             """
             Get an iterator over the items (key-value pairs) of the GeoJSON object
             """
         @typing.overload
-        def keys(self) -> value.KeysView:
-            ...
+        def keys(self) -> value.KeysView: ...
         @typing.overload
         def keys(self) -> collections.abc.Iterator[str]:
             """
@@ -2856,13 +3407,13 @@ class value:
             Convert the GeoJSON object to a RapidJSON value
             """
         @typing.overload
-        def values(self) -> value.ValuesView:
-            ...
+        def values(self) -> value.ValuesView: ...
         @typing.overload
         def values(self) -> collections.abc.Iterator[value]:
             """
             Get an iterator over the values of the GeoJSON object
             """
+
     def Get(self) -> typing.Any:
         """
         Get the GeoJSON value as a Python object

@@ -1195,4 +1195,4 @@ def str2json2str(
         Optional[str]: Converted JSON string, or None if input is invalid.
     """
 
-__version__: str = "0.2.3"
+__version__: str = "0.2.4"
