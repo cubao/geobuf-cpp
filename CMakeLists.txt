@@ -34,7 +34,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 17)
-include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/headers/include)
+execute_process(
+  COMMAND "${Python_EXECUTABLE}" -c
+          "import cubao_headers; print(cubao_headers.get_include())"
+  OUTPUT_VARIABLE CUBAO_HEADERS_INCLUDE_DIR
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+include_directories(SYSTEM ${CUBAO_HEADERS_INCLUDE_DIR})
 include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/src/geobuf)
 
 option(BUILD_SHARED_LIBS "Build shared library." OFF)
