@@ -1,15 +1,20 @@
 [build-system]
-requires = ["scikit-build-core>=0.3.3", "pybind11"]
+requires = ["scikit-build-core>=0.3.3", "pybind11", "cubao-headers>=0.1.0"]
 build-backend = "scikit_build_core.build"
 
 
 [project]
 name = "pybind11_geobuf"
-version = "0.2.3"
+version = "0.2.4"
 description="c++ geobuf with python binding"
 readme = "README.md"
 authors = [
   { name = "district10", email = "dvorak4tzx@gmail.com" },
+]
+dependencies = [
+  "fire",
+  "loguru",
+  "numpy",
 ]
 requires-python = ">=3.7"
 classifiers = [
@@ -22,6 +27,8 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 
 
@@ -30,7 +37,7 @@ Homepage = "https://geobuf-cpp.readthedocs.io"
 
 
 [project.optional-dependencies]
-test = ["pytest", "scipy"]
+test = ["pytest"]
 
 
 [tool.scikit-build]

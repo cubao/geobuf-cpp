@@ -26,6 +26,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pragma-once-outside-header")
 endif()
 
+if(MSVC)
+    add_compile_options(/bigobj)
+endif()
+
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 add_definitions(-DPROJECT_BINARY_DIR="${PROJECT_BINARY_DIR}")
@@ -34,7 +38,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 17)
-include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/headers/include)
+execute_process(
+    COMMAND "${Python_EXECUTABLE}" -c "import cubao_headers; print(cubao_headers.get_include())"
+    OUTPUT_VARIABLE CUBAO_HEADERS_INCLUDE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+include_directories(SYSTEM ${CUBAO_HEADERS_INCLUDE_DIR})
 include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/src/geobuf)
 
 option(BUILD_SHARED_LIBS "Build shared library." OFF)
@@ -44,7 +52,7 @@ file(GLOB_RECURSE SOURCES src/**/*.cpp)
 add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_VISIBILITY_PRESET "hidden")
-install(TARGETS ${PROJECT_NAME} DESTINATION ${PROJECT_NAME})
+# Don't install static library to wheel - delocate-wheel can't handle .a files
 
 add_executable(pbf_decoder src/geobuf/pbf_decoder.cpp)
 target_compile_definitions(pbf_decoder PUBLIC -DPBF_DECODER_ENABLE_MAIN)
