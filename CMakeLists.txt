@@ -52,7 +52,7 @@ file(GLOB_RECURSE SOURCES src/**/*.cpp)
 add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_VISIBILITY_PRESET "hidden")
-install(TARGETS ${PROJECT_NAME} DESTINATION ${PROJECT_NAME})
+# Don't install static library to wheel - delocate-wheel can't handle .a files
 
 add_executable(pbf_decoder src/geobuf/pbf_decoder.cpp)
 target_compile_definitions(pbf_decoder PUBLIC -DPBF_DECODER_ENABLE_MAIN)
