@@ -80,6 +80,11 @@ class TestTransformPoint:
         T[:3, 3] = [10, 20, 30]  # translation
         pt.affine(T)
         assert pt() == [11.0, 22.0, 33.0]
+        pt = geojson.Point(1.0, 2.0, 3.0)
+        T[:, 0] *= 5
+        T[:, 1] *= 2
+        pt.affine(T)
+        assert pt() == [15.0, 24.0, 33.0]
 
 
 class TestTransformLineString:
