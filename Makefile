@@ -44,6 +44,7 @@ cli_test: cli_test1 cli_test2 cli_test3 cli_test4
 restub:
 	pybind11-stubgen pybind11_geobuf._core -o stubs
 	cp -rf stubs/pybind11_geobuf/_core src/pybind11_geobuf
+	pre-commit run --files src/pybind11_geobuf/_core/*.pyi
 
 test_all:
 	@cd build && for t in $(wildcard $(BUILD_DIR)/test_*); do echo $$t && eval $$t >/dev/null 2>&1 && echo 'ok' || echo $(RED)Not Ok$(NC); done
