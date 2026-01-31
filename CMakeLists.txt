@@ -35,10 +35,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 17)
 execute_process(
-  COMMAND "${Python_EXECUTABLE}" -c
-          "import cubao_headers; print(cubao_headers.get_include())"
-  OUTPUT_VARIABLE CUBAO_HEADERS_INCLUDE_DIR
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
+    COMMAND "${Python_EXECUTABLE}" -c "import cubao_headers; print(cubao_headers.get_include())"
+    OUTPUT_VARIABLE CUBAO_HEADERS_INCLUDE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
 include_directories(SYSTEM ${CUBAO_HEADERS_INCLUDE_DIR})
 include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/src/geobuf)
 
