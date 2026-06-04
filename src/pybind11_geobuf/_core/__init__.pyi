@@ -1,7 +1,6 @@
 from __future__ import annotations
-import collections.abc
 import numpy
-import numpy.typing
+import pybind11_stubgen.typing_ext
 import typing
 from . import geojson
 from . import tf
@@ -66,7 +65,7 @@ class Decoder:
         """
     def decode_feature(
         self, bytes: str, only_geometry: bool = False, only_properties: bool = False
-    ) -> pybind11_geobuf._core.geojson.Feature | None:
+    ) -> geojson.Feature | None:
         """
         Decode Protocol Buffer (PBF) feature.
 
@@ -152,9 +151,9 @@ class Encoder:
     def __init__(
         self,
         *,
-        max_precision: typing.SupportsInt = 1000000,
+        max_precision: int = 1000000,
         only_xy: bool = False,
-        round_z: typing.SupportsInt | None = None,
+        round_z: int | None = None,
     ) -> None:
         """
         Initialize an Encoder object.
@@ -294,12 +293,8 @@ class GeobufIndex:
         """
     @typing.overload
     def decode_feature(
-        self,
-        index: typing.SupportsInt,
-        *,
-        only_geometry: bool = False,
-        only_properties: bool = False,
-    ) -> pybind11_geobuf._core.geojson.Feature | None:
+        self, index: int, *, only_geometry: bool = False, only_properties: bool = False
+    ) -> geojson.Feature | None:
         """
         Decode a feature from the Geobuf file.
 
@@ -314,7 +309,7 @@ class GeobufIndex:
     @typing.overload
     def decode_feature(
         self, bytes: str, *, only_geometry: bool = False, only_properties: bool = False
-    ) -> pybind11_geobuf._core.geojson.Feature | None:
+    ) -> geojson.Feature | None:
         """
         Decode a feature from bytes.
 
@@ -328,7 +323,7 @@ class GeobufIndex:
         """
     def decode_feature_of_id(
         self, id: str, *, only_geometry: bool = False, only_properties: bool = False
-    ) -> pybind11_geobuf._core.geojson.Feature | None:
+    ) -> geojson.Feature | None:
         """
         Decode a feature by its ID.
 
@@ -342,7 +337,7 @@ class GeobufIndex:
         """
     def decode_features(
         self,
-        index: collections.abc.Sequence[typing.SupportsInt],
+        index: list[int],
         *,
         only_geometry: bool = False,
         only_properties: bool = False,
@@ -387,9 +382,7 @@ class GeobufIndex:
         Returns:
             None
         """
-    def mmap_bytes(
-        self, offset: typing.SupportsInt, length: typing.SupportsInt
-    ) -> bytes | None:
+    def mmap_bytes(self, offset: int, length: int) -> bytes | None:
         """
         Read bytes from the memory-mapped file.
 
@@ -425,8 +418,8 @@ class GeobufIndex:
         """
     def query(
         self,
-        arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[2, 1]"],
-        arg1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[2, 1]"],
+        arg0: numpy.ndarray[numpy.float64[2, 1]],
+        arg1: numpy.ndarray[numpy.float64[2, 1]],
     ) -> set[int]:
         """
         Query features within a bounding box.
@@ -497,9 +490,7 @@ class NodeItem:
         """
         Check if this node's bounding box intersects with another node's bounding box
         """
-    def to_numpy(
-        self,
-    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[4, 1]"]:
+    def to_numpy(self) -> numpy.ndarray[numpy.float64[4, 1]]:
         """
         Convert the node's bounding box to a numpy array [minX, minY, maxX, maxY]
         """
@@ -541,11 +532,7 @@ class NodeItem:
 
 class PackedRTree:
     def search(
-        self,
-        min_x: typing.SupportsFloat,
-        min_y: typing.SupportsFloat,
-        max_x: typing.SupportsFloat,
-        max_y: typing.SupportsFloat,
+        self, min_x: float, min_y: float, max_x: float, max_y: float
     ) -> list[int]:
         """
         Search for items within the given bounding box.
@@ -560,9 +547,7 @@ class PackedRTree:
             list: List of offsets of items within the bounding box.
         """
     @property
-    def extent(
-        self,
-    ) -> typing.Annotated[numpy.typing.NDArray[numpy.float64], "[4, 1]"]: ...
+    def extent(self) -> numpy.ndarray[numpy.float64[4, 1]]: ...
     @property
     def node_size(self) -> int: ...
     @property
@@ -597,9 +582,7 @@ class Planet:
         Returns:
             None
         """
-    def copy(
-        self, arg0: typing.Annotated[numpy.typing.ArrayLike, numpy.int32, "[m, 1]"]
-    ) -> geojson.FeatureCollection:
+    def copy(self, arg0: numpy.ndarray[numpy.int32[m, 1]]) -> geojson.FeatureCollection:
         """
         Create a deep copy of the Planet object.
 
@@ -608,9 +591,7 @@ class Planet:
         """
     def crop(
         self,
-        polygon: typing.Annotated[
-            numpy.typing.NDArray[numpy.float64], "[m, 2]", "flags.c_contiguous"
-        ],
+        polygon: numpy.ndarray[numpy.float64[m, 2], numpy.ndarray.flags.c_contiguous],
         *,
         clipping_mode: str = "longest",
         strip_properties: bool = False,
@@ -653,9 +634,9 @@ class Planet:
         """
     def query(
         self,
-        min: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[2, 1]"],
-        max: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[2, 1]"],
-    ) -> typing.Annotated[numpy.typing.NDArray[numpy.int32], "[m, 1]"]:
+        min: numpy.ndarray[numpy.float64[2, 1]],
+        max: numpy.ndarray[numpy.float64[2, 1]],
+    ) -> numpy.ndarray[numpy.int32[m, 1]]:
         """
         Query features within the given bounding box.
 
@@ -701,11 +682,11 @@ class rapidjson:
         def __getstate__(self) -> int: ...
         def __hash__(self) -> int: ...
         def __index__(self) -> int: ...
-        def __init__(self, value: typing.SupportsInt) -> None: ...
+        def __init__(self, value: int) -> None: ...
         def __int__(self) -> int: ...
         def __ne__(self, other: typing.Any) -> bool: ...
         def __repr__(self) -> str: ...
-        def __setstate__(self, state: typing.SupportsInt) -> None: ...
+        def __setstate__(self, state: int) -> None: ...
         def __str__(self) -> str: ...
         @property
         def name(self) -> str: ...
@@ -844,19 +825,19 @@ class rapidjson:
         """
         Set the value to an empty array
         """
-    def SetDouble(self, arg0: typing.SupportsFloat) -> rapidjson:
+    def SetDouble(self, arg0: float) -> rapidjson:
         """
         Set the value to a double
         """
-    def SetFloat(self, arg0: typing.SupportsFloat) -> rapidjson:
+    def SetFloat(self, arg0: float) -> rapidjson:
         """
         Set the value to a float
         """
-    def SetInt(self, arg0: typing.SupportsInt) -> rapidjson:
+    def SetInt(self, arg0: int) -> rapidjson:
         """
         Set the value to an integer
         """
-    def SetInt64(self, arg0: typing.SupportsInt) -> rapidjson:
+    def SetInt64(self, arg0: int) -> rapidjson:
         """
         Set the value to a 64-bit integer
         """
@@ -868,11 +849,11 @@ class rapidjson:
         """
         Set the value to an empty object
         """
-    def SetUint(self, arg0: typing.SupportsInt) -> rapidjson:
+    def SetUint(self, arg0: int) -> rapidjson:
         """
         Set the value to an unsigned integer
         """
-    def SetUint64(self, arg0: typing.SupportsInt) -> rapidjson:
+    def SetUint64(self, arg0: int) -> rapidjson:
         """
         Set the value to a 64-bit unsigned integer
         """
@@ -906,7 +887,7 @@ class rapidjson:
         Delete a member by key
         """
     @typing.overload
-    def __delitem__(self, arg0: typing.SupportsInt) -> None:
+    def __delitem__(self, arg0: int) -> None:
         """
         Delete an array element by index
         """
@@ -920,7 +901,7 @@ class rapidjson:
         Get a member value by key
         """
     @typing.overload
-    def __getitem__(self, arg0: typing.SupportsInt) -> rapidjson:
+    def __getitem__(self, arg0: int) -> rapidjson:
         """
         Get an array element by index
         """
@@ -944,7 +925,7 @@ class rapidjson:
         Compare two RapidJSON values for inequality
         """
     @typing.overload
-    def __setitem__(self, index: typing.SupportsInt, value: typing.Any) -> typing.Any:
+    def __setitem__(self, index: int, value: typing.Any) -> typing.Any:
         """
         Set array element by index
         """
@@ -1010,9 +991,9 @@ class rapidjson:
         *,
         sort_keys: bool = True,
         strip_geometry_z_0: bool = True,
-        round_geojson_non_geometry: typing.SupportsInt | None = 3,
+        round_geojson_non_geometry: int | None = 3,
         round_geojson_geometry: typing.Annotated[
-            collections.abc.Sequence[typing.SupportsInt], "FixedSize(3)"
+            list[int], pybind11_stubgen.typing_ext.FixedSize(3)
         ]
         | None = [8, 8, 3],
         denoise_double_0: bool = True,
@@ -1029,11 +1010,7 @@ class rapidjson:
         Append value to array
         """
     def round(
-        self,
-        *,
-        precision: typing.SupportsFloat = 3,
-        depth: typing.SupportsInt = 32,
-        skip_keys: collections.abc.Sequence[str] = [],
+        self, *, precision: float = 3, depth: int = 32, skip_keys: list[str] = []
     ) -> rapidjson:
         """
         Round numeric values in the JSON
@@ -1042,15 +1019,13 @@ class rapidjson:
         self,
         *,
         precision: typing.Annotated[
-            collections.abc.Sequence[typing.SupportsInt], "FixedSize(3)"
+            list[int], pybind11_stubgen.typing_ext.FixedSize(3)
         ] = [8, 8, 3],
     ) -> rapidjson:
         """
         Round geometry coordinates in GeoJSON
         """
-    def round_geojson_non_geometry(
-        self, *, precision: typing.SupportsInt = 3
-    ) -> rapidjson:
+    def round_geojson_non_geometry(self, *, precision: int = 3) -> rapidjson:
         """
         Round non-geometry numeric values in GeoJSON
         """
@@ -1098,10 +1073,10 @@ def normalize_json(
     sort_keys: bool = True,
     denoise_double_0: bool = True,
     strip_geometry_z_0: bool = True,
-    round_non_geojson: typing.SupportsInt | None = 3,
-    round_geojson_non_geometry: typing.SupportsInt | None = 3,
+    round_non_geojson: int | None = 3,
+    round_geojson_non_geometry: int | None = 3,
     round_geojson_geometry: typing.Annotated[
-        collections.abc.Sequence[typing.SupportsInt], "FixedSize(3)"
+        list[int], pybind11_stubgen.typing_ext.FixedSize(3)
     ]
     | None = [8, 8, 3],
 ) -> bool:
@@ -1130,10 +1105,10 @@ def normalize_json(
     sort_keys: bool = True,
     denoise_double_0: bool = True,
     strip_geometry_z_0: bool = True,
-    round_non_geojson: typing.SupportsInt | None = 3,
-    round_geojson_non_geometry: typing.SupportsInt | None = 3,
+    round_non_geojson: int | None = 3,
+    round_geojson_non_geometry: int | None = 3,
     round_geojson_geometry: typing.Annotated[
-        collections.abc.Sequence[typing.SupportsInt], "FixedSize(3)"
+        list[int], pybind11_stubgen.typing_ext.FixedSize(3)
     ]
     | None = [8, 8, 3],
 ) -> rapidjson:
@@ -1195,4 +1170,4 @@ def str2json2str(
         Optional[str]: Converted JSON string, or None if input is invalid.
     """
 
-__version__: str = "0.2.4"
+__version__: str = "0.2.5"
