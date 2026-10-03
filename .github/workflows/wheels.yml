@@ -68,7 +68,9 @@ jobs:
         CIBW_ARCHS_WINDOWS: AMD64 ARM64
         CIBW_SKIP: "pp* *musllinux* *_i686"
         CIBW_TEST_SKIP: "*macosx* *win* *aarch64"
-        CIBW_BEFORE_BUILD: "pip install --prefer-binary numpy fire pytest"
+        # manylinux2014 (kept for glibc 2.17 wheels) has gcc 10.2, which
+        # cannot build numpy >= 2.3 (manylinux_2_28 only) from source.
+        CIBW_BEFORE_BUILD: "pip install --prefer-binary 'numpy<2.3' fire pytest"
 
     - name: Verify clean directory
       run: git diff --exit-code
