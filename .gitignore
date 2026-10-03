@@ -13,3 +13,5 @@ data/suzhoubeizhan.idx
 package-lock.json
 node_modules
 stubs
+tests/pyodide/wheels.json
+tests/pyodide/pyodide-dist/

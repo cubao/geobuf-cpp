@@ -5,7 +5,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pybind11_geobuf"
-version = "0.2.4"
+version = "0.2.5"
 description="c++ geobuf with python binding"
 readme = "README.md"
 authors = [
@@ -51,6 +51,7 @@ xfail_strict = true
 log_cli_level = "INFO"
 filterwarnings = [
   "error",
+  "ignore::pytest.PytestCacheWarning",
 ]
 testpaths = ["tests"]
 
@@ -60,6 +61,18 @@ test-command = "pytest {project}/tests"
 test-extras = ["test"]
 test-skip = ["*universal2:arm64"]
 build-verbosity = 1
+# The linux jobs stay on cibuildwheel v2.22 for glibc 2.17 wheels, whose
+# manylinux2014 container has gcc 10.2; numpy >= 2.3 only ships
+# manylinux_2_28 wheels, so uv would try to build it from source and fail.
+test-requires = ["numpy<2.3"]
+
+# `--exports whole_archive` keeps the pybind11 module init symbol, otherwise
+# dropped by the linker; -p no:cacheprovider because the wasm side cannot
+# write .pytest_cache.
+[tool.cibuildwheel.pyodide]
+build-frontend = {name = "build", args = ["--exports", "whole_archive"]}
+test-command = "python -m pytest {project}/tests -p no:cacheprovider"
+test-extras = ["test"]
 
 
 [tool.ruff]
