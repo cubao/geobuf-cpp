@@ -69,8 +69,10 @@ jobs:
         CIBW_SKIP: "pp* *musllinux* *_i686"
         CIBW_TEST_SKIP: "*macosx* *win* *aarch64"
         # manylinux2014 (kept for glibc 2.17 wheels) has gcc 10.2, which
-        # cannot build numpy >= 2.3 (manylinux_2_28 only) from source.
-        CIBW_BEFORE_BUILD: "pip install --prefer-binary 'numpy<2.3' fire pytest"
+        # cannot build numpy >= 2.3 (manylinux_2_28 only) from source; 2.2.6 is
+        # the newest numpy with manylinux_2_17 wheels. Pin the exact version so
+        # the command needs no quotes on Windows.
+        CIBW_BEFORE_BUILD: "pip install --prefer-binary numpy==2.2.6 fire pytest"
 
     - name: Verify clean directory
       run: git diff --exit-code
