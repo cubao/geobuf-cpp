@@ -49,14 +49,32 @@ option(BUILD_SHARED_LIBS "Build shared library." OFF)
 set(HEADER_ROOT "${PROJECT_SOURCE_DIR}/src/${PROJECT_NAME}")
 file(GLOB_RECURSE HEADERS src/**/*.hpp)
 file(GLOB_RECURSE SOURCES src/**/*.cpp)
+if(EMSCRIPTEN)
+    # pbf_decoder.cpp is the standalone CLI (it has its own main() and re-defines symbols from geobuf.cpp); pyodide
+    # links the extension with --whole-archive, which cannot tolerate those duplicates.
+    list(REMOVE_ITEM SOURCES ${PROJECT_SOURCE_DIR}/src/geobuf/pbf_decoder.cpp)
+endif()
 add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_VISIBILITY_PRESET "hidden")
 # Don't install static library to wheel - delocate-wheel can't handle .a files
 
-add_executable(pbf_decoder src/geobuf/pbf_decoder.cpp)
-target_compile_definitions(pbf_decoder PUBLIC -DPBF_DECODER_ENABLE_MAIN)
-install(TARGETS pbf_decoder RUNTIME DESTINATION ${PROJECT_NAME})
+if(NOT EMSCRIPTEN)
+    add_executable(pbf_decoder src/geobuf/pbf_decoder.cpp)
+    target_compile_definitions(pbf_decoder PUBLIC -DPBF_DECODER_ENABLE_MAIN)
+    install(TARGETS pbf_decoder RUNTIME DESTINATION ${PROJECT_NAME})
+endif()
+
+# The examples and C++ test drivers are host executables; skip them when cross-compiling the python extension for
+# pyodide.
+if(EMSCRIPTEN)
+    set(BUILD_EXAMPLES
+        OFF
+        CACHE BOOL "" FORCE)
+    set(BUILD_TESTS
+        OFF
+        CACHE BOOL "" FORCE)
+endif()
 
 option(BUILD_EXAMPLES "Build examples." ON)
 if(BUILD_EXAMPLES)
