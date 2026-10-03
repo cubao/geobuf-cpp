@@ -50,10 +50,9 @@ set(HEADER_ROOT "${PROJECT_SOURCE_DIR}/src/${PROJECT_NAME}")
 file(GLOB_RECURSE HEADERS src/**/*.hpp)
 file(GLOB_RECURSE SOURCES src/**/*.cpp)
 if(EMSCRIPTEN)
-    # pbf_decoder.cpp is the standalone CLI (own main(), and it re-defines
-    # symbols from geobuf.cpp); pyodide links the extension with
-    # --whole-archive, which cannot tolerate those duplicates.
-    list(FILTER SOURCES EXCLUDE REGEX "pbf_decoder[.]cpp$")
+    # pbf_decoder.cpp is the standalone CLI (it has its own main() and re-defines symbols from geobuf.cpp); pyodide
+    # links the extension with --whole-archive, which cannot tolerate those duplicates.
+    list(REMOVE_ITEM SOURCES ${PROJECT_SOURCE_DIR}/src/geobuf/pbf_decoder.cpp)
 endif()
 add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})
@@ -66,8 +65,8 @@ if(NOT EMSCRIPTEN)
     install(TARGETS pbf_decoder RUNTIME DESTINATION ${PROJECT_NAME})
 endif()
 
-# The examples and C++ test drivers are host executables; skip them when
-# cross-compiling the python extension for pyodide.
+# The examples and C++ test drivers are host executables; skip them when cross-compiling the python extension for
+# pyodide.
 if(EMSCRIPTEN)
     set(BUILD_EXAMPLES
         OFF

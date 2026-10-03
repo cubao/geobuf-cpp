@@ -38,6 +38,10 @@ Homepage = "https://geobuf-cpp.readthedocs.io"
 
 [project.optional-dependencies]
 test = ["pytest"]
+# The linux test env runs in the manylinux2014 container (kept for glibc 2.17
+# wheels) whose gcc 10.2 cannot build numpy from source, and numpy >= 2.3 only
+# ships manylinux_2_28 wheels.
+test-linux = ["pytest", "numpy<2.3"]
 
 
 [tool.scikit-build]
@@ -61,10 +65,11 @@ test-command = "pytest {project}/tests"
 test-extras = ["test"]
 test-skip = ["*universal2:arm64"]
 build-verbosity = 1
-# The linux jobs stay on cibuildwheel v2.22 for glibc 2.17 wheels, whose
-# manylinux2014 container has gcc 10.2; numpy >= 2.3 only ships
-# manylinux_2_28 wheels, so uv would try to build it from source and fail.
-test-requires = ["numpy<2.3"]
+
+[tool.cibuildwheel.linux]
+# manylinux2014 + gcc 10.2 cannot install/build modern numpy, see test-linux
+test-extras = ["test-linux"]
+
 
 # `--exports whole_archive` keeps the pybind11 module init symbol, otherwise
 # dropped by the linker; -p no:cacheprovider because the wasm side cannot
