@@ -1968,6 +1968,8 @@ def test_geobuf_index():
         },
     }
     assert indexer.decode_feature(0)() == expected
+    assert indexer.decode_feature_of_id("24")() == expected
+    assert indexer.decode_feature_of_id("not-a-feature-id") is None
     f = indexer.decode_feature(0, only_geometry=True)()
     assert f["properties"] == {}
     f = indexer.decode_feature(0, only_properties=True)()
