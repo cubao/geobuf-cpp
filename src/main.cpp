@@ -849,7 +849,7 @@ PYBIND11_MODULE(_core, m)
              )docstring")
         .def("decode_feature_of_id",
              py::overload_cast<const std::string &, bool, bool>(
-                 &GeobufIndex::decode_feature),
+                 &GeobufIndex::decode_feature_of_id),
              "id"_a, py::kw_only(), "only_geometry"_a = false,
              "only_properties"_a = false,
              R"docstring(

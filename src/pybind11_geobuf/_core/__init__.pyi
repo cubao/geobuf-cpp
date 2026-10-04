@@ -66,7 +66,7 @@ class Decoder:
         """
     def decode_feature(
         self, bytes: str, only_geometry: bool = False, only_properties: bool = False
-    ) -> pybind11_geobuf._core.geojson.Feature | None:
+    ) -> geojson.Feature | None:
         """
         Decode Protocol Buffer (PBF) feature.
 
@@ -299,7 +299,7 @@ class GeobufIndex:
         *,
         only_geometry: bool = False,
         only_properties: bool = False,
-    ) -> pybind11_geobuf._core.geojson.Feature | None:
+    ) -> geojson.Feature | None:
         """
         Decode a feature from the Geobuf file.
 
@@ -314,7 +314,7 @@ class GeobufIndex:
     @typing.overload
     def decode_feature(
         self, bytes: str, *, only_geometry: bool = False, only_properties: bool = False
-    ) -> pybind11_geobuf._core.geojson.Feature | None:
+    ) -> geojson.Feature | None:
         """
         Decode a feature from bytes.
 
@@ -328,7 +328,7 @@ class GeobufIndex:
         """
     def decode_feature_of_id(
         self, id: str, *, only_geometry: bool = False, only_properties: bool = False
-    ) -> pybind11_geobuf._core.geojson.Feature | None:
+    ) -> geojson.Feature | None:
         """
         Decode a feature by its ID.
 
@@ -1195,4 +1195,4 @@ def str2json2str(
         Optional[str]: Converted JSON string, or None if input is invalid.
     """
 
-__version__: str = "0.2.4"
+__version__: str = "0.2.6"

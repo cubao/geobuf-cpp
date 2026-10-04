@@ -23,7 +23,7 @@ pip install git+https://github.com/cubao/geobuf-cpp.git
 
 (you can build wheels for later reuse by ` pip wheel git+https://github.com/cubao/geobuf-cpp.git`)
 
-See `tests/test_geobuf.py` for usage.
+See [introduction.md](introduction.md) for a user guide and `tests/test_geobuf.py` for usage.
 
 ### in the browser (pyodide / wasm)
 
