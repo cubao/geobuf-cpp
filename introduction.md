@@ -74,9 +74,9 @@ enc.encode(geojson="cities.geojson", geobuf="cities.pbf")
 dec = gb.Decoder()
 dec.decode(geobuf="cities.pbf", geojson="cities.geojson", indent=True)
 
-# Or use the load/dump shortcut on GeoJSON objects
-fc = geojson.FeatureCollection().load("cities.pbf")   # auto-detects .pbf
-fc.dump("cities_copy.geojson", indent=True)           # auto-detects .geojson
+# Or use the load/dump shortcut on a GeoJSON object (works for any variant)
+gj = geojson.GeoJSON().load("cities.pbf")             # auto-detects .pbf
+gj.dump("cities_copy.geojson", indent=True)           # auto-detects .geojson
 ```
 
 ---
@@ -201,7 +201,9 @@ import numpy as np
 ls = geojson.LineString()
 ls.from_numpy(np.array([[0, 0, 0], [1, 1, 0]], dtype=float))
 
-# From a JSON file (auto-detects .pbf or .geojson)
+# From a JSON file (auto-detects .pbf or .geojson).
+# Typed wrappers require matching content: FeatureCollection().load() raises
+# `RuntimeError: in get<T>()` unless the file actually holds a FeatureCollection.
 fc = geojson.FeatureCollection().load("data.geojson")
 fc2 = geojson.FeatureCollection().load("data.pbf")
 
@@ -297,10 +299,10 @@ f.dump("feature.pbf")
 
 ```python
 # Bounding box [min_lon, min_lat, max_lon, max_lat]
-bbox = f.bbox()                      # np.ndarray([4])
+bbox = f.bbox()                      # shape (4,)
 
 # With Z: [min_lon, min_lat, min_alt, max_lon, max_lat, max_alt]
-bbox6 = f.bbox(with_z=True)          # np.ndarray([6])
+bbox6 = f.bbox(with_z=True)          # shape (6,)
 
 # Mutable numpy view of coordinates (modifying this changes the C++ data)
 coords = f.as_numpy()               # np.ndarray shape (N, 3), writable
@@ -593,7 +595,7 @@ import pybind11_geobuf as gb
 
 # Build index alongside the geobuf file
 gb.GeobufIndex.indexing(
-    "cities.pbf",              # input geobuf
+    "cities.pbf",              # input geobuf (must contain a FeatureCollection)
     "cities.pbf.index",        # output index file
     feature_id="@",            # "@" = auto-detect: uses feature.id, or falls back to
                                #   "id" / "feature_id" / "fid" property keys
